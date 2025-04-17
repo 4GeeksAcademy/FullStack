@@ -8,6 +8,7 @@ import RelatedContent from "../component/RelatedContent.jsx";
 import PromoBanner from "../component/PromoBanner.jsx";
 import SpecialOffersCarousel from "../component/SpecialOffersCarousel.jsx";
 import Newsletter from "../component/Newsletter.jsx";
+import Footer from "../component/Footer.jsx";
 
 export const Home = () => {
   return (
@@ -21,6 +22,7 @@ export const Home = () => {
       <PromoBanner />
       <SpecialOffersCarousel />
       <Newsletter />
+      <Footer />
     </div>
   );
 };

@@ -12,6 +12,8 @@ from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
 from api.models import Viajes, Top, Belleza, Gastronomia, Category
+from api.services import inicializar_servicios
+
 # from models import Person
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
@@ -33,11 +35,6 @@ MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
 
 datos = {
-    "ofertas_destacadas": [{"id": i, "titulo": f"Oferta {i}"} for i in range(1, 21)],
-    "belleza": [{"id": i, "titulo": f"Belleza {i}"} for i in range(1, 21)],
-    "gastronomia": [{"id": i, "titulo": f"Gastronomía {i}"} for i in range(1, 21)],
-    "viajes": [{"id": i, "titulo": f"Viaje {i}"} for i in range(1, 21)],
-    "ofertas_especiales": [{"id": i, "titulo": f"Especial {i}"} for i in range(1, 21)],
     "newsletter": []
 }
 
@@ -193,6 +190,55 @@ def crear_categoria():
         "id": nueva_categoria.id,
         "nombre": nueva_categoria.nombre
     }), 201
+
+# Crear categorías si no existen al iniciar la app
+@app.before_request
+def crear_categorias():
+    # Verifica si las categorías existen al principio de cada solicitud
+    categorias = Category.query.all()
+
+    if not any(c.nombre == 'Viajes' for c in categorias):
+        categoria_viajes = Category(nombre='Viajes')
+        db.session.add(categoria_viajes)
+    
+    if not any(c.nombre == 'Top' for c in categorias):
+        categoria_top = Category(nombre='Top')
+        db.session.add(categoria_top)
+    
+    if not any(c.nombre == 'Belleza' for c in categorias):
+        categoria_belleza = Category(nombre='Belleza')
+        db.session.add(categoria_belleza)
+    
+    if not any(c.nombre == 'Gastronomia' for c in categorias):
+        categoria_gastronomia = Category(nombre='Gastronomia')
+        db.session.add(categoria_gastronomia)
+    
+    db.session.commit()  # Confirmar los cambios en la base de datos
+
+# Ruta para obtener todas las categorías
+@app.route('/categorias', methods=['GET'])
+def obtener_categorias():
+    categorias = Category.query.all()
+    categorias_serializadas = [{
+        "id": categoria.id,
+        "nombre": categoria.nombre
+    } for categoria in categorias]
+
+    return jsonify({"categorias": categorias_serializadas}), 200
+
+
+@app.before_request
+def inicializar_db():
+    # Aquí debes usar un ID de usuario válido y los IDs de las categorías correspondientes.
+    user_id = 1  # Debes reemplazar con un ID de usuario válido
+    viajes_category_id = 1  # Reemplaza con el ID válido para la categoría 'Viajes'
+    top_category_id = 3  # Reemplaza con el ID válido para la categoría 'Top'
+    belleza_category_id = 2  # Reemplaza con el ID válido para la categoría 'Belleza'
+    gastronomia_category_id = 4  # Reemplaza con el ID válido para la categoría 'Gastronomía'
+
+    # Inicializa los servicios en la base de datos
+    inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_category_id, gastronomia_category_id)
+
 
 # Ruta para crear un servicio
 @app.route('/viajes', methods=['POST'])

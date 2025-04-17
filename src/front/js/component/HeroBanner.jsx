@@ -9,7 +9,7 @@ const HeroBanner = () => {
   return (
     <div className="container-fluid">
       <div className="row">
-        <div className="col-12 col-sm-10 col-md-9 col-lg-8 mx-auto px-3 px-sm-4">
+        <div className="col-12 col-sm-10 col-md-9 col-lg-9 mx-auto px-3 px-sm-4">
           <div
             className="position-relative bg-danger bg-gradient overflow-hidden mb-4 mt-5"
             style={{

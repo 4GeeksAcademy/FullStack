@@ -18,7 +18,7 @@ const LayoutHeader = () => {
     <>
       <header className="sticky-top bg-white shadow-sm">
         <div className="container d-flex align-items-center py-3 flex-wrap">
-          {/* Logo */}
+          {/* Logo groupon*/}
           <div
             className="d-flex align-items-center me-auto me-md-4"
             role="button"
@@ -30,6 +30,7 @@ const LayoutHeader = () => {
 
           {/* Iconos móviles */}
           <div className="d-flex d-md-none align-items-center gap-3 order-md-last">
+            {/* logo de carrito */}
             <div
               className="position-relative"
               onClick={() => setShowCart(true)}
@@ -42,7 +43,7 @@ const LayoutHeader = () => {
                 </span>
               )}
             </div>
-
+            {/* logo de login */}
             <div onClick={() => setShowLogin(true)} role="button">
               <i className="bi bi-person-circle fs-4 text-dark"></i>
             </div>
@@ -67,6 +68,7 @@ const LayoutHeader = () => {
                 className="form-control me-2 rounded-pill"
                 placeholder="Busca restaurantes, spas, actividades..."
               />
+              {/* logo de ciudad Madrid */}
               <div className="d-flex align-items-center bg-light px-3 py-2 rounded-pill">
                 <i className="bi bi-geo-alt-fill me-2 text-secondary"></i>
                 <span className="text-muted small">{location}</span>

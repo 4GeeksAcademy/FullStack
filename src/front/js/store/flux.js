@@ -14,6 +14,12 @@ const getState = ({ getStore, getActions, setStore }) => {
           initial: "white",
         },
       ],
+      categories: [
+        { id: "top", name: "Top Ofertas", icon: "⭐" },
+        { id: "beauty", name: "Belleza", icon: "💄" },
+        { id: "food", name: "Gastronomía", icon: "🍴" },
+        { id: "travel", name: "Viajes", icon: "✈️" },
+      ],
       cartItems: [], // Aquí se almacenarán los productos en el carrito
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles

@@ -3,7 +3,7 @@ import { Context } from "../store/appContext";
 
 const CartModal = ({ onClose }) => {
   const { store, actions } = useContext(Context);
-  const cartItems = store.cart || [];
+  const cartItems = store.cartItems || [];
 
   const updateQuantity = (id, newQuantity) => {
     if (newQuantity < 1) return;

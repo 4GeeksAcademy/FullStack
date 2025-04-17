@@ -4,6 +4,7 @@ import HeroBanner from "../component/HeroBanner.jsx";
 import CategoriesSection from "../component/CategoriesSection.jsx";
 import SearchFilters from "../component/SearchFilters.jsx";
 import FeaturedDeals from "../component/FeaturedDeals.jsx";
+import RelatedContent from "../component/RelatedContent.jsx";
 
 export const Home = () => {
   return (
@@ -13,6 +14,7 @@ export const Home = () => {
       <CategoriesSection />
       <SearchFilters />
       <FeaturedDeals />
+      <RelatedContent />
     </div>
   );
 };

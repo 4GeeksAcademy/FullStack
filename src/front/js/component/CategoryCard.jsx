@@ -51,8 +51,8 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
           )}
         </div>
 
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
+        <div className="d-flex flex-column">
+          <div className="d-flex justify-content-start align-items-center mb-1">
             <span
               className={`fw-bold text-danger ${compact ? "fs-6" : "fs-5"}`}
             >
@@ -65,7 +65,9 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
             )}
           </div>
           {!compact && (
-            <small className="text-muted">{offer.buyers} comprados</small>
+            <div className="d-flex justify-content-end">
+              <small className="text-muted">{offer.buyers} comprados</small>
+            </div>
           )}
         </div>
       </div>

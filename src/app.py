@@ -6,11 +6,12 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db
+from api.models import db 
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
-
+from api.models import User
+from api.models import Viajes, Top, Belleza, Gastronomia
 # from models import Person
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
@@ -80,30 +81,57 @@ def serve_any_other_file(path):
 def crear_usuario():
     data = request.get_json()
     correo = data.get('correo')
-    contraseña = data.get('contraseña')
+    password = data.get('password')
     nombre = data.get('nombre')
+    role = data.get('role', 'cliente')  # por si no envían el role
 
-    if not correo or not contraseña or not nombre:
+    if not correo or not password or not nombre:
         return jsonify({"error": "Correo, contraseña y nombre son obligatorios"}), 400
 
-    if correo in usuarios:
+    # Buscar si ya existe un usuario con ese correo
+    usuario_existente = User.query.filter_by(correo=correo).first()
+    if usuario_existente:
         return jsonify({"error": "El usuario ya existe"}), 409
 
-    usuarios[correo] = {
-        "nombre": nombre,
-        "contraseña": contraseña
-    }
+    # Crear nuevo usuario
+    nuevo_usuario = User(
+        nombre=nombre,
+        password=password,  # Aquí deberías cifrar la contraseña idealmente
+        correo=correo,
+        role=role,
+        is_active=True
+    )
+    db.session.add(nuevo_usuario)
+    db.session.commit()
+
     return jsonify({"mensaje": f"Usuario '{nombre}' creado correctamente"}), 201
+    
+# Ruta para obtener todos los usuarios
+@app.route('/usuarios', methods=['GET'])
+def obtener_usuarios():
+    usuarios = User.query.all()
+    return jsonify([usuario.serialize() for usuario in usuarios]), 200
+
+# Ruta para obtener un usuario por ID
+@app.route('/usuarios/<int:id>', methods=['GET'])
+def obtener_usuario_por_id(id):
+    usuario = User.query.get(id)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    return jsonify(usuario.serialize()), 200
 
 # Ruta para iniciar sesión
 @app.route('/login', methods=['POST'])
 def iniciar_sesion():
     data = request.get_json()
     correo = data.get('correo')
-    contraseña = data.get('contraseña')
+    contraseña = data.get('password')
 
-    usuario = usuarios.get(correo)
-    if not usuario or usuario["contraseña"] != contraseña:
+    if not correo or not contraseña:
+        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+
+    usuario = User.query.filter_by(correo=correo).first()
+    if not usuario or usuario.password != contraseña:
         return jsonify({"error": "Correo o contraseña incorrectos"}), 401
 
     return jsonify({"mensaje": f"Bienvenido, {correo}"}), 200
@@ -113,30 +141,19 @@ def iniciar_sesion():
 def editar_usuario():
     data = request.get_json()
     correo = data.get('correo')
-    nueva_contraseña = data.get('contraseña')
+    nueva_contraseña = data.get('password')
 
-    if correo not in usuarios:
+    if not correo or not nueva_contraseña:
+        return jsonify({"error": "Correo y nueva contraseña son obligatorios"}), 400
+
+    usuario = User.query.filter_by(correo=correo).first()
+    if not usuario:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    usuarios[correo]["contraseña"] = nueva_contraseña
+    usuario.password = nueva_contraseña
+    db.session.commit()
+
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
-
-# Crear rutas para secciones dinámicas
-def crear_rutas_categoria(nombre):
-    @app.route(f'/{nombre}/principal', methods=['GET'], endpoint=f'{nombre}_principal')
-    def get_principal(nombre=nombre):
-        return jsonify(datos[nombre][:4])
-
-    @app.route(f'/{nombre}/categorias', methods=['GET'], endpoint=f'{nombre}_categorias')
-    def get_categorias(nombre=nombre):
-        return jsonify(datos[nombre][:8])
-
-    @app.route(f'/{nombre}/<int:item_id>', methods=['GET'], endpoint=f'{nombre}_por_id')
-    def get_por_id(item_id, nombre=nombre):
-        item = next((i for i in datos[nombre] if i["id"] == item_id), None)
-        if item:
-            return jsonify(item)
-        return jsonify({"error": "No encontrado"}), 404
 
 
 # Ruta para suscribirse al newsletter
@@ -154,60 +171,10 @@ def agregar_a_newsletter():
     datos["newsletter"].append(correo)
     return jsonify({"mensaje": "Suscripción exitosa"}), 201
 
-# Crear servicio por parte del proveedor
-@app.route('/servicio/crear', methods=['POST'])
-def crear_servicio():
-    data = request.get_json()
-    proveedor = data.get('correo')
-    nombre = data.get('nombre')
-    precio = data.get('precio')
-    descripcion = data.get('descripcion')
-    ubicacion = data.get('ubicacion')
-    horarios = data.get('horarios')
-
-    if not all([proveedor, nombre, precio, descripcion, ubicacion, horarios]):
-        return jsonify({"error": "Faltan datos del servicio"}), 400
-
-    if proveedor not in usuarios:
-        return jsonify({"error": "Usuario no registrado"}), 404
-
-    nuevo_servicio = {
-        "id": len(servicios) + 1,
-        "proveedor": proveedor,
-        "nombre": nombre,
-        "precio": precio,
-        "descripcion": descripcion,
-        "ubicacion": ubicacion,
-        "horarios": horarios
-    }
-
-    servicios.append(nuevo_servicio)
-    return jsonify({"mensaje": "Servicio creado con éxito", "servicio": nuevo_servicio}), 201
-
-# Consultar reservas del proveedor
-@app.route('/proveedor/<correo>/reservas', methods=['GET'])
-def reservas_proveedor(correo):
-    servicios_proveedor = [s["id"] for s in servicios if s["proveedor"] == correo]
-    mis_reservas = [r for r in reservas if r["servicio_id"] in servicios_proveedor]
-
-    return jsonify(mis_reservas), 200
-
-# Crear una compra
-@app.route('/comprar', methods=['POST'])
-def comprar_servicio():
-    data = request.get_json()
-    usuario = data.get('usuario')
-    servicio_id = data.get('servicio_id')
-
-    if not usuario or not servicio_id:
-        return jsonify({"error": "Faltan datos"}), 400
-
-    compras.append({
-        "usuario": usuario,
-        "servicio_id": servicio_id
-    })
-
-    return jsonify({"mensaje": "Compra registrada con éxito"}), 201
+# Ruta para obtener todos los correos del newsletter
+@app.route('/newsletter', methods=['GET'])
+def obtener_newsletter():
+    return jsonify({"correos_suscritos": datos["newsletter"]}), 200
 
 # Crear una reserva solo si ha comprado
 @app.route('/reserva', methods=['POST'])

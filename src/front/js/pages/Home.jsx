@@ -5,6 +5,7 @@ import CategoriesSection from "../component/CategoriesSection.jsx";
 import SearchFilters from "../component/SearchFilters.jsx";
 import FeaturedDeals from "../component/FeaturedDeals.jsx";
 import RelatedContent from "../component/RelatedContent.jsx";
+import PromoBanner from "../component/PromoBanner.jsx";
 
 export const Home = () => {
   return (
@@ -15,6 +16,7 @@ export const Home = () => {
       <SearchFilters />
       <FeaturedDeals />
       <RelatedContent />
+      <PromoBanner />
     </div>
   );
 };

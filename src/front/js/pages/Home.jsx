@@ -6,6 +6,8 @@ import SearchFilters from "../component/SearchFilters.jsx";
 import FeaturedDeals from "../component/FeaturedDeals.jsx";
 import RelatedContent from "../component/RelatedContent.jsx";
 import PromoBanner from "../component/PromoBanner.jsx";
+import SpecialOffersCarousel from "../component/SpecialOffersCarousel.jsx";
+import Newsletter from "../component/Newsletter.jsx";
 
 export const Home = () => {
   return (
@@ -17,6 +19,8 @@ export const Home = () => {
       <FeaturedDeals />
       <RelatedContent />
       <PromoBanner />
+      <SpecialOffersCarousel />
+      <Newsletter />
     </div>
   );
 };

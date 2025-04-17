@@ -1,4 +1,4 @@
-/* import React from "react";
+import React from "react";
 
 const CategoryCard = ({ offer, onViewService, compact = false }) => {
   const discount = Math.round(
@@ -72,7 +72,7 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
 
       <style>{`
         .card:hover .card-title-hover {
-          color: #dc3545; /* Bootstrap red */
+          color: #dc3545; 
         }
       `}</style>
     </div>
@@ -80,4 +80,3 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
 };
 
 export default CategoryCard;
- */

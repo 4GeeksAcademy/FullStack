@@ -1,5 +1,18 @@
 # services.py
-from api.models import db, Viajes, Top, Belleza, Gastronomia
+from api.models import db, Viajes, Top, Belleza, Gastronomia, User
+
+def create_admin_user():
+    user = User.query.filter_by(correo='admin@outlook.com').first()
+    if not user:
+        user = User(
+            nombre='Admin',
+            correo='admin@outlook.com',
+            password='admin',
+            role='Administrador'
+            )
+        db.session.add(user)
+        db.session.commit()
+    
 
 # Función para crear los servicios de Viajes
 def crear_servicios_viajes(user_id, viajes_category_id):
@@ -67,6 +80,7 @@ def crear_servicios_gastronomia(user_id, gastronomia_category_id):
 
 # Función para inicializar todos los servicios
 def inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_category_id, gastronomia_category_id):
+    create_admin_user()
     # Crear los servicios para cada categoría
     crear_servicios_viajes(user_id, viajes_category_id)
     crear_servicios_top(user_id, top_category_id)

@@ -16,6 +16,8 @@ class User(db.Model):
     payments = db.relationship('Payment', lazy='dynamic', cascade='all, delete-orphan')
     reservations = db.relationship('Reservation', lazy='dynamic', cascade='all, delete-orphan')
 
+    cart = db.relationship('Cart', back_populates='user', uselist=False)
+
     def __repr__(self):
         return f'<User {self.correo}>'
 
@@ -200,4 +202,41 @@ class Category(db.Model):
         return {
             "id": self.id,
             "nombre": self.nombre
+        }
+
+class Cart(db.Model):
+    __tablename__ = 'carts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    
+    user = db.relationship('User', back_populates='cart')
+
+    cart_services = db.relationship('CartService', back_populates='cart', cascade='all, delete-orphan')
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "items": [cs.serialize() for cs in self.cart_services]
+        }
+
+class CartService(db.Model):
+    __tablename__ = 'cart_services'
+
+    id = db.Column(db.Integer, primary_key=True)
+    cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
+    service_type = db.Column(db.String(50), nullable=False)
+    service_id = db.Column(db.Integer, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+
+    cart = db.relationship('Cart', back_populates='cart_services')
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "cart_id": self.cart_id,
+            "service_type": self.service_type,
+            "service_id": self.service_id,
+            "quantity": self.quantity
         }

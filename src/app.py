@@ -12,7 +12,7 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db, Payment
@@ -642,6 +642,70 @@ def reservas_por_proveedor(proveedor_id):
         "reservas": reservas_serializadas,
         "total": len(reservas_serializadas)
     })
+
+
+# Agrego producto al carrito
+@app.route('/usuario/carrito', methods=['POST'])
+def add_producto_to_cart():
+    data = request.get_json();
+    cart = Cart.query.filter_by(user_id=data['user_id']).first()
+    if not cart:
+        cart = Cart(user_id=data['user_id'])
+        db.session.add(cart)
+        db.session.commit()
+
+    cart_service = CartService.query.filter_by(
+        cart_id=cart.id,
+        service_type=data['service_type'],
+        service_id=data['service_id']
+    ).first()
+
+    if cart_service:
+        cart_service.quantity += data['quantity']
+    else:
+        cart_service = CartService(
+            cart_id=cart.id,
+            service_type=data['service_type'],
+            service_id=data['service_id'],
+            quantity=data['quantity']
+        )
+        db.session.add(cart_service)
+
+    db.session.commit()
+    return jsonify(cart_service.serialize()), 200
+
+# Obtengo los servicios reales del carrito
+@app.route('/usuario/carrito/servicios/<int:user_id>', methods=['GET'])
+def obtener_servicios_carrito(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    cart_services = CartService.query.filter_by(cart_id=user.cart.id).all()
+    
+    user_services = []
+   
+    if not cart_services:
+        return jsonify({}), 200
+    else:
+        for item in cart_services:
+            servicio = None
+           
+            if item.service_type == "viaje":
+                servicio = Viajes.query.get(item.service_id)
+            elif item.service_type == "belleza":
+                servicio = Belleza.query.get(item.service_id)
+            elif item.service_type == "gastronomia":
+                servicio = Gastronomia.query.get(item.service_id)
+            elif item.service_type == "top":
+                servicio = Top.query.get(item.service_id)
+            
+            if servicio:
+                user_services.append({
+                    "tipo": item.service_type,
+                    "cantidad": item.quantity,
+                    "detalle": servicio.descripcion,
+                    "precio": servicio.precio
+                })
+    
+    return jsonify(user_services), 200
 
 
 # this only runs if `$ python src/main.py` is executed

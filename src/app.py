@@ -2,7 +2,8 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for, send_from_directory
+import stripe
+from flask import Flask, Blueprint, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
@@ -11,10 +12,15 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Cart, CartService
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService
 from api.services import inicializar_servicios
+from dotenv import load_dotenv
+from api.models import db, Payment
+from datetime import datetime
 
 # from models import Person
+load_dotenv()
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -467,64 +473,176 @@ def obtener_belleza_por_id(id):
         'category_id': belleza.category_id
     }, 200
 
+# RUTA PARA CREAR UNA COMPRA
 
-# Crear una reserva solo si ha comprado
-@app.route('/reserva', methods=['POST'])
-def crear_reserva():
-    data = request.get_json()
-    servicio_id = data.get('servicio_id')
-    usuario = data.get('usuario')
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'unit_amount': 2000,  # 20.00 USD
+                    'product_data': {
+                        'name': 'Ejemplo de Servicio',
+                        'description': 'Este es un servicio de prueba conectado a Stripe.',
+                    },
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url='https://bug-free-dollop-jjqvwgpp59xg2q47w-3001.app.github.dev/success',
+            cancel_url='https://bug-free-dollop-jjqvwgpp59xg2q47w-3001.app.github.dev/cancel',
+        )
+        return jsonify({'id': session.id})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+# Ruta para manejar el webhook de Stripe
 
-    if not servicio_id or not usuario:
-        return jsonify({"error": "Faltan datos"}), 400
+@app.route('/webhook', methods=['POST'])
+def stripe_webhook():
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
+    endpoint_secret = "whsec_MMNDXmbt4VJAhPs0vCjAFmNvOWVMff64"
 
-    ha_comprado = any(
-        c for c in compras if c["usuario"] == usuario and c["servicio_id"] == servicio_id
-    )
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except ValueError as e:
+        print(f"❌ Payload inválido: {str(e)}")
+        return 'Invalid payload', 400
+    except stripe.error.SignatureVerificationError as e:
+        print(f"❌ Firma inválida: {str(e)}")
+        return 'Invalid signature', 400
 
-    if not ha_comprado:
-        return jsonify({"error": "El usuario no ha comprado este servicio"}), 403
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        session_id = session['id']
+        print(f"✅ Pago completado para la sesión {session_id}")
 
-    reservas.append({
-        "servicio_id": servicio_id,
-        "usuario": usuario
+        try:
+            # Recuperamos la sesión con los line_items
+            session_with_items = stripe.checkout.Session.retrieve(session_id, expand=['line_items'])
+            line_items = session_with_items['line_items']['data']
+
+            # ⚠️ Extraer información crítica desde metadata
+            metadata = session.get('metadata', {})
+            user_id = int(metadata.get('user_id'))
+            service_id = int(metadata.get('service_id'))
+            service_type = metadata.get('service_type')
+
+            if not all([user_id, service_id, service_type]):
+                raise ValueError("Faltan datos necesarios en metadata")
+
+            # Guardar el pago
+            payment = Payment(
+                currency=session['currency'],
+                amount=int(session['amount_total']),
+                paypal_payment_id=session_id,
+                user_id=user_id,
+                payment_date=datetime.utcnow()
+            )
+            db.session.add(payment)
+            db.session.flush()  # para obtener el ID del pago antes de hacer commit
+
+            # Crear reserva y vincularla con el pago
+            reservation = Reservation(
+                user_id=user_id,
+                service_id=service_id,
+                service_type=service_type,
+                payment_id=payment.id,
+                date=datetime.utcnow()
+            )
+            db.session.add(reservation)
+            db.session.commit()
+
+            print(f"✅ Reserva y pago registrados: {reservation.serialize()}")
+
+        except Exception as e:
+            print(f"❌ Error al procesar webhook: {str(e)}")
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+
+    return '', 200
+
+
+# Ruta para obtener todas las reservas de un usuario
+@app.route('/reservas/usuario/<int:id_usuario>', methods=['GET'])
+def reservas_por_usuario(id_usuario):
+    try:
+        # Buscar las reservas en la base de datos
+        reservas_db = Reservation.query.filter_by(user_id=id_usuario).all()
+
+        # Serializar las reservas
+        reservas_serializadas = [reserva.serialize() for reserva in reservas_db]
+        
+        return jsonify(reservas_serializadas), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Ruta para obtener todas las reservas desde la base de datos
+@app.route('/reservas', methods=['GET'])
+def obtener_reservas():
+    # 🔎 Consultamos todas las reservas en la tabla 'reservations'
+    reservas = Reservation.query.all()
+    
+    # 🧾 Convertimos a formato JSON serializable
+    reservas_serializadas = [reserva.serialize() for reserva in reservas]
+
+    return jsonify({
+        "total": len(reservas_serializadas),
+        "reservas": reservas_serializadas
+    }), 200
+
+# Ruta para obtener todas las compras de un usuario desde la base de datos
+@app.route('/compras/<int:user_id>', methods=['GET'])
+def obtener_compras_usuario(user_id):
+    # 🔍 Consultamos todas las compras asociadas al usuario
+    compras = Payment.query.filter_by(user_id=user_id).all()
+
+    if not compras:
+        return jsonify({"mensaje": "No se encontraron compras para este usuario"}), 404
+
+    compras_serializadas = [compra.serialize() for compra in compras]
+
+    return jsonify({
+        "total": len(compras_serializadas),
+        "compras": compras_serializadas
+    }), 200
+
+# Ruta para obtener todas las compras
+@app.route('/compras', methods=['GET'])
+def obtener_todas_las_compras():
+    # 🔍 Consultamos todas las compras en la base de datos
+    compras = Payment.query.all()
+
+    if not compras:
+        return jsonify({"mensaje": "No se encontraron compras"}), 404
+
+    compras_serializadas = [compra.serialize() for compra in compras]
+
+    return jsonify({
+        "total": len(compras_serializadas),
+        "compras": compras_serializadas
+    }), 200
+
+@app.route('/reservas/proveedor/<int:proveedor_id>', methods=['GET'])
+def reservas_por_proveedor(proveedor_id):
+    # Consultar las reservas filtrando por `user_id`
+    reservas = Reservation.query.filter_by(user_id=proveedor_id).all()
+
+    if not reservas:
+        return jsonify({"mensaje": "No hay reservas para los servicios de este proveedor"}), 404
+
+    # Serializar las reservas
+    reservas_serializadas = [reserva.serialize() for reserva in reservas]
+
+    return jsonify({
+        "reservas": reservas_serializadas,
+        "total": len(reservas_serializadas)
     })
 
-    return jsonify({"mensaje": "Reserva creada con éxito"}), 201
-
-
-# Consultar compras de un usuario
-
-@app.route('/usuario/<nombre>/compras', methods=['GET'])
-def ver_compras_por_nombre(nombre):
-    # Buscar el correo del usuario por su nombre
-    correo_usuario = None
-    for correo, datos in usuarios.items():
-        if datos["nombre"].lower() == nombre.lower():
-            correo_usuario = correo
-            break
-
-    if not correo_usuario:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-
-    # Buscar compras del usuario
-    mis_compras = [c for c in compras if c["usuario"] == correo_usuario]
-
-    if not mis_compras:
-        return jsonify({"mensaje": "Este usuario no ha realizado compras aún"}), 200
-
-    # Obtener detalles del servicio comprado
-    resultado = []
-    for compra in mis_compras:
-        servicio = next((s for s in servicios if s["id"] == compra["servicio_id"]), None)
-        if servicio:
-            resultado.append({
-                "nombre_servicio": servicio["nombre"],
-                "precio": servicio["precio"],
-                "descripcion": servicio["descripcion"]
-            })
-
-    return jsonify(resultado), 200
 
 # Agrego producto al carrito
 @app.route('/usuario/carrito', methods=['POST'])

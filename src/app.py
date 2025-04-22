@@ -17,10 +17,12 @@ from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db, Payment
 from datetime import datetime
+from api.payment import payment_bp
 
 # from models import Person
 load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -54,6 +56,8 @@ setup_admin(app)
 
 # add the admin
 setup_commands(app)
+
+app.register_blueprint(payment_bp)
 
 # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
@@ -706,7 +710,6 @@ def obtener_servicios_carrito(user_id):
                 })
     
     return jsonify(user_services), 200
-
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':

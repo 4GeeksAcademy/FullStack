@@ -10,6 +10,12 @@ class User(db.Model):
     nombre = db.Column(db.String(120), nullable=False)
     correo = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
+    telefono = db.Column(db.String(20))
+    direccion_line1 = db.Column(db.String(120))
+    direccion_line2 = db.Column(db.String(120), nullable=True)
+    ciudad = db.Column(db.String(80))
+    codigo_postal = db.Column(db.String(20))
+    pais = db.Column(db.String(50))
     role = db.Column(db.String(50), default='cliente')
     is_active = db.Column(db.Boolean(), default=True)
 

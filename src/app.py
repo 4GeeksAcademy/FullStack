@@ -688,7 +688,7 @@ def obtener_servicios_carrito(user_id):
         for item in cart_services:
             servicio = None
            
-            if item.service_type == "viaje":
+            if item.service_type == "viajes":
                 servicio = Viajes.query.get(item.service_id)
             elif item.service_type == "belleza":
                 servicio = Belleza.query.get(item.service_id)
@@ -706,6 +706,27 @@ def obtener_servicios_carrito(user_id):
                 })
     
     return jsonify(user_services), 200
+
+@app.route('/usuario/carrito/servicios', methods=['DELETE'])
+def delte_producto():
+    data = request.get_json()
+    user = User.query.get(data['user_id'])
+
+    if user and user.cart:
+        cart_service = CartService.query.filter_by(
+            cart_id=user.cart.id,
+            service_type=data['service_type'],
+            service_id=data['service_id']
+        ).first()
+
+        if cart_service:
+            db.session.delete(cart_service)
+            db.session.commit()
+            return jsonify({'message': 'Producto eliminado del carrito'}), 200
+        else:
+            return jsonify({'message': 'Producto no encontrado en el carrito'}), 404
+    else:
+        return jsonify({'message':'Usuario o carrito no encontrado'}), 404
 
 
 # this only runs if `$ python src/main.py` is executed

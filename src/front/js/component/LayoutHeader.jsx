@@ -5,6 +5,7 @@ import { Context } from "../store/appContext.js";
 import { Link } from "react-router-dom"; // Importar Link de react-router-dom
 import "bootstrap-icons/font/bootstrap-icons.css";
 
+
 const LayoutHeader = () => {
   const { store, actions } = useContext(Context); // Contexto para usar acciones y estado global
   const [location, setLocation] = useState("Madrid");

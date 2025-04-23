@@ -1,9 +1,17 @@
 import React from "react";
 
 const CategoryCard = ({ offer, onViewService, compact = false }) => {
-  const discount = Math.round(
-    (1 - offer.discountPrice / offer.originalPrice) * 100
-  );
+  const {
+    title = "Sin título",
+    image = "https://via.placeholder.com/300x200?text=Sin+imagen",
+    rating = 0,
+    reviews = 0,
+    discountPrice = 0,
+    originalPrice = 1,
+    buyers = 0,
+  } = offer;
+
+  const discount = Math.round((1 - discountPrice / originalPrice) * 100);
 
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, i) => (
@@ -25,9 +33,9 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
     >
       <div className="position-relative">
         <img
-          src={offer.image}
+          src={image}
           className={`card-img-top ${compact ? "object-fit-cover" : ""}`}
-          alt={offer.title}
+          alt={title}
           style={{ height: compact ? "130px" : "200px", objectFit: "cover" }}
         />
         <span className="position-absolute top-0 end-0 bg-danger text-white small px-2 py-1 m-2 rounded">
@@ -41,14 +49,12 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
             compact ? "fs-6" : "fs-5"
           } text-truncate card-title-hover`}
         >
-          {offer.title}
+          {title}
         </h5>
 
         <div className="d-flex align-items-center mb-2">
-          {renderStars(offer.rating)}
-          {!compact && (
-            <small className="text-muted ms-2">({offer.reviews})</small>
-          )}
+          {renderStars(rating)}
+          {!compact && <small className="text-muted ms-2">({reviews})</small>}
         </div>
 
         <div className="d-flex flex-column">
@@ -56,17 +62,17 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
             <span
               className={`fw-bold text-danger ${compact ? "fs-6" : "fs-5"}`}
             >
-              ${offer.discountPrice}
+              ${discountPrice}
             </span>
             {!compact && (
               <small className="text-muted text-decoration-line-through ms-2">
-                ${offer.originalPrice}
+                ${originalPrice}
               </small>
             )}
           </div>
           {!compact && (
             <div className="d-flex justify-content-end">
-              <small className="text-muted">{offer.buyers} comprados</small>
+              <small className="text-muted">{buyers} comprados</small>
             </div>
           )}
         </div>
@@ -74,7 +80,7 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
 
       <style>{`
         .card:hover .card-title-hover {
-          color: #dc3545; 
+          color: #dc3545;
         }
       `}</style>
     </div>

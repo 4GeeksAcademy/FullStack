@@ -17,6 +17,8 @@ from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db, Payment
 from datetime import datetime
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from flask_bcrypt import Bcrypt
 
 # from models import Person
 load_dotenv()
@@ -26,6 +28,11 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
+app.config["JWT_SECRET_KEY"] = "6Smc-TWCMZkUXJ5DN6ZUmOq5OHHzjZID8NGt7c1VxpxK0TJ7Nzv0bFJ3wD7lTGiYiNk1TUnRhjM"
+jwt = JWTManager(app)
+
+bcrypt = Bcrypt(app)
+
 app.url_map.strict_slashes = False
 
 # database condiguration
@@ -97,9 +104,11 @@ def crear_usuario():
         return jsonify({"error": "El usuario ya existe"}), 409
 
     # Crear nuevo usuario
+    pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
     nuevo_usuario = User(
         nombre=nombre,
-        password=password,  # Aquí deberías cifrar la contraseña idealmente
+        password=pw_hash,  # Aquí deberías cifrar la contraseña idealmente
         correo=correo,
         role=role,
         is_active=True
@@ -109,14 +118,17 @@ def crear_usuario():
 
     return jsonify({"mensaje": f"Usuario '{nombre}' creado correctamente"}), 201
     
+
 # Ruta para obtener todos los usuarios
 @app.route('/usuarios', methods=['GET'])
+@jwt_required()
 def obtener_usuarios():
     usuarios = User.query.all()
     return jsonify([usuario.serialize() for usuario in usuarios]), 200
 
 # Ruta para obtener un usuario por ID
 @app.route('/usuarios/<int:id>', methods=['GET'])
+@jwt_required()
 def obtener_usuario_por_id(id):
     usuario = User.query.get(id)
     if not usuario:
@@ -134,10 +146,11 @@ def iniciar_sesion():
         return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
 
     usuario = User.query.filter_by(correo=correo).first()
-    if not usuario or usuario.password != contraseña:
+    if not usuario or not bcrypt.check_password_hash(usuario.password, contraseña):
         return jsonify({"error": "Correo o contraseña incorrectos"}), 401
 
-    return jsonify({"mensaje": f"Bienvenido, {correo}"}), 200
+    access_token = create_access_token(identity=usuario.correo)
+    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token}), 200
 
 # Ruta para editar usuario (cambiar contraseña)
 @app.route('/editar', methods=['PUT'])
@@ -153,7 +166,9 @@ def editar_usuario():
     if not usuario:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    usuario.password = nueva_contraseña
+    pw_hash = bcrypt.generate_password_hash(nueva_contraseña).decode('utf-8')
+
+    usuario.password = pw_hash
     db.session.commit()
 
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
@@ -176,11 +191,13 @@ def agregar_a_newsletter():
 
 # Ruta para obtener todos los correos del newsletter
 @app.route('/newsletter', methods=['GET'])
+@jwt_required()
 def obtener_newsletter():
     return jsonify({"correos_suscritos": datos["newsletter"]}), 200
 
 # Ruta para categoria 
 @app.route('/categorias', methods=['POST'])
+@jwt_required()
 def crear_categoria():
     data = request.get_json()
 
@@ -248,6 +265,7 @@ def inicializar_db():
 
 # Ruta para crear un servicio
 @app.route('/viajes', methods=['POST'])
+@jwt_required()
 def crear_viaje():
     data = request.get_json()
 
@@ -306,6 +324,7 @@ def obtener_viaje(id):
 # RUTA PARA CREAR SERVICIO EN TOP
 
 @app.route('/top', methods=['POST'])
+@jwt_required()
 def crear_top():
     data = request.get_json()
 
@@ -363,6 +382,7 @@ def obtener_top_por_id(id):
 # RUTA PARA CREAR GASTRONOMIA
 
 @app.route('/gastronomia', methods=['POST'])
+@jwt_required()
 def crear_gastronomia():
     data = request.get_json()
 
@@ -420,6 +440,7 @@ def obtener_gastronomia_por_id(id):
 
 # RUTA PARA CREAR BELLEZA
 @app.route('/belleza', methods=['POST'])
+@jwt_required()
 def crear_belleza():
     data = request.get_json()
 
@@ -476,6 +497,7 @@ def obtener_belleza_por_id(id):
 # RUTA PARA CREAR UNA COMPRA
 
 @app.route('/create-checkout-session', methods=['POST'])
+@jwt_required()
 def create_checkout_session():
     try:
         session = stripe.checkout.Session.create(
@@ -569,6 +591,7 @@ def stripe_webhook():
 
 # Ruta para obtener todas las reservas de un usuario
 @app.route('/reservas/usuario/<int:id_usuario>', methods=['GET'])
+@jwt_required()
 def reservas_por_usuario(id_usuario):
     try:
         # Buscar las reservas en la base de datos
@@ -583,6 +606,7 @@ def reservas_por_usuario(id_usuario):
 
 # Ruta para obtener todas las reservas desde la base de datos
 @app.route('/reservas', methods=['GET'])
+@jwt_required()
 def obtener_reservas():
     # 🔎 Consultamos todas las reservas en la tabla 'reservations'
     reservas = Reservation.query.all()
@@ -597,6 +621,7 @@ def obtener_reservas():
 
 # Ruta para obtener todas las compras de un usuario desde la base de datos
 @app.route('/compras/<int:user_id>', methods=['GET'])
+@jwt_required()
 def obtener_compras_usuario(user_id):
     # 🔍 Consultamos todas las compras asociadas al usuario
     compras = Payment.query.filter_by(user_id=user_id).all()
@@ -613,6 +638,7 @@ def obtener_compras_usuario(user_id):
 
 # Ruta para obtener todas las compras
 @app.route('/compras', methods=['GET'])
+@jwt_required()
 def obtener_todas_las_compras():
     # 🔍 Consultamos todas las compras en la base de datos
     compras = Payment.query.all()
@@ -628,6 +654,7 @@ def obtener_todas_las_compras():
     }), 200
 
 @app.route('/reservas/proveedor/<int:proveedor_id>', methods=['GET'])
+@jwt_required()
 def reservas_por_proveedor(proveedor_id):
     # Consultar las reservas filtrando por `user_id`
     reservas = Reservation.query.filter_by(user_id=proveedor_id).all()
@@ -646,6 +673,7 @@ def reservas_por_proveedor(proveedor_id):
 
 # Agrego producto al carrito
 @app.route('/usuario/carrito', methods=['POST'])
+@jwt_required()
 def add_producto_to_cart():
     data = request.get_json();
     cart = Cart.query.filter_by(user_id=data['user_id']).first()
@@ -676,6 +704,7 @@ def add_producto_to_cart():
 
 # Obtengo los servicios reales del carrito
 @app.route('/usuario/carrito/servicios/<int:user_id>', methods=['GET'])
+@jwt_required()
 def obtener_servicios_carrito(user_id):
     user = User.query.filter_by(id=user_id).first()
     cart_services = CartService.query.filter_by(cart_id=user.cart.id).all()
@@ -708,6 +737,7 @@ def obtener_servicios_carrito(user_id):
     return jsonify(user_services), 200
 
 @app.route('/usuario/carrito/servicios', methods=['DELETE'])
+@jwt_required()
 def delte_producto():
     data = request.get_json()
     user = User.query.get(data['user_id'])

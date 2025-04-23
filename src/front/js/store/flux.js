@@ -37,6 +37,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           buyers: 250,
         },
       ],
+      serviciosViajes: [],
       cartItems: [], // Aquí se almacenarán los productos en el carrito
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
@@ -124,6 +125,17 @@ const getState = ({ getStore, getActions, setStore }) => {
           (sum, item) => sum + item.discountPrice * item.quantity,
           0
         );
+      },
+      cargarServiciosViajes: async () => {
+        try {
+          const resp = await fetch("https://animated-funicular-pvwjwpvwjq527v5j-3001.app.github.dev/viajes"); // Ajustá esta URL a tu ruta real
+          if (!resp.ok) throw new Error("Error al obtener servicios de viajes");
+          const data = await resp.json();
+          setStore({ serviciosViajes: data.viajes });
+          console.log("estos son los viajes", data.viajes)
+        } catch (error) {
+          console.error("Error cargando viajes:", error);
+        }
       },
     },
   };

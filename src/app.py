@@ -12,12 +12,13 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db, Payment
 from datetime import datetime
 from api.payment import payment_bp
+from flask_cors import CORS 
 
 # from models import Person
 load_dotenv()
@@ -29,6 +30,7 @@ static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+CORS(app) 
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
@@ -163,7 +165,9 @@ def editar_usuario():
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
 
 
-# Ruta para suscribirse al newsletter
+from flask import request, jsonify
+from api.models import db, Newsletter  # Asegurate que esté bien importado
+
 @app.route('/newsletter', methods=['POST'])
 def agregar_a_newsletter():
     data = request.get_json()
@@ -172,16 +176,22 @@ def agregar_a_newsletter():
     if not correo:
         return jsonify({"error": "Correo es obligatorio"}), 400
 
-    if correo in datos["newsletter"]:
+    existente = Newsletter.query.filter_by(correo=correo).first()
+    if existente:
         return jsonify({"mensaje": "Este correo ya está suscrito"}), 200
 
-    datos["newsletter"].append(correo)
+    nuevo = Newsletter(correo=correo)
+    db.session.add(nuevo)
+    db.session.commit()
+
     return jsonify({"mensaje": "Suscripción exitosa"}), 201
 
-# Ruta para obtener todos los correos del newsletter
+
 @app.route('/newsletter', methods=['GET'])
 def obtener_newsletter():
-    return jsonify({"correos_suscritos": datos["newsletter"]}), 200
+    subs = Newsletter.query.all()
+    return jsonify({"correos_suscritos": [s.correo for s in subs]}), 200
+
 
 # Ruta para categoria 
 @app.route('/categorias', methods=['POST'])

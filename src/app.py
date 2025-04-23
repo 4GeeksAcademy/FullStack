@@ -12,17 +12,20 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db, Payment
 from datetime import datetime
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_bcrypt import Bcrypt
+from api.payment import payment_bp
+from flask_cors import CORS 
 
 # from models import Person
 load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -34,6 +37,7 @@ jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 
 app.url_map.strict_slashes = False
+CORS(app) 
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
@@ -61,6 +65,8 @@ setup_admin(app)
 
 # add the admin
 setup_commands(app)
+
+app.register_blueprint(payment_bp)
 
 # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
@@ -174,7 +180,9 @@ def editar_usuario():
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
 
 
-# Ruta para suscribirse al newsletter
+from flask import request, jsonify
+from api.models import db, Newsletter  # Asegurate que esté bien importado
+
 @app.route('/newsletter', methods=['POST'])
 def agregar_a_newsletter():
     data = request.get_json()
@@ -183,17 +191,23 @@ def agregar_a_newsletter():
     if not correo:
         return jsonify({"error": "Correo es obligatorio"}), 400
 
-    if correo in datos["newsletter"]:
+    existente = Newsletter.query.filter_by(correo=correo).first()
+    if existente:
         return jsonify({"mensaje": "Este correo ya está suscrito"}), 200
 
-    datos["newsletter"].append(correo)
+    nuevo = Newsletter(correo=correo)
+    db.session.add(nuevo)
+    db.session.commit()
+
     return jsonify({"mensaje": "Suscripción exitosa"}), 201
 
-# Ruta para obtener todos los correos del newsletter
+
 @app.route('/newsletter', methods=['GET'])
 @jwt_required()
 def obtener_newsletter():
-    return jsonify({"correos_suscritos": datos["newsletter"]}), 200
+    subs = Newsletter.query.all()
+    return jsonify({"correos_suscritos": [s.correo for s in subs]}), 200
+
 
 # Ruta para categoria 
 @app.route('/categorias', methods=['POST'])
@@ -736,6 +750,7 @@ def obtener_servicios_carrito(user_id):
     
     return jsonify(user_services), 200
 
+
 @app.route('/usuario/carrito/servicios', methods=['DELETE'])
 @jwt_required()
 def delte_producto():
@@ -757,8 +772,6 @@ def delte_producto():
             return jsonify({'message': 'Producto no encontrado en el carrito'}), 404
     else:
         return jsonify({'message':'Usuario o carrito no encontrado'}), 404
-
-
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))

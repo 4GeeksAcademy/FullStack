@@ -1,7 +1,9 @@
 {
     "_meta": {
         "hash": {
+
             "sha256": "a885ef6315310c11f246ceb2430f51076b27c8dcc7042962167ca94b0a9bb03f"
+
         },
         "pipfile-spec": 6,
         "requires": {
@@ -39,6 +41,7 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==2025.1.31"
+
         },
         "charset-normalizer": {
             "hashes": [
@@ -137,6 +140,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==3.4.1"
+
         },
         "click": {
             "hashes": [
@@ -278,6 +282,7 @@
             ],
             "index": "pypi",
             "version": "==23.0.0"
+
         },
         "idna": {
             "hashes": [
@@ -286,6 +291,7 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==3.10"
+
         },
         "itsdangerous": {
             "hashes": [
@@ -380,11 +386,13 @@
         },
         "packaging": {
             "hashes": [
+
                 "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484",
                 "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f"
             ],
             "markers": "python_version >= '3.8'",
             "version": "==25.0"
+
         },
         "psycopg2-binary": {
             "hashes": [
@@ -459,6 +467,7 @@
             ],
             "index": "pypi",
             "version": "==2.9.10"
+
         },
         "pyjwt": {
             "hashes": [
@@ -467,17 +476,21 @@
             ],
             "markers": "python_version >= '3.9'",
             "version": "==2.10.1"
+
         },
-        "python-dotenv": {
+        "pyjwt": {
             "hashes": [
+
                 "sha256:41f90bc6f5f177fb41f53e87666db362025010eb28f60a01c9143bfa33a2b2d5",
                 "sha256:d7c01d9e2293916c18baf562d95698754b0dbbb5e74d457c45d4f6561fb9d55d"
             ],
             "index": "pypi",
             "version": "==1.1.0"
+
         },
-        "pyyaml": {
+        "python-dotenv": {
             "hashes": [
+
                 "sha256:01179a4a8559ab5de078078f37e5c1a30d76bb88519906844fd7bdea1b7729ff",
                 "sha256:0833f8694549e586547b576dcfaba4a6b55b9e96098b36cdc7ebefe667dfed48",
                 "sha256:0a9a2848a5b7feac301353437eb7d5957887edbf81d56e903999a75a3d743086",
@@ -542,6 +555,7 @@
             ],
             "markers": "python_version >= '3.0'",
             "version": "==2.32.3"
+
         },
         "six": {
             "hashes": [

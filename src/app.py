@@ -224,6 +224,7 @@ def crear_categoria():
     }), 201
 
 # Crear categorías si no existen al iniciar la app
+# Crear categorías si no existen al iniciar la app
 @app.before_request
 def crear_categorias():
     # Verifica si las categorías existen al principio de cada solicitud
@@ -232,25 +233,24 @@ def crear_categorias():
     if not any(c.nombre == 'Viajes' for c in categorias):
         categoria_viajes = Category(nombre='Viajes')
         db.session.add(categoria_viajes)
-    
+
     if not any(c.nombre == 'Top' for c in categorias):
         categoria_top = Category(nombre='Top')
         db.session.add(categoria_top)
-    
+
     if not any(c.nombre == 'Belleza' for c in categorias):
         categoria_belleza = Category(nombre='Belleza')
         db.session.add(categoria_belleza)
-    
+
     if not any(c.nombre == 'Gastronomia' for c in categorias):
         categoria_gastronomia = Category(nombre='Gastronomia')
         db.session.add(categoria_gastronomia)
-    
+
     if not any(c.nombre == 'Ofertas' for c in categorias):
         categoria_ofertas = Category(nombre='Ofertas')
         db.session.add(categoria_ofertas)
 
     db.session.commit()  # Confirmar los cambios en la base de datos
-
 
 # Ruta para obtener todas las categorías
 @app.route('/categorias', methods=['GET'])

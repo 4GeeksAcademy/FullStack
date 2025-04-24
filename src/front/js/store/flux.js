@@ -128,9 +128,10 @@ const getState = ({ getStore, getActions, setStore }) => {
       },
       cargarServiciosViajes: async () => {
         try {
-          const resp = await fetch("https://animated-funicular-pvwjwpvwjq527v5j-3001.app.github.dev/viajes"); // Ajustá esta URL a tu ruta real
+          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/viajes"); 
           if (!resp.ok) throw new Error("Error al obtener servicios de viajes");
           const data = await resp.json();
+          console.log("Servicios de viajes recibidos:", data.viajes); // Verifica los datos que llegan
           setStore({ serviciosViajes: data.viajes });
           console.log("estos son los viajes", data.viajes)
         } catch (error) {

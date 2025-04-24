@@ -6,28 +6,34 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
     image = "https://via.placeholder.com/300x200?text=Sin+imagen",
     rating = 0,
     reviews = 0,
-    discountPrice = 0,
-    originalPrice = 1,
+    discountPrice = 0, // precio con descuento
+    price = 0,         // precio original
     buyers = 0,
   } = offer;
 
-  const discount = Math.round((1 - discountPrice / originalPrice) * 100);
+  // 🔍 Debug logs
+  console.log("Datos recibidos en offer:", offer);
+  console.log("discountPrice crudo:", discountPrice, "price crudo:", price);
 
+  // Aseguramos que sean números
+  const safeDiscountPrice = Number(discountPrice) || 0;
+  const safePrice = Number(price) || 1;
+
+  // Calculamos el descuento de forma segura
+  const discount = Math.max(0, Math.round((1 - safeDiscountPrice / safePrice) * 100));
+
+  // Render de estrellas
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, i) => (
       <i
         key={i}
-        className={`bi ${
-          i < rating ? "bi-star-fill text-warning" : "bi-star text-secondary"
-        } me-1`}
+        className={`bi ${i < rating ? "bi-star-fill text-warning" : "bi-star text-secondary"} me-1`}
       ></i>
     ));
 
   return (
     <div
-      className={`card h-100 shadow-sm border-0 rounded-4 overflow-hidden ${
-        compact ? "p-2" : ""
-      }`}
+      className={`card h-100 shadow-sm border-0 rounded-4 overflow-hidden ${compact ? "p-2" : ""}`}
       onClick={() => onViewService(offer)}
       style={{ cursor: "pointer" }}
     >
@@ -38,17 +44,14 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
           alt={title}
           style={{ height: compact ? "130px" : "200px", objectFit: "cover" }}
         />
+
         <span className="position-absolute top-0 end-0 bg-danger text-white small px-2 py-1 m-2 rounded">
           {discount}% OFF
         </span>
       </div>
 
       <div className={compact ? "p-2" : "p-3"}>
-        <h5
-          className={`fw-bold mb-2 ${
-            compact ? "fs-6" : "fs-5"
-          } text-truncate card-title-hover`}
-        >
+        <h5 className={`fw-bold mb-2 ${compact ? "fs-6" : "fs-5"} text-truncate card-title-hover`}>
           {title}
         </h5>
 
@@ -59,14 +62,12 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
 
         <div className="d-flex flex-column">
           <div className="d-flex justify-content-start align-items-center mb-1">
-            <span
-              className={`fw-bold text-danger ${compact ? "fs-6" : "fs-5"}`}
-            >
-              ${discountPrice}
+            <span className={`fw-bold text-danger ${compact ? "fs-6" : "fs-5"}`}>
+              ${safeDiscountPrice}
             </span>
             {!compact && (
               <small className="text-muted text-decoration-line-through ms-2">
-                ${originalPrice}
+                ${safePrice}
               </small>
             )}
           </div>

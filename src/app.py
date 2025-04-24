@@ -12,7 +12,7 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db, Payment
@@ -178,10 +178,6 @@ def editar_usuario():
 
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
 
-
-from flask import request, jsonify
-from api.models import db, Newsletter  # Asegurate que esté bien importado
-
 @app.route('/newsletter', methods=['POST'])
 def agregar_a_newsletter():
     data = request.get_json()
@@ -249,7 +245,12 @@ def crear_categorias():
         categoria_gastronomia = Category(nombre='Gastronomia')
         db.session.add(categoria_gastronomia)
     
+    if not any(c.nombre == 'Ofertas' for c in categorias):
+        categoria_ofertas = Category(nombre='Ofertas')
+        db.session.add(categoria_ofertas)
+
     db.session.commit()  # Confirmar los cambios en la base de datos
+
 
 # Ruta para obtener todas las categorías
 @app.route('/categorias', methods=['GET'])
@@ -268,14 +269,74 @@ def inicializar_db():
     # Aquí debes usar un ID de usuario válido y los IDs de las categorías correspondientes.
     user_id = 1  # Debes reemplazar con un ID de usuario válido
     viajes_category_id = 1  # Reemplaza con el ID válido para la categoría 'Viajes'
-    top_category_id = 3  # Reemplaza con el ID válido para la categoría 'Top'
-    belleza_category_id = 2  # Reemplaza con el ID válido para la categoría 'Belleza'
+    top_category_id = 3     # Reemplaza con el ID válido para la categoría 'Top'
+    belleza_category_id = 2 # Reemplaza con el ID válido para la categoría 'Belleza'
     gastronomia_category_id = 4  # Reemplaza con el ID válido para la categoría 'Gastronomía'
+    ofertas_category_id = 6  # ID asignado a la nueva categoría 'Ofertas'
 
-    # Inicializa los servicios en la base de datos
-    inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_category_id, gastronomia_category_id)
+    # Inicializa los servicios en la base de datos (ahora incluyendo Ofertas)
+    inicializar_servicios(
+        user_id,
+        viajes_category_id,
+        top_category_id,
+        belleza_category_id,
+        gastronomia_category_id,
+        ofertas_category_id
+    )
 
 # RUTAS
+@app.route('/ofertas', methods=['POST'])
+@jwt_required()
+def crear_oferta():
+    data = request.get_json()
+
+    nueva_oferta = Ofertas(
+        title=data.get('title'),
+        descripcion=data.get('descripcion'),
+        price=data.get('price'),
+        city=data.get('city'),
+        image=data.get('image'),
+        discountPrice=data.get('discountPrice'),
+        rating=data.get('rating'),
+        reviews=data.get('reviews'),
+        buyers=data.get('buyers'),
+        user_id=data.get('user_id'),
+        category_id=data.get('category_id')
+    )
+    db.session.add(nueva_oferta)
+    db.session.commit()
+
+    return jsonify(nueva_oferta.serialize()), 201
+
+@app.route('/ofertas', methods=['GET'])
+def obtener_ofertas():
+    ofertas = Ofertas.query.all()
+    ofertas_serializadas = [oferta.serialize() for oferta in ofertas]
+
+    return jsonify({"ofertas": ofertas_serializadas}), 200
+
+@app.route('/ofertas/<int:id>', methods=['GET'])
+def obtener_oferta(id):
+    oferta = Ofertas.query.get(id)
+
+    if oferta is None:
+        return {'message': 'Oferta no encontrada'}, 404
+
+    return jsonify(oferta.serialize()), 200
+
+@app.route('/ofertas/<int:id>', methods=['DELETE'])
+def eliminar_oferta(id):
+    oferta = Ofertas.query.get(id)
+
+    if not oferta:
+        return jsonify({"message": "Oferta no encontrada"}), 404
+
+    db.session.delete(oferta)
+    db.session.commit()
+
+    return jsonify({"message": f"Oferta con ID {id} eliminada correctamente"}), 200
+
+
 @app.route('/viajes', methods=['POST'])
 @jwt_required()
 def crear_viaje():
@@ -644,7 +705,7 @@ def add_producto_to_cart():
     return jsonify(cart_service.serialize()), 200
 
 # Obtengo los servicios reales del carrito
-@app.route('-<int:user_id>', methods=['GET'])
+@app.route('/usuario/carrito/servicios/<int:user_id>', methods=['GET'])
 @jwt_required()
 def obtener_servicios_carrito(user_id):
     user = User.query.filter_by(id=user_id).first()
@@ -664,8 +725,8 @@ def obtener_servicios_carrito(user_id):
                 servicio = Belleza.query.get(item.service_id)
             elif item.service_type == "gastronomia":
                 servicio = Gastronomia.query.get(item.service_id)
-            elif item.service_type == "top":
-                servicio = Top.query.get(item.service_id)
+            elif item.service_type == "ofertas":  # Asegúrate de que este tipo esté correctamente definido en tu base de datos.
+                servicio = Ofertas.query.get(item.service_id)  # Asegúrate de que 'Ofertas' esté bien definido.
             
             if servicio:
                 user_services.append({

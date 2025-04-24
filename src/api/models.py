@@ -23,6 +23,7 @@ class User(db.Model):
     top_list = db.relationship('Top', back_populates='user')
     belleza_list = db.relationship('Belleza', back_populates='user')
     gastronomia_list = db.relationship('Gastronomia', back_populates='user')
+    ofertas_list = db.relationship('Ofertas', back_populates='user', lazy='dynamic')
 
     # Otras relaciones
     payments = db.relationship('Payment', lazy='dynamic', cascade='all, delete-orphan')
@@ -95,6 +96,42 @@ class Reservation(db.Model):
             "user_id": self.user_id,
             "service_type": self.service_type,
             "service_id": self.service_id
+        }
+class Ofertas(db.Model):
+    __tablename__ = 'ofertas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255))
+    descripcion = db.Column(db.String(500))
+    image = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    category = db.Column(db.String(100))
+    discountPrice = db.Column(db.Float)
+    price = db.Column(db.Float)
+    rating = db.Column(db.Float)
+    reviews = db.Column(db.Integer)
+    buyers = db.Column(db.Integer)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+
+    user = db.relationship('User', back_populates='ofertas_list')
+    category = db.relationship('Category', back_populates='ofertas_category')
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "descripcion": self.descripcion,
+            "image": self.image,
+            "city": self.city,
+            "discountPrice": self.discountPrice,
+            "price": self.price,
+            "rating": self.rating,
+            "reviews": self.reviews,
+            "buyers": self.buyers,
+            "user_id": self.user_id,
+            "category_id": self.category_id
         }
 
 class Viajes(db.Model):
@@ -260,6 +297,9 @@ class Category(db.Model):
     top_category = db.relationship('Top', back_populates='category', lazy='dynamic')
     belleza_category = db.relationship('Belleza', back_populates='category', lazy='dynamic')
     gastronomia_category = db.relationship('Gastronomia', back_populates='category', lazy='dynamic')
+    
+    # Relación con la nueva tabla Ofertas
+    ofertas_category = db.relationship('Ofertas', back_populates='category', lazy='dynamic')
 
     def serialize(self):
         return {

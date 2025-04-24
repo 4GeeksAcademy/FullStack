@@ -1,5 +1,5 @@
 # services.py
-from api.models import db, Viajes, Top, Belleza, Gastronomia, User
+from api.models import db, Viajes, Top, Belleza, Gastronomia, User, Ofertas
 
 def create_admin_user():
     user = User.query.filter_by(correo='admin@outlook.com').first()
@@ -12,6 +12,64 @@ def create_admin_user():
         db.session.add(user)
         db.session.commit()
     
+def crear_servicios_ofertas(user_id, ofertas_category_id):
+    if not Ofertas.query.filter_by(category_id=ofertas_category_id).first():
+        ofertas = [
+            Ofertas(
+                title="Clase de yoga al amanecer en la playa",
+                descripcion="Sesión de 90 minutos con instructores certificados frente al mar.",
+                image="https://source.unsplash.com/random/800x600/?yoga,beach",
+                city="Tulum, México",
+                price=35,
+                discountPrice=60,
+                rating=4.9,
+                reviews=85,
+                buyers=160,
+                user_id=user_id,
+                category_id=ofertas_category_id
+            ),
+            Ofertas(
+                title="Experiencia de cata de cervezas artesanales",
+                descripcion="Degustación de 6 variedades con maridaje incluido.",
+                image="https://source.unsplash.com/random/800x600/?craftbeer,tasting",
+                city="Valparaíso, Chile",
+                price=22,
+                discountPrice=40,
+                rating=4.7,
+                reviews=70,
+                buyers=95,
+                user_id=user_id,
+                category_id=ofertas_category_id
+            ),
+            Ofertas(
+                title="Taller de cerámica con materiales incluidos",
+                descripcion="Creá tus propias piezas con ayuda de artistas locales.",
+                image="https://source.unsplash.com/random/800x600/?pottery,workshop",
+                city="Montevideo, Uruguay",
+                price=45,
+                discountPrice=80,
+                rating=4.8,
+                reviews=120,
+                buyers=145,
+                user_id=user_id,
+                category_id=ofertas_category_id
+            ),
+            Ofertas(
+                title="City tour nocturno en bicicleta eléctrica",
+                descripcion="Descubrí los secretos de la ciudad iluminada con guía bilingüe.",
+                image="https://source.unsplash.com/random/800x600/?biketour,citynight",
+                city="Lima, Perú",
+                price=30,
+                discountPrice=50,
+                rating=4.6,
+                reviews=60,
+                buyers=90,
+                user_id=user_id,
+                category_id=ofertas_category_id
+            ),
+        ]
+        db.session.bulk_save_objects(ofertas)
+        db.session.commit()
 
 # Función para crear los servicios de Viajes
 def crear_servicios_viajes(user_id, viajes_category_id):
@@ -463,10 +521,11 @@ def crear_servicios_gastronomia(user_id, gastronomia_category_id):
         db.session.commit()
 
 # Función para inicializar todos los servicios
-def inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_category_id, gastronomia_category_id):
+def inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_category_id, gastronomia_category_id, ofertas_category_id):
     create_admin_user()
     # Crear los servicios para cada categoría
     crear_servicios_viajes(user_id, viajes_category_id)
     crear_servicios_top(user_id, top_category_id)
     crear_servicios_belleza(user_id, belleza_category_id)
     crear_servicios_gastronomia(user_id, gastronomia_category_id)
+    crear_servicios_ofertas(user_id, ofertas_category_id)  

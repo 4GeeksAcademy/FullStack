@@ -116,7 +116,6 @@ class Ofertas(db.Model):
 
     user = db.relationship('User', back_populates='ofertas_list')
     category = db.relationship('Category', back_populates='ofertas_category')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
 
     def serialize(self):
         return {

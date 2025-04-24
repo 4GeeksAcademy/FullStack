@@ -126,6 +126,7 @@ def crear_usuario():
 
 # Ruta para obtener todos los usuarios
 @app.route('/usuarios', methods=['GET'])
+@jwt_required()
 def obtener_usuarios():
     usuarios = User.query.all()
     return jsonify([usuario.serialize() for usuario in usuarios]), 200

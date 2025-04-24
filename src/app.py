@@ -325,6 +325,7 @@ def obtener_oferta(id):
     return jsonify(oferta.serialize()), 200
 
 @app.route('/ofertas/<int:id>', methods=['DELETE'])
+@jwt_required()
 def eliminar_oferta(id):
     oferta = Ofertas.query.get(id)
 

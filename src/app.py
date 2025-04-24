@@ -92,42 +92,40 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # avoid cache memory
     return response
 
-# Ruta para crear usuarios
 @app.route('/registro', methods=['POST'])
 def crear_usuario():
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "No se recibieron datos JSON"}), 400
+
     correo = data.get('correo')
     password = data.get('password')
-    nombre = data.get('nombre')
-    role = data.get('role', 'cliente')  # por si no envían el role
+    role = data.get('role', 'cliente')
 
-    if not correo or not password or not nombre:
-        return jsonify({"error": "Correo, contraseña y nombre son obligatorios"}), 400
+    if not correo or not password:
+        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
 
-    # Buscar si ya existe un usuario con ese correo
+    # Validar si el correo ya existe
     usuario_existente = User.query.filter_by(correo=correo).first()
     if usuario_existente:
         return jsonify({"error": "El usuario ya existe"}), 409
 
-    # Crear nuevo usuario
+    # Encriptar contraseña
     pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     nuevo_usuario = User(
-        nombre=nombre,
-        password=pw_hash,  # Aquí deberías cifrar la contraseña idealmente
         correo=correo,
+        password=pw_hash,
         role=role,
         is_active=True
     )
     db.session.add(nuevo_usuario)
     db.session.commit()
 
-    return jsonify({"mensaje": f"Usuario '{nombre}' creado correctamente"}), 201
-    
+    return jsonify({"mensaje": "Usuario creado correctamente"}), 201
 
 # Ruta para obtener todos los usuarios
 @app.route('/usuarios', methods=['GET'])
-@jwt_required()
 def obtener_usuarios():
     usuarios = User.query.all()
     return jsonify([usuario.serialize() for usuario in usuarios]), 200
@@ -276,81 +274,61 @@ def inicializar_db():
     # Inicializa los servicios en la base de datos
     inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_category_id, gastronomia_category_id)
 
-
-# Ruta para crear un servicio
+# RUTAS
 @app.route('/viajes', methods=['POST'])
 @jwt_required()
 def crear_viaje():
     data = request.get_json()
 
-    # Puedes imprimir para debug
-    print("Datos recibidos:", data)
-
     nuevo_viaje = Viajes(
-        nombre=data.get('nombre'),
+        title=data.get('title'),  # Nombre cambiado por title
         descripcion=data.get('descripcion'),
-        precio=data.get('precio'),
-        ubicacion=data.get('ubicacion'),
-        horarios=data.get('horarios'),
+        price=data.get('price'),  # Precio cambiado por Price
+        city=data.get('city'),  # Ubicación cambiada por city
+        image=data.get('image'),
+        discountPrice=data.get('discountPrice'),
+        rating=data.get('rating'),
+        reviews=data.get('reviews'),
+        buyers=data.get('buyers'),
         user_id=data.get('user_id'),
         category_id=data.get('category_id')
     )
-
     db.session.add(nuevo_viaje)
     db.session.commit()
 
     return jsonify(nuevo_viaje.serialize()), 201
 
-# Ruta para obtener todos los viajes
 @app.route('/viajes', methods=['GET'])
 def obtener_viajes():
     viajes = Viajes.query.all()
-    viajes_serializados = [{
-        "id": viaje.id,
-        "nombre": viaje.nombre,
-        "precio": viaje.precio,
-        "descripcion": viaje.descripcion
-    } for viaje in viajes]
+    viajes_serializados = [viaje.serialize() for viaje in viajes]
 
     return jsonify({"viajes": viajes_serializados}), 200
 
 @app.route('/viajes/<int:id>', methods=['GET'])
 def obtener_viaje(id):
-    # Buscar el viaje en la base de datos por su id
     viaje = Viajes.query.get(id)
-    
-    if viaje is None:
-        # Si no se encuentra el viaje, devolver un error 404
-        return {'message': 'Viaje no encontrado'}, 404
-    
-    # Si se encuentra el viaje, devolver los datos en formato JSON
-    return {
-        'id': viaje.id,
-        'nombre': viaje.nombre,
-        'descripcion': viaje.descripcion,
-        'precio': viaje.precio,
-        'ubicacion': viaje.ubicacion,
-        'horarios': viaje.horarios,
-        'user_id': viaje.user_id,
-        'category_id': viaje.category_id
-    }, 200
 
-# RUTA PARA CREAR SERVICIO EN TOP
+    if viaje is None:
+        return {'message': 'Viaje no encontrado'}, 404
+
+    return jsonify(viaje.serialize()), 200
 
 @app.route('/top', methods=['POST'])
 @jwt_required()
 def crear_top():
     data = request.get_json()
 
-    # Puedes imprimir para debug
-    print("Datos recibidos para Top:", data)
-
     nuevo_top = Top(
-        nombre=data.get('nombre'),
+        title=data.get('title'),  # Nombre cambiado por title
         descripcion=data.get('descripcion'),
-        precio=data.get('precio'),
-        ubicacion=data.get('ubicacion'),
-        horarios=data.get('horarios'),
+        price=data.get('price'),  # Precio cambiado por Price
+        city=data.get('city'),  # Ubicación cambiada por city
+        image=data.get('image'),
+        discountPrice=data.get('discountPrice'),
+        rating=data.get('rating'),
+        reviews=data.get('reviews'),
+        buyers=data.get('buyers'),
         user_id=data.get('user_id'),
         category_id=data.get('category_id')
     )
@@ -360,55 +338,37 @@ def crear_top():
 
     return jsonify(nuevo_top.serialize()), 201
 
-# RUTA PARA OBTENER TOP (TODOS)
-
 @app.route('/top', methods=['GET'])
 def obtener_top():
     top_items = Top.query.all()
-    top_serializados = [{
-        "id": top.id,
-        "nombre": top.nombre,
-        "precio": top.precio,
-        "descripcion": top.descripcion
-    } for top in top_items]
+    top_serializados = [top.serialize() for top in top_items]
 
     return jsonify({"top": top_serializados}), 200
 
-# RUTA PARA OBTENER TOP POR ID
 @app.route('/top/<int:id>', methods=['GET'])
 def obtener_top_por_id(id):
     top = Top.query.get(id)
-    
+
     if top is None:
         return {'message': 'Top no encontrado'}, 404
-    
-    return {
-        'id': top.id,
-        'nombre': top.nombre,
-        'descripcion': top.descripcion,
-        'precio': top.precio,
-        'ubicacion': top.ubicacion,
-        'horarios': top.horarios,
-        'user_id': top.user_id,
-        'category_id': top.category_id
-    }, 200
 
-# RUTA PARA CREAR GASTRONOMIA
+    return jsonify(top.serialize()), 200
 
 @app.route('/gastronomia', methods=['POST'])
 @jwt_required()
 def crear_gastronomia():
     data = request.get_json()
 
-    # Puedes imprimir para debug
-    print("Datos recibidos para Gastronomía:", data)
-
     nueva_gastronomia = Gastronomia(
-        nombre=data.get('nombre'),
+        title=data.get('title'),  # Nombre cambiado por title
         descripcion=data.get('descripcion'),
-        precio=data.get('precio'),
-        ubicacion=data.get('ubicacion'),
-        horarios=data.get('horarios'),
+        price=data.get('price'),  # Precio cambiado por Price
+        city=data.get('city'),  # Ubicación cambiada por city
+        image=data.get('image'),
+        discountPrice=data.get('discountPrice'),
+        rating=data.get('rating'),
+        reviews=data.get('reviews'),
+        buyers=data.get('buyers'),
         user_id=data.get('user_id'),
         category_id=data.get('category_id')
     )
@@ -418,55 +378,37 @@ def crear_gastronomia():
 
     return jsonify(nueva_gastronomia.serialize()), 201
 
-# RUTA PARA OBTENER GASTRONOMIA (TODOS)
-
 @app.route('/gastronomia', methods=['GET'])
 def obtener_gastronomia():
     gastronomia_items = Gastronomia.query.all()
-    gastronomia_serializados = [{
-        "id": gastronomia.id,
-        "nombre": gastronomia.nombre,
-        "precio": gastronomia.precio,
-        "descripcion": gastronomia.descripcion
-    } for gastronomia in gastronomia_items]
+    gastronomia_serializados = [gastronomia.serialize() for gastronomia in gastronomia_items]
 
     return jsonify({"gastronomia": gastronomia_serializados}), 200
-
-# RUTA PARA OBTENER GASTRONOMIA POR ID
 
 @app.route('/gastronomia/<int:id>', methods=['GET'])
 def obtener_gastronomia_por_id(id):
     gastronomia = Gastronomia.query.get(id)
-    
+
     if gastronomia is None:
         return {'message': 'Gastronomía no encontrada'}, 404
-    
-    return {
-        'id': gastronomia.id,
-        'nombre': gastronomia.nombre,
-        'descripcion': gastronomia.descripcion,
-        'precio': gastronomia.precio,
-        'ubicacion': gastronomia.ubicacion,
-        'horarios': gastronomia.horarios,
-        'user_id': gastronomia.user_id,
-        'category_id': gastronomia.category_id
-    }, 200
 
-# RUTA PARA CREAR BELLEZA
+    return jsonify(gastronomia.serialize()), 200
+
 @app.route('/belleza', methods=['POST'])
 @jwt_required()
 def crear_belleza():
     data = request.get_json()
 
-    # Puedes imprimir para debug
-    print("Datos recibidos para Belleza:", data)
-
     nueva_belleza = Belleza(
-        nombre=data.get('nombre'),
+        title=data.get('title'),  # Nombre cambiado por title
         descripcion=data.get('descripcion'),
-        precio=data.get('precio'),
-        ubicacion=data.get('ubicacion'),
-        horarios=data.get('horarios'),
+        price=data.get('price'),  # Precio cambiado por Price
+        city=data.get('city'),  # Ubicación cambiada por city
+        image=data.get('image'),
+        discountPrice=data.get('discountPrice'),
+        rating=data.get('rating'),
+        reviews=data.get('reviews'),
+        buyers=data.get('buyers'),
         user_id=data.get('user_id'),
         category_id=data.get('category_id')
     )
@@ -476,37 +418,21 @@ def crear_belleza():
 
     return jsonify(nueva_belleza.serialize()), 201
 
-# RUTA PARA OBTENER BELLEZA (TODOS)
 @app.route('/belleza', methods=['GET'])
 def obtener_belleza():
     belleza_items = Belleza.query.all()
-    belleza_serializados = [{
-        "id": belleza.id,
-        "nombre": belleza.nombre,
-        "precio": belleza.precio,
-        "descripcion": belleza.descripcion
-    } for belleza in belleza_items]
+    belleza_serializados = [belleza.serialize() for belleza in belleza_items]
 
     return jsonify({"belleza": belleza_serializados}), 200
 
-# RUTA PARA OBTENER BELLEZA POR ID
 @app.route('/belleza/<int:id>', methods=['GET'])
 def obtener_belleza_por_id(id):
     belleza = Belleza.query.get(id)
-    
+
     if belleza is None:
         return {'message': 'Belleza no encontrada'}, 404
-    
-    return {
-        'id': belleza.id,
-        'nombre': belleza.nombre,
-        'descripcion': belleza.descripcion,
-        'precio': belleza.precio,
-        'ubicacion': belleza.ubicacion,
-        'horarios': belleza.horarios,
-        'user_id': belleza.user_id,
-        'category_id': belleza.category_id
-    }, 200
+
+    return jsonify(belleza.serialize()), 200
 
 # RUTA PARA CREAR UNA COMPRA
 
@@ -717,7 +643,7 @@ def add_producto_to_cart():
     return jsonify(cart_service.serialize()), 200
 
 # Obtengo los servicios reales del carrito
-@app.route('/usuario/carrito/servicios/<int:user_id>', methods=['GET'])
+@app.route('-<int:user_id>', methods=['GET'])
 @jwt_required()
 def obtener_servicios_carrito(user_id):
     user = User.query.filter_by(id=user_id).first()

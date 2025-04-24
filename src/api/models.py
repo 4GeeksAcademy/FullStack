@@ -7,7 +7,6 @@ class User(db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(120), nullable=False)
     correo = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
     telefono = db.Column(db.String(20))
@@ -19,9 +18,15 @@ class User(db.Model):
     role = db.Column(db.String(50), default='cliente')
     is_active = db.Column(db.Boolean(), default=True)
 
+    # Relación con los servicios
+    viajes_list = db.relationship('Viajes', back_populates='user')
+    top_list = db.relationship('Top', back_populates='user')
+    belleza_list = db.relationship('Belleza', back_populates='user')
+    gastronomia_list = db.relationship('Gastronomia', back_populates='user')
+
+    # Otras relaciones
     payments = db.relationship('Payment', lazy='dynamic', cascade='all, delete-orphan')
     reservations = db.relationship('Reservation', lazy='dynamic', cascade='all, delete-orphan')
-
     cart = db.relationship('Cart', back_populates='user', uselist=False)
 
     def __repr__(self):
@@ -31,11 +36,11 @@ class User(db.Model):
         return {
             "id": self.id,
             "correo": self.correo,
-            "nombre": self.nombre,
             "role": self.role,
             "is_active": self.is_active
         }
-    
+
+
 class Newsletter(db.Model):
     __tablename__ = 'newsletter'
 
@@ -96,98 +101,149 @@ class Viajes(db.Model):
     __tablename__ = 'viajes'
 
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(240), nullable=False)
-    descripcion = db.Column(db.Text, nullable=False)
-    precio = db.Column(db.Integer, nullable=False)
-    ubicacion = db.Column(db.String(120), nullable=False)
-    horarios = db.Column(db.String(255), nullable=False)
-
+    title = db.Column(db.String(255))
+    descripcion = db.Column(db.String(500))
+    image = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    category = db.Column(db.String(100))
+    discountPrice = db.Column(db.Float)
+    price = db.Column(db.Float)
+    rating = db.Column(db.Float)
+    reviews = db.Column(db.Integer)
+    buyers = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+
+    user = db.relationship('User', back_populates='viajes_list')
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+    category = db.relationship('Category', back_populates='viajes_category')
 
     def serialize(self):
         return {
             "id": self.id,
-            "nombre": self.nombre,
+            "title": self.title,
             "descripcion": self.descripcion,
-            "precio": self.precio,
-            "ubicacion": self.ubicacion,
-            "horarios": self.horarios,
+            "image": self.image,
+            "city": self.city,
+            "discountPrice": self.discountPrice,
+            "price": self.price,
+            "rating": self.rating,
+            "reviews": self.reviews,
+            "buyers": self.buyers,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
+
 
 class Top(db.Model):
     __tablename__ = 'top'
 
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(240), nullable=False)
-    descripcion = db.Column(db.Text, nullable=False)
-    precio = db.Column(db.Integer, nullable=False)
-    ubicacion = db.Column(db.String(120), nullable=False)
-    horarios = db.Column(db.String(255), nullable=False)
-
+    title = db.Column(db.String(255))
+    descripcion = db.Column(db.String(500))
+    image = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    category = db.Column(db.String(100))
+    discountPrice = db.Column(db.Float)
+    price = db.Column(db.Float)
+    rating = db.Column(db.Float)
+    reviews = db.Column(db.Integer)
+    buyers = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+
+    user = db.relationship('User', back_populates='top_list')
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+    category = db.relationship('Category', back_populates='top_category')
 
     def serialize(self):
         return {
             "id": self.id,
-            "nombre": self.nombre,
+            "title": self.title,
             "descripcion": self.descripcion,
-            "precio": self.precio,
-            "ubicacion": self.ubicacion,
-            "horarios": self.horarios,
+            "image": self.image,
+            "city": self.city,
+            "discountPrice": self.discountPrice,
+            "price": self.price,
+            "rating": self.rating,
+            "reviews": self.reviews,
+            "buyers": self.buyers,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
+
 
 class Belleza(db.Model):
     __tablename__ = 'belleza'
 
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(240), nullable=False)
-    descripcion = db.Column(db.Text, nullable=False)
-    precio = db.Column(db.Integer, nullable=False)
-    ubicacion = db.Column(db.String(120), nullable=False)
-    horarios = db.Column(db.String(255), nullable=False)
-
+    title = db.Column(db.String(255))
+    descripcion = db.Column(db.String(500))
+    image = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    category = db.Column(db.String(100))
+    discountPrice = db.Column(db.Float)
+    price = db.Column(db.Float)
+    rating = db.Column(db.Float)
+    reviews = db.Column(db.Integer)
+    buyers = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+
+    user = db.relationship('User', back_populates='belleza_list')
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+    category = db.relationship('Category', back_populates='belleza_category')
 
     def serialize(self):
         return {
             "id": self.id,
-            "nombre": self.nombre,
+            "title": self.title,
             "descripcion": self.descripcion,
-            "precio": self.precio,
-            "ubicacion": self.ubicacion,
-            "horarios": self.horarios,
+            "image": self.image,
+            "city": self.city,
+            "discountPrice": self.discountPrice,
+            "price": self.price,
+            "rating": self.rating,
+            "reviews": self.reviews,
+            "buyers": self.buyers,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
+
 
 class Gastronomia(db.Model):
     __tablename__ = 'gastronomia'
 
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(240), nullable=False)
-    descripcion = db.Column(db.Text, nullable=False)
-    precio = db.Column(db.Integer, nullable=False)
-    ubicacion = db.Column(db.String(120), nullable=False)
-    horarios = db.Column(db.String(255), nullable=False)
-
+    title = db.Column(db.String(255))
+    descripcion = db.Column(db.String(500))
+    image = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    category = db.Column(db.String(100))
+    discountPrice = db.Column(db.Float)
+    price = db.Column(db.Float)
+    rating = db.Column(db.Float)
+    reviews = db.Column(db.Integer)
+    buyers = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+
+    user = db.relationship('User', back_populates='gastronomia_list')
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+    category = db.relationship('Category', back_populates='gastronomia_category')
 
     def serialize(self):
         return {
             "id": self.id,
-            "nombre": self.nombre,
+            "title": self.title,
             "descripcion": self.descripcion,
-            "precio": self.precio,
-            "ubicacion": self.ubicacion,
-            "horarios": self.horarios,
+            "image": self.image,
+            "city": self.city,
+            "discountPrice": self.discountPrice,
+            "price": self.price,
+            "rating": self.rating,
+            "reviews": self.reviews,
+            "buyers": self.buyers,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
@@ -199,16 +255,18 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False, unique=True)
     
-    viajes = db.relationship('Viajes', backref='category', lazy='dynamic')
-    top = db.relationship('Top', backref='category', lazy='dynamic')
-    belleza = db.relationship('Belleza', backref='category', lazy='dynamic')
-    gastronomia = db.relationship('Gastronomia', backref='category', lazy='dynamic')
+    # Relaciones con las otras tablas
+    viajes_category = db.relationship('Viajes', back_populates='category', lazy='dynamic')
+    top_category = db.relationship('Top', back_populates='category', lazy='dynamic')
+    belleza_category = db.relationship('Belleza', back_populates='category', lazy='dynamic')
+    gastronomia_category = db.relationship('Gastronomia', back_populates='category', lazy='dynamic')
 
     def serialize(self):
         return {
             "id": self.id,
             "nombre": self.nombre
         }
+
 
 class Cart(db.Model):
     __tablename__ = 'carts'

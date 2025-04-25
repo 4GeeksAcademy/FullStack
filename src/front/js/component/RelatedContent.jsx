@@ -2,15 +2,23 @@ import React, { useContext, useEffect, useRef } from "react";
 import { Context } from "../store/appContext";
 import CategoryCard from "./CategoryCard.jsx";
 
-const RelatedContent = ({ onNavigate = () => {} }) => {
+const RelatedContent = ({ onNavigate = () => { } }) => {
   const { store, actions } = useContext(Context);
 
   useEffect(() => {
     if (store.serviciosViajes.length === 0) {
       actions.cargarServiciosViajes();
     }
+    if (store.serviciosGastronomia.length === 0) {
+      actions.cargarServiciosGastronomia();
+    }
+    if (store.serviciosBelleza.length === 0) {
+      actions.cargarServiciosBelleza();
+    }
     console.log("servicios viajes desde componente:", store.serviciosViajes);
-  }, [store.serviciosViajes, actions]);
+    console.log("servicios gastronomia desde componente:", store.serviciosGastronomia);
+    console.log("servicios belleza desde componente:", store.serviciosBelleza);
+  }, [store.serviciosViajes, store.serviciosGastronomia, store.serviciosBelleza, actions]);
 
   const defaultOffer =
     store.producto && store.producto.length > 0 ? store.producto[0] : null;
@@ -19,20 +27,20 @@ const RelatedContent = ({ onNavigate = () => {} }) => {
     {
       id: "beauty",
       name: "Belleza",
-      deals: store.producto.filter((d) => d.category === "beauty").length > 0
-        ? store.producto.filter((d) => d.category === "beauty")
+      deals: store.serviciosBelleza && store.serviciosBelleza.length > 0
+        ? store.serviciosBelleza
         : defaultOffer
-        ? Array(4).fill(defaultOffer)
-        : [],
+          ? Array(4).fill(defaultOffer)
+          : [],
     },
     {
       id: "food",
       name: "Gastronomía",
-      deals: store.producto.filter((d) => d.category === "food").length > 0
-        ? store.producto.filter((d) => d.category === "food")
+      deals: store.serviciosGastronomia && store.serviciosGastronomia.length > 0
+        ? store.serviciosGastronomia
         : defaultOffer
-        ? Array(4).fill({ ...defaultOffer, category: "food" })
-        : [],
+          ? Array(4).fill({ ...defaultOffer, category: "food" })
+          : [],
     },
     {
       id: "travel",
@@ -40,8 +48,8 @@ const RelatedContent = ({ onNavigate = () => {} }) => {
       deals: store.serviciosViajes && store.serviciosViajes.length > 0
         ? store.serviciosViajes
         : defaultOffer
-        ? Array(4).fill({ ...defaultOffer, category: "travel" })
-        : [],
+          ? Array(4).fill({ ...defaultOffer, category: "travel" })
+          : [],
     },
   ];
 
@@ -106,8 +114,8 @@ const RelatedContent = ({ onNavigate = () => {} }) => {
                         (deal.precio
                           ? Math.round(deal.precio * 1.2)
                           : deal.discountPrice
-                          ? Math.round(deal.discountPrice * 1.2)
-                          : 0),
+                            ? Math.round(deal.discountPrice * 1.2)
+                            : 0),
                       buyers: deal.buyers || 5,
                     };
 

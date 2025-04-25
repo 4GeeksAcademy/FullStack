@@ -10,7 +10,7 @@ const Newsletter = () => {
 
     // Hacer la solicitud POST a la API de Flask
     try {
-      const response = await fetch("https://animated-funicular-pvwjwpvwjq527v5j-3001.app.github.dev/newsletter", {
+      const response = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/newsletter", {
         method: "POST", // Método de la solicitud
         headers: {
           "Content-Type": "application/json", // Especificamos que los datos están en formato JSON

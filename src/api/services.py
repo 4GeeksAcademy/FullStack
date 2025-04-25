@@ -78,7 +78,7 @@ def crear_servicios_viajes(user_id, viajes_category_id):
             Viajes(
                 title="Aventura en la Patagonia",
                 descripcion="Explora los glaciares y montañas del sur de Argentina.",
-                image="https://source.unsplash.com/random/800x600/?patagonia",
+                image="https://images.unsplash.com/photo-1526397751294-331021109fbd",
                 city="El Calafate",
                 price=800,
                 discountPrice=1050,

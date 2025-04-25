@@ -117,6 +117,7 @@ class Ofertas(db.Model):
     user = db.relationship('User', back_populates='ofertas_list')
     category = db.relationship('Category', back_populates='ofertas_category')
 
+
     def serialize(self):
         return {
             "id": self.id,

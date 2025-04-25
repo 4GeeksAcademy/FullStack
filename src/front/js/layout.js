@@ -10,7 +10,8 @@ import injectContext from "./store/appContext";
 
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
-
+import CartPage from "./component/CartPage.jsx"; 
+import LoginPage from "./component/LoginPage.jsx"; 
 
 //create your first component
 const Layout = () => {
@@ -28,13 +29,18 @@ const Layout = () => {
             <Route path="/" element={<Home />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="/single/:theid" element={<Single />} />
-            {/* <Route path="/top" element={<TopPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            {/* 
+            Uncomment these when you have these components ready
+            <Route path="/top" element={<TopPage />} />
             <Route path="/food" element={<FoodPage />} />
             <Route path="/beauty" element={<BeautyPage />} />
             <Route path="/activities" element={<ActivitiesPage />} />
-            <Route path="/travel" element={<TravelPage />} /> */}
-            {/* <Route path="/ofertas" element={<OfertasPage />} /> */}
-            <Route path="*" element={<h1>Not found!</h1>} />
+            <Route path="/travel" element={<TravelPage />} />
+            <Route path="/ofertas" element={<OfertasPage />} /> 
+            */}
+            <Route path="*" element={<h1 className="text-center py-5">Not found!</h1>} />
           </Routes>
           <Footer />
         </ScrollToTop>

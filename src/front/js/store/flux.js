@@ -38,6 +38,8 @@ const getState = ({ getStore, getActions, setStore }) => {
         },
       ],
       serviciosViajes: [],
+      serviciosGastronomia: [],
+      serviciosBelleza: [],
       cartItems: [], // Aquí se almacenarán los productos en el carrito
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
@@ -138,6 +140,30 @@ const getState = ({ getStore, getActions, setStore }) => {
           console.error("Error cargando viajes:", error);
         }
       },
+      cargarServiciosGastronomia: async() => {
+        try {
+          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/gastronomia");
+          if(!resp.ok) throw new Error("Error al obtener servicios gastronomía")
+          const data = await resp.json()
+          console.log("servicios recibidos de gastronomía: ", data.gastronomia) // verificador
+          setStore({ serviciosGastronomia: data.gastronomia});
+          console.log("Esta es la gastonomia", data.gastronomia)
+      } catch (e){
+          console.error("error cargando gastronimia", e);
+      }
+      },
+      cargarServiciosBelleza: async()=>{
+        try{
+          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/belleza");
+          if(!resp.ok) throw new Error("Error al obtener servicios belleza")
+          const data = await resp.json()
+          console.log("servicios recibidos de belleza: ", data.belleza) // verificador
+          setStore({ serviciosBelleza: data.belleza});
+          console.log("Esta es la belleza data", data.belleza)
+        }catch(e){
+          console.error("error al cargar belleza", e);
+        }
+      }
     },
   };
 };

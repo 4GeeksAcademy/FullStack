@@ -343,3 +343,39 @@ class CartService(db.Model):
             "service_id": self.service_id,
             "quantity": self.quantity
         }
+
+class Politica(db.Model):
+    __tablename__ = 'politicas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(150), nullable=False, unique=True)
+    contenido = db.Column(db.Text, nullable=False)  # Ideal para textos largos
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "titulo": self.titulo,
+            "contenido": self.contenido
+        }
+
+class Factura(db.Model):
+    __tablename__ = 'facturas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    servicio = db.Column(db.String(255), nullable=False)
+    monto = db.Column(db.Float, nullable=False)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+    metodo_pago = db.Column(db.String(50), nullable=False)
+
+    user = db.relationship('User', backref='facturas')
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "servicio": self.servicio,
+            "monto": self.monto,
+            "fecha": self.fecha.isoformat(),
+            "metodo_pago": self.metodo_pago
+        }

@@ -21,11 +21,12 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_requir
 from flask_bcrypt import Bcrypt
 from api.payment import payment_bp
 from flask_cors import CORS 
+from api.politicas import crear_politicas, Politica
+from api.factura import crear_factura
+from flask_cors import CORS
 
-# from models import Person
+
 load_dotenv()
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -37,7 +38,7 @@ jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 
 app.url_map.strict_slashes = False
-CORS(app) 
+CORS(app, origins=["http://localhost:3000"]) 
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
@@ -250,6 +251,28 @@ def crear_categorias():
         db.session.add(categoria_ofertas)
 
     db.session.commit()  # Confirmar los cambios en la base de datos
+
+@app.before_request
+def inicializar_politicas():
+    crear_politicas()
+
+# Obtener todas las políticas
+@app.route('/politicas', methods=['GET'])
+def obtener_politicas():
+    politicas = Politica.query.all()
+    politicas_serializadas = [p.serialize() for p in politicas]
+    return jsonify({"politicas": politicas_serializadas}), 200
+
+
+# Obtener una política por ID
+@app.route('/politicas/<int:id>', methods=['GET'])
+def obtener_politica_por_id(id):
+    politica = Politica.query.get(id)
+
+    if not politica:
+        return jsonify({"message": "Política no encontrada"}), 404
+
+    return jsonify(politica.serialize()), 200
 
 
 # Ruta para obtener todas las categorías
@@ -499,30 +522,7 @@ def obtener_belleza_por_id(id):
 
 # RUTA PARA CREAR UNA COMPRA
 
-@app.route('/create-checkout-session', methods=['POST'])
-@jwt_required()
-def create_checkout_session():
-    try:
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'unit_amount': 2000,  # 20.00 USD
-                    'product_data': {
-                        'name': 'Ejemplo de Servicio',
-                        'description': 'Este es un servicio de prueba conectado a Stripe.',
-                    },
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            success_url='https://bug-free-dollop-jjqvwgpp59xg2q47w-3001.app.github.dev/success',
-            cancel_url='https://bug-free-dollop-jjqvwgpp59xg2q47w-3001.app.github.dev/cancel',
-        )
-        return jsonify({'id': session.id})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+
     
 # Ruta para manejar el webhook de Stripe
 

@@ -151,7 +151,6 @@ class Viajes(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='viajes_list')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship('Category', back_populates='viajes_category')
 
     def serialize(self):
@@ -189,7 +188,6 @@ class Top(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='top_list')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship('Category', back_populates='top_category')
 
     def serialize(self):
@@ -227,7 +225,6 @@ class Belleza(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='belleza_list')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship('Category', back_populates='belleza_category')
 
     def serialize(self):
@@ -265,7 +262,6 @@ class Gastronomia(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='gastronomia_list')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship('Category', back_populates='gastronomia_category')
 
     def serialize(self):

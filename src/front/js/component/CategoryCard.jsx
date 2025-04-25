@@ -3,24 +3,61 @@ import React from "react";
 const CategoryCard = ({ offer, onViewService, compact = false }) => {
   const {
     title = "Sin título",
-    image = "https://via.placeholder.com/300x200?text=Sin+imagen",
+    image,
     rating = 0,
     reviews = 0,
-    discountPrice = 0, // precio con descuento
-    price = 0,         // precio original
+    discountPrice = 0,
+    price = 0,
     buyers = 0,
   } = offer;
 
-  // 🔍 Debug logs
-  console.log("Datos recibidos en offer:", offer);
-  console.log("discountPrice crudo:", discountPrice, "price crudo:", price);
+  // Imagen por defecto
+  const defaultImage = "https://images.unsplash.com/photo-1526397751294-331021109fbd";
+
+  // Debug de los valores recibidos
+  console.log("📦 Datos completos recibidos:", offer);
+  console.log("💰 Price original:", price, typeof price);
+  console.log("🏷️ DiscountPrice:", discountPrice, typeof discountPrice);
 
   // Aseguramos que sean números
   const safeDiscountPrice = Number(discountPrice) || 0;
-  const safePrice = Number(price) || 1;
+  
+  // Si no tenemos precio original, generamos uno basado en un descuento aleatorio
+  // usando un valor basado en el título o ID para que sea consistente
+  const generateVariedDiscount = () => {
+    const titleSum = title.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const lastDigit = safeDiscountPrice % 10;
+    return 10 + (titleSum + lastDigit) % 36; // Entre 10% y 45%
+  };
+  
+  const randomDiscount = generateVariedDiscount();
+  const calculatedMultiplier = 100 / (100 - randomDiscount);
+  const calculatedOriginalPrice = Math.round(safeDiscountPrice * calculatedMultiplier);
+  
+  // Usamos el precio original si existe, sino el calculado
+  const safeOriginalPrice = Number(price) > 0 ? Number(price) : calculatedOriginalPrice;
 
-  // Calculamos el descuento de forma segura
-  const discount = Math.max(0, Math.round((1 - safeDiscountPrice / safePrice) * 100));
+  console.log("🔢 SafeOriginalPrice (después de calcular):", safeOriginalPrice);
+  console.log("🔢 SafeDiscountPrice:", safeDiscountPrice);
+  
+  // CALCULO REAL DEL DESCUENTO:
+  // Calculamos el descuento exacto basado en la diferencia entre los precios
+  // Solo si ambos precios son mayores que cero
+  let finalDiscount;
+  
+  if (safeOriginalPrice > 0 && safeDiscountPrice > 0) {
+    // Fórmula: (1 - precioConDescuento/precioOriginal) * 100
+    finalDiscount = Math.round((1 - safeDiscountPrice / safeOriginalPrice) * 100);
+    console.log("📊 Descuento calculado con la fórmula:", finalDiscount);
+  } else {
+    finalDiscount = randomDiscount;
+    console.log("📊 Usando descuento aleatorio:", finalDiscount);
+  }
+  
+  // Aseguramos que el descuento sea positivo
+  finalDiscount = Math.max(0, finalDiscount);
+  
+  console.log("🏷️ Porcentaje descuento final mostrado:", finalDiscount);
 
   // Render de estrellas
   const renderStars = (rating) =>
@@ -39,14 +76,25 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
     >
       <div className="position-relative">
         <img
-          src={image}
+          src={image || defaultImage}
           className={`card-img-top ${compact ? "object-fit-cover" : ""}`}
           alt={title}
-          style={{ height: compact ? "130px" : "200px", objectFit: "cover" }}
+          style={{ 
+            height: compact ? "130px" : "200px", 
+            objectFit: "cover",
+            width: "100%",
+            backgroundColor: "#f0f0f0"
+          }}
+          onError={(e) => {
+            e.target.src = defaultImage;
+            console.log("⚠️ Error cargando imagen, usando la predeterminada");
+          }}
+          loading="lazy"
         />
 
+        {/* Mostramos la etiqueta de descuento con el valor calculado */}
         <span className="position-absolute top-0 end-0 bg-danger text-white small px-2 py-1 m-2 rounded">
-          {discount}% OFF
+          {finalDiscount}% OFF
         </span>
       </div>
 
@@ -67,7 +115,7 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
             </span>
             {!compact && (
               <small className="text-muted text-decoration-line-through ms-2">
-                ${safePrice}
+                ${safeOriginalPrice}
               </small>
             )}
           </div>
@@ -82,6 +130,12 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
       <style>{`
         .card:hover .card-title-hover {
           color: #dc3545;
+        }
+        .card-img-top {
+          transition: opacity 0.3s ease;
+        }
+        .card-img-top:hover {
+          opacity: 0.9;
         }
       `}</style>
     </div>

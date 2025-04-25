@@ -136,6 +136,8 @@ const getState = ({ getStore, getActions, setStore }) => {
           console.log("Servicios de viajes recibidos:", data.viajes); // Verifica los datos que llegan
           setStore({ serviciosViajes: data.viajes });
           console.log("estos son los viajes", data.viajes)
+          console.log("esta es la 1er imagen", data.viajes[0]?.image)
+          console.log("este es el price",data.viajes[0]?.price )
         } catch (error) {
           console.error("Error cargando viajes:", error);
         }

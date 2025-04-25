@@ -22,7 +22,6 @@ from flask_bcrypt import Bcrypt
 from api.payment import payment_bp
 from flask_cors import CORS 
 from api.politicas import crear_politicas, Politica
-from api.factura import crear_factura
 from flask_cors import CORS
 
 

@@ -298,7 +298,7 @@ def inicializar_db():
     top_category_id = 3     # Reemplaza con el ID válido para la categoría 'Top'
     belleza_category_id = 2 # Reemplaza con el ID válido para la categoría 'Belleza'
     gastronomia_category_id = 4  # Reemplaza con el ID válido para la categoría 'Gastronomía'
-    ofertas_category_id = 6  # ID asignado a la nueva categoría 'Ofertas'
+    ofertas_category_id = 1  # ID asignado a la nueva categoría 'Ofertas'
 
     # Inicializa los servicios en la base de datos (ahora incluyendo Ofertas)
     inicializar_servicios(

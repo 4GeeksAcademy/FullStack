@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 58a993ab2cae
+Revision ID: a49011483992
 Revises: 
-Create Date: 2025-04-24 01:05:58.885645
+Create Date: 2025-04-25 23:35:49.516160
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '58a993ab2cae'
+revision = 'a49011483992'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,9 +30,15 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('correo')
     )
+    op.create_table('politicas',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('titulo', sa.String(length=150), nullable=False),
+    sa.Column('contenido', sa.Text(), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('titulo')
+    )
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('correo', sa.String(length=120), nullable=False),
     sa.Column('password', sa.String(length=80), nullable=False),
     sa.Column('telefono', sa.String(length=20), nullable=True),
@@ -48,11 +54,15 @@ def upgrade():
     )
     op.create_table('belleza',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('nombre', sa.String(length=240), nullable=False),
-    sa.Column('descripcion', sa.Text(), nullable=False),
-    sa.Column('precio', sa.Integer(), nullable=False),
-    sa.Column('ubicacion', sa.String(length=120), nullable=False),
-    sa.Column('horarios', sa.String(length=255), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('descripcion', sa.String(length=500), nullable=True),
+    sa.Column('image', sa.String(length=255), nullable=True),
+    sa.Column('city', sa.String(length=100), nullable=True),
+    sa.Column('discountPrice', sa.Float(), nullable=True),
+    sa.Column('price', sa.Float(), nullable=True),
+    sa.Column('rating', sa.Float(), nullable=True),
+    sa.Column('reviews', sa.Integer(), nullable=True),
+    sa.Column('buyers', sa.Integer(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('category_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
@@ -66,13 +76,44 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
     )
+    op.create_table('facturas',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('servicio', sa.String(length=255), nullable=False),
+    sa.Column('monto', sa.Float(), nullable=False),
+    sa.Column('fecha', sa.DateTime(), nullable=True),
+    sa.Column('metodo_pago', sa.String(length=50), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('gastronomia',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('nombre', sa.String(length=240), nullable=False),
-    sa.Column('descripcion', sa.Text(), nullable=False),
-    sa.Column('precio', sa.Integer(), nullable=False),
-    sa.Column('ubicacion', sa.String(length=120), nullable=False),
-    sa.Column('horarios', sa.String(length=255), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('descripcion', sa.String(length=500), nullable=True),
+    sa.Column('image', sa.String(length=255), nullable=True),
+    sa.Column('city', sa.String(length=100), nullable=True),
+    sa.Column('discountPrice', sa.Float(), nullable=True),
+    sa.Column('price', sa.Float(), nullable=True),
+    sa.Column('rating', sa.Float(), nullable=True),
+    sa.Column('reviews', sa.Integer(), nullable=True),
+    sa.Column('buyers', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('category_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('ofertas',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('descripcion', sa.String(length=500), nullable=True),
+    sa.Column('image', sa.String(length=255), nullable=True),
+    sa.Column('city', sa.String(length=100), nullable=True),
+    sa.Column('discountPrice', sa.Float(), nullable=True),
+    sa.Column('price', sa.Float(), nullable=True),
+    sa.Column('rating', sa.Float(), nullable=True),
+    sa.Column('reviews', sa.Integer(), nullable=True),
+    sa.Column('buyers', sa.Integer(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('category_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
@@ -92,11 +133,15 @@ def upgrade():
     )
     op.create_table('top',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('nombre', sa.String(length=240), nullable=False),
-    sa.Column('descripcion', sa.Text(), nullable=False),
-    sa.Column('precio', sa.Integer(), nullable=False),
-    sa.Column('ubicacion', sa.String(length=120), nullable=False),
-    sa.Column('horarios', sa.String(length=255), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('descripcion', sa.String(length=500), nullable=True),
+    sa.Column('image', sa.String(length=255), nullable=True),
+    sa.Column('city', sa.String(length=100), nullable=True),
+    sa.Column('discountPrice', sa.Float(), nullable=True),
+    sa.Column('price', sa.Float(), nullable=True),
+    sa.Column('rating', sa.Float(), nullable=True),
+    sa.Column('reviews', sa.Integer(), nullable=True),
+    sa.Column('buyers', sa.Integer(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('category_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
@@ -105,11 +150,15 @@ def upgrade():
     )
     op.create_table('viajes',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('nombre', sa.String(length=240), nullable=False),
-    sa.Column('descripcion', sa.Text(), nullable=False),
-    sa.Column('precio', sa.Integer(), nullable=False),
-    sa.Column('ubicacion', sa.String(length=120), nullable=False),
-    sa.Column('horarios', sa.String(length=255), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('descripcion', sa.String(length=500), nullable=True),
+    sa.Column('image', sa.String(length=255), nullable=True),
+    sa.Column('city', sa.String(length=100), nullable=True),
+    sa.Column('discountPrice', sa.Float(), nullable=True),
+    sa.Column('price', sa.Float(), nullable=True),
+    sa.Column('rating', sa.Float(), nullable=True),
+    sa.Column('reviews', sa.Integer(), nullable=True),
+    sa.Column('buyers', sa.Integer(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('category_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
@@ -147,10 +196,13 @@ def downgrade():
     op.drop_table('viajes')
     op.drop_table('top')
     op.drop_table('payments')
+    op.drop_table('ofertas')
     op.drop_table('gastronomia')
+    op.drop_table('facturas')
     op.drop_table('carts')
     op.drop_table('belleza')
     op.drop_table('users')
+    op.drop_table('politicas')
     op.drop_table('newsletter')
     op.drop_table('categories')
     # ### end Alembic commands ###

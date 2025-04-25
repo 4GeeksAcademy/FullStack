@@ -7,7 +7,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server --config webpack.dev.js --port 3008",
+    "start": "webpack-dev-server --config webpack.dev.js --port 3000",
     "build": "webpack --config webpack.prod.js"
   },
   "author": {
@@ -73,6 +73,8 @@
     ]
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^3.6.0",
+    "@stripe/stripe-js": "^7.2.0",
     "bootstrap-icons": "^1.11.3",
     "prop-types": "^15.6.1",
     "react": "^16.8.4",

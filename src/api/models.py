@@ -116,7 +116,7 @@ class Ofertas(db.Model):
 
     user = db.relationship('User', back_populates='ofertas_list')
     category = db.relationship('Category', back_populates='ofertas_category')
-    
+
 
     def serialize(self):
         return {
@@ -152,7 +152,6 @@ class Viajes(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='viajes_list')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship('Category', back_populates='viajes_category')
 
     def serialize(self):
@@ -190,7 +189,6 @@ class Top(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='top_list')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship('Category', back_populates='top_category')
 
     def serialize(self):
@@ -228,7 +226,6 @@ class Belleza(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='belleza_list')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship('Category', back_populates='belleza_category')
 
     def serialize(self):
@@ -266,7 +263,6 @@ class Gastronomia(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='gastronomia_list')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship('Category', back_populates='gastronomia_category')
 
     def serialize(self):
@@ -343,4 +339,40 @@ class CartService(db.Model):
             "service_type": self.service_type,
             "service_id": self.service_id,
             "quantity": self.quantity
+        }
+
+class Politica(db.Model):
+    __tablename__ = 'politicas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(150), nullable=False, unique=True)
+    contenido = db.Column(db.Text, nullable=False)  # Ideal para textos largos
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "titulo": self.titulo,
+            "contenido": self.contenido
+        }
+
+class Factura(db.Model):
+    __tablename__ = 'facturas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    servicio = db.Column(db.String(255), nullable=False)
+    monto = db.Column(db.Float, nullable=False)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+    metodo_pago = db.Column(db.String(50), nullable=False)
+
+    user = db.relationship('User', backref='facturas')
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "servicio": self.servicio,
+            "monto": self.monto,
+            "fecha": self.fecha.isoformat(),
+            "metodo_pago": self.metodo_pago
         }

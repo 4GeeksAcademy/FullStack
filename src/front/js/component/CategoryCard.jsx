@@ -18,17 +18,17 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
 
   // Imagen por defecto
   const defaultImage = "https://images.unsplash.com/photo-1526397751294-331021109fbd";
-  
+
   // Usar el título correcto (title o nombre)
   const displayTitle = title || nombre || "Sin título";
-  
+
   // Usar la imagen correcta (image o imagen)
   const displayImage = image || imagen || defaultImage;
-  
+
   // Detectamos qué campos de precio existen y los normalizamos
   let actualPrice = 0;
   let actualDiscountPrice = 0;
-  
+
   // Determinar cuál es el precio original y cuál el precio con descuento
   if (price !== undefined && discountPrice !== undefined) {
     // Si tenemos ambos precios, verificamos cuál es mayor (el mayor debe ser el original)
@@ -58,23 +58,23 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
     actualPrice = Number(originalPrice);
     actualDiscountPrice = Math.round(actualPrice * 0.7); // 30% de descuento
   }
-  
+
   // Si después de todo esto, seguimos sin precios válidos, asignamos valores por defecto
   if (actualPrice <= 0) actualPrice = 1000;
   if (actualDiscountPrice <= 0) actualDiscountPrice = Math.round(actualPrice * 0.7);
-  
+
   // Nos aseguramos que el precio con descuento sea menor que el precio original
   if (actualDiscountPrice >= actualPrice) {
     actualDiscountPrice = Math.round(actualPrice * 0.7); // 30% de descuento por defecto
   }
-  
+
   // Calculamos el descuento real
   let finalDiscount = Math.round(((actualPrice - actualDiscountPrice) / actualPrice) * 100);
-  
+
   // Nos aseguramos de que el descuento tenga sentido
   if (finalDiscount < 5) finalDiscount = 5;
   if (finalDiscount > 80) finalDiscount = 80;
-  
+
   // Render de estrellas
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, i) => (
@@ -85,9 +85,9 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
     ));
 
   // Depuración para ver los valores calculados
-  console.log(`Card "${displayTitle}": 
-    Original data - price: ${price}, discountPrice: ${discountPrice}, precio: ${precio}
-    Calculated - actualPrice: ${actualPrice}, actualDiscountPrice: ${actualDiscountPrice}, discount: ${finalDiscount}%`);
+  // console.log(`Card "${displayTitle}": 
+  //   Original data - price: ${price}, discountPrice: ${discountPrice}, precio: ${precio}
+  //   Calculated - actualPrice: ${actualPrice}, actualDiscountPrice: ${actualDiscountPrice}, discount: ${finalDiscount}%`);
 
   return (
     <div
@@ -100,8 +100,8 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
           src={displayImage}
           className={`card-img-top ${compact ? "object-fit-cover" : ""}`}
           alt={displayTitle}
-          style={{ 
-            height: compact ? "130px" : "200px", 
+          style={{
+            height: compact ? "130px" : "200px",
             objectFit: "cover",
             width: "100%",
             backgroundColor: "#f0f0f0"

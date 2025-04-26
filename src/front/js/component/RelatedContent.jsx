@@ -19,9 +19,9 @@ const RelatedContent = ({ onNavigate = () => { } }) => {
 
       // Debug para ver si llegaron los datos
       setTimeout(() => {
-        console.log("🧠 Belleza:", store.serviciosBelleza);
-        console.log("🍝 Gastronomía:", store.serviciosGastronomia);
-        console.log("✈️ Viajes:", store.serviciosViajes);
+        // console.log("🧠 Belleza:", store.serviciosBelleza);
+        // console.log("🍝 Gastronomía:", store.serviciosGastronomia);
+        // console.log("✈️ Viajes:", store.serviciosViajes);
       }, 2000);
     };
 

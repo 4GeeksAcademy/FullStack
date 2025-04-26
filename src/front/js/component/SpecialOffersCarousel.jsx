@@ -1,75 +1,15 @@
-import React, { useState } from "react";
-/* import "bootstrap/dist/css/bootstrap.min.css"; */
+import React, { useState, useEffect, useContext } from "react";
+import { Context } from "../store/appContext"; // Asegúrate de importar tu contexto correctamente
 
 const SpecialOffersCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { store, actions } = useContext(Context); // usamos el Contexto
+  const specialOffers = store.serviciosOfertas; // agarramos los datos que trae tu Flux
 
-  const specialOffers = [
-    {
-      id: 1,
-      title: "Escapada Romántica",
-      description: "Fin de semana en hotel boutique con cena",
-      image:
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      city: "Barcelona",
-    },
-    {
-      id: 2,
-      title: "Aventura en Pirineos",
-      description: "Rafting y senderismo con guía experto",
-      image:
-        "https://images.unsplash.com/photo-1532339142463-fd0a89797911?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      city: "Huesca",
-    },
-    {
-      id: 3,
-      title: "Tour Gastronómico",
-      description: "5 paradas en restaurantes locales",
-      image:
-        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      city: "San Sebastián",
-    },
-    {
-      id: 4,
-      title: "Spa de Lujo",
-      description: "Día completo con masajes y tratamientos",
-      image:
-        "https://images.unsplash.com/photo-1559599101-f09722fb4948?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      city: "Madrid",
-    },
-    {
-      id: 5,
-      title: "Tour Vinícola",
-      description: "Visita a bodegas con catas incluidas",
-      image:
-        "https://images.unsplash.com/photo-1478720568477-152d9b164e26?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      city: "La Rioja",
-    },
-    {
-      id: 6,
-      title: "Parque de Aventuras",
-      description: "Tirolinas y puentes colgantes en la naturaleza",
-      image:
-        "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      city: "Guadalajara",
-    },
-    {
-      id: 7,
-      title: "Clase de Cocina",
-      description: "Aprende de chefs profesionales",
-      image:
-        "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      city: "Valencia",
-    },
-    {
-      id: 8,
-      title: "Observación de Estrellas",
-      description: "Tour astronómico con cena campestre",
-      image:
-        "https://images.unsplash.com/photo-1534447677768-be436bb09401?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      city: "Granada",
-    },
-  ];
+  useEffect(() => {
+    // Llamamos a la acción para cargar las ofertas cuando el componente se monta
+    actions.cargarServiciosOfertas();
+  }, []); // <-- Solo al montar el componente
 
   const CARDS_PER_PAGE = 4;
   const totalPages = Math.ceil(specialOffers.length / CARDS_PER_PAGE);

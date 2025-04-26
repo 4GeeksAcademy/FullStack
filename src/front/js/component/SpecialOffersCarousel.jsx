@@ -56,7 +56,7 @@ const SpecialOffersCarousel = () => {
                       <span className="badge bg-primary">{offer.city}</span>
                     </div>
                     <p className="card-text text-muted small flex-grow-1">
-                      {offer.description}
+                      {offer.descripcion}
                     </p>
                     <button className="btn btn-outline-danger btn-sm mt-3 w-100">
                       Más información

@@ -37,7 +37,7 @@ jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 
 app.url_map.strict_slashes = False
-CORS(app, origins=["http://localhost:3000"]) 
+CORS(app, origins=["*"])
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")

@@ -13,6 +13,7 @@ def create_admin_user():
         db.session.commit()
     
 def crear_servicios_ofertas(user_id, ofertas_category_id):
+    if not Ofertas.query.filter_by(category_id=ofertas_category_id).first():
         ofertas = [
             # Ofertas originales
             Ofertas(

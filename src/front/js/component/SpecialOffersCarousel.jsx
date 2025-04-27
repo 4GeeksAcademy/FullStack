@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Context } from "../store/appContext"; // Asegúrate de importar tu contexto correctamente
 
+
 const SpecialOffersCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { store, actions } = useContext(Context); // usamos el Contexto
   const specialOffers = store.serviciosOfertas; // agarramos los datos que trae tu Flux
+  
 
   useEffect(() => {
     // Llamamos a la acción para cargar las ofertas cuando el componente se monta
@@ -14,13 +16,17 @@ const SpecialOffersCarousel = () => {
   const CARDS_PER_PAGE = 4;
   const totalPages = Math.ceil(specialOffers.length / CARDS_PER_PAGE);
 
+  // Función para ir al siguiente set de ofertas (avanzar)
   const nextSlide = () => {
+    // No permitimos avanzar si estamos en la última página
     if (currentIndex + CARDS_PER_PAGE < specialOffers.length) {
       setCurrentIndex(currentIndex + CARDS_PER_PAGE);
     }
   };
 
+  // Función para retroceder (ir a la página anterior)
   const prevSlide = () => {
+    // No permitimos retroceder más allá de la primera página
     if (currentIndex - CARDS_PER_PAGE >= 0) {
       setCurrentIndex(currentIndex - CARDS_PER_PAGE);
     }
@@ -67,23 +73,26 @@ const SpecialOffersCarousel = () => {
             ))}
           </div>
 
+          {/* Botón de retroceso */}
           <button
             onClick={prevSlide}
             className="btn btn-light position-absolute top-50 start-0 translate-middle-y"
-            disabled={currentIndex === 0}
+            disabled={currentIndex === 0} // Desactiva el botón si estamos en el primer set de datos
           >
             &#8592;
           </button>
 
+          {/* Botón de avance */}
           <button
             onClick={nextSlide}
             className="btn btn-light position-absolute top-50 end-0 translate-middle-y"
-            disabled={currentIndex + CARDS_PER_PAGE >= specialOffers.length}
+            disabled={currentIndex + CARDS_PER_PAGE >= specialOffers.length} // Desactiva el botón si estamos en la última página
           >
             &#8594;
           </button>
         </div>
 
+        {/* Indicadores de página */}
         {totalPages > 1 && (
           <div className="d-flex justify-content-center mt-3">
             {Array.from({ length: totalPages }).map((_, index) => (

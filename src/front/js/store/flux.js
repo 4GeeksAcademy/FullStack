@@ -40,6 +40,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       serviciosViajes: [],
       serviciosGastronomia: [],
       serviciosBelleza: [],
+      serviciosOfertas: [],
       cartItems: [], // Aquí se almacenarán los productos en el carrito
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
@@ -133,7 +134,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const resp = await fetch(process.env.BACKEND_URL + "/viajes");
           const data = await resp.json();
           const viajes = data.viajes || [];
-          console.log("Datos de viajes recibidos:", viajes);
+          
           
           // Actualizamos el store directamente
           setStore({ serviciosViajes: viajes });
@@ -151,7 +152,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const resp = await fetch(process.env.BACKEND_URL + "/gastronomia");
           const data = await resp.json();
           const gastronomia = data.gastronomia || [];
-          console.log("Datos de gastronomía recibidos:", gastronomia);
+          
           
           // Actualizamos el store directamente
           setStore({ serviciosGastronomia: gastronomia });
@@ -169,13 +170,30 @@ const getState = ({ getStore, getActions, setStore }) => {
           const resp = await fetch(process.env.BACKEND_URL + "/belleza");
           const data = await resp.json();
           const belleza = data.belleza || [];
-          console.log("Datos de belleza recibidos:", belleza);
+          
           
           // Actualizamos el store directamente
           setStore({ serviciosBelleza: belleza });
           
           // Devolvemos la belleza para posible uso en componentes
           return belleza;
+        } catch (e) {
+          console.error("Error al cargar belleza:", e);
+          return [];
+        }
+      },
+      cargarServiciosOfertas: async () => {
+        try {
+          const resp = await fetch(process.env.BACKEND_URL + "/ofertas");
+          const data = await resp.json();
+          const ofertas = data.ofertas || [];
+          console.log("DATOSSSSSS OFERTASSSSS FETCHHH FLUXXXX:", ofertas);
+          
+          // Actualizamos el store directamente
+          setStore({ serviciosOfertas: ofertas });
+          
+          // Devolvemos la belleza para posible uso en componentes
+          return ofertas;
         } catch (e) {
           console.error("Error al cargar belleza:", e);
           return [];

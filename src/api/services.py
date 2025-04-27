@@ -15,6 +15,7 @@ def create_admin_user():
 def crear_servicios_ofertas(user_id, ofertas_category_id):
     if not Ofertas.query.filter_by(category_id=ofertas_category_id).first():
         ofertas = [
+            # Ofertas originales
             Ofertas(
                 title="Clase de yoga al amanecer en la playa",
                 descripcion="Sesión de 90 minutos con instructores certificados frente al mar.",
@@ -67,9 +68,63 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
                 user_id=user_id,
                 category_id=ofertas_category_id
             ),
+            # Nuevas ofertas agregadas
+            Ofertas(
+                title="Clase de cocina peruana tradicional",
+                descripcion="Aprendé a preparar ceviche y lomo saltado con chefs locales.",
+                image="https://source.unsplash.com/random/800x600/?peruviancuisine,cookingclass",
+                city="Cusco, Perú",
+                price=40,
+                discountPrice=70,
+                rating=4.8,
+                reviews=95,
+                buyers=110,
+                user_id=user_id,
+                category_id=ofertas_category_id
+            ),
+            Ofertas(
+                title="Paseo en kayak por lagunas escondidas",
+                descripcion="Exploración guiada en kayak por reservas naturales secretas.",
+                image="https://source.unsplash.com/random/800x600/?kayaking,adventure",
+                city="Bariloche, Argentina",
+                price=50,
+                discountPrice=85,
+                rating=4.7,
+                reviews=88,
+                buyers=130,
+                user_id=user_id,
+                category_id=ofertas_category_id
+            ),
+            Ofertas(
+                title="Ruta de arte urbano y grafitis",
+                descripcion="Recorrido por murales y arte callejero con un guía especializado.",
+                image="https://source.unsplash.com/random/800x600/?streetart,graffiti",
+                city="Bogotá, Colombia",
+                price=20,
+                discountPrice=35,
+                rating=4.5,
+                reviews=75,
+                buyers=100,
+                user_id=user_id,
+                category_id=ofertas_category_id
+            ),
+            Ofertas(
+                title="Workshop de fotografía al atardecer",
+                descripcion="Clase práctica para capturar el atardecer con cámara o celular.",
+                image="https://source.unsplash.com/random/800x600/?sunset,photography",
+                city="Punta del Este, Uruguay",
+                price=55,
+                discountPrice=95,
+                rating=4.9,
+                reviews=110,
+                buyers=140,
+                user_id=user_id,
+                category_id=ofertas_category_id
+            ),
         ]
         db.session.bulk_save_objects(ofertas)
         db.session.commit()
+
 
 # Función para crear los servicios de Viajes
 def crear_servicios_viajes(user_id, viajes_category_id):

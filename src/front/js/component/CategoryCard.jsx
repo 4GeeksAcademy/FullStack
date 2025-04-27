@@ -1,64 +1,80 @@
 import React from "react";
 
 const CategoryCard = ({ offer, onViewService, compact = false }) => {
+  // Extraemos los valores del offer con valores por defecto
   const {
     title = "Sin título",
+    nombre, // Nombre alternativo que podría venir del backend
     image,
+    imagen, // Nombre alternativo para imagen
     rating = 0,
     reviews = 0,
-    discountPrice = 0,
-    price = 0,
+    price, // Campo "price" del backend
+    precio, // Posible alternativa en español
+    discountPrice, // Campo que podría estar invertido
+    originalPrice, // Por si acaso existe este campo
     buyers = 0,
   } = offer;
 
   // Imagen por defecto
   const defaultImage = "https://images.unsplash.com/photo-1526397751294-331021109fbd";
-
-  // Debug de los valores recibidos
-  console.log("📦 Datos completos recibidos:", offer);
-  console.log("💰 Price original:", price, typeof price);
-  console.log("🏷️ DiscountPrice:", discountPrice, typeof discountPrice);
-
-  // Aseguramos que sean números
-  const safeDiscountPrice = Number(discountPrice) || 0;
   
-  // Si no tenemos precio original, generamos uno basado en un descuento aleatorio
-  // usando un valor basado en el título o ID para que sea consistente
-  const generateVariedDiscount = () => {
-    const titleSum = title.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    const lastDigit = safeDiscountPrice % 10;
-    return 10 + (titleSum + lastDigit) % 36; // Entre 10% y 45%
-  };
+  // Usar el título correcto (title o nombre)
+  const displayTitle = title || nombre || "Sin título";
   
-  const randomDiscount = generateVariedDiscount();
-  const calculatedMultiplier = 100 / (100 - randomDiscount);
-  const calculatedOriginalPrice = Math.round(safeDiscountPrice * calculatedMultiplier);
+  // Usar la imagen correcta (image o imagen)
+  const displayImage = image || imagen || defaultImage;
   
-  // Usamos el precio original si existe, sino el calculado
-  const safeOriginalPrice = Number(price) > 0 ? Number(price) : calculatedOriginalPrice;
-
-  console.log("🔢 SafeOriginalPrice (después de calcular):", safeOriginalPrice);
-  console.log("🔢 SafeDiscountPrice:", safeDiscountPrice);
+  // Detectamos qué campos de precio existen y los normalizamos
+  let actualPrice = 0;
+  let actualDiscountPrice = 0;
   
-  // CALCULO REAL DEL DESCUENTO:
-  // Calculamos el descuento exacto basado en la diferencia entre los precios
-  // Solo si ambos precios son mayores que cero
-  let finalDiscount;
-  
-  if (safeOriginalPrice > 0 && safeDiscountPrice > 0) {
-    // Fórmula: (1 - precioConDescuento/precioOriginal) * 100
-    finalDiscount = Math.round((1 - safeDiscountPrice / safeOriginalPrice) * 100);
-    console.log("📊 Descuento calculado con la fórmula:", finalDiscount);
-  } else {
-    finalDiscount = randomDiscount;
-    console.log("📊 Usando descuento aleatorio:", finalDiscount);
+  // Determinar cuál es el precio original y cuál el precio con descuento
+  if (price !== undefined && discountPrice !== undefined) {
+    // Si tenemos ambos precios, verificamos cuál es mayor (el mayor debe ser el original)
+    if (Number(price) < Number(discountPrice)) {
+      // Si price es menor que discountPrice, entonces price es el precio con descuento
+      actualDiscountPrice = Number(price);
+      actualPrice = Number(discountPrice);
+    } else {
+      // En caso contrario, asumimos que los campos están correctamente nombrados
+      actualPrice = Number(price);
+      actualDiscountPrice = Number(discountPrice);
+    }
+  } else if (price !== undefined) {
+    // Si solo tenemos price, lo usamos como precio con descuento y calculamos un precio original
+    actualDiscountPrice = Number(price);
+    actualPrice = Math.round(actualDiscountPrice * 1.5);
+  } else if (precio !== undefined) {
+    // Si tenemos precio (en español), lo usamos como precio con descuento
+    actualDiscountPrice = Number(precio);
+    actualPrice = Math.round(actualDiscountPrice * 1.5);
+  } else if (discountPrice !== undefined) {
+    // Si solo tenemos discountPrice, lo usamos como precio con descuento
+    actualDiscountPrice = Number(discountPrice);
+    actualPrice = Math.round(actualDiscountPrice * 1.5);
+  } else if (originalPrice !== undefined) {
+    // Si tenemos originalPrice pero ningún precio con descuento, calculamos uno
+    actualPrice = Number(originalPrice);
+    actualDiscountPrice = Math.round(actualPrice * 0.7); // 30% de descuento
   }
   
-  // Aseguramos que el descuento sea positivo
-  finalDiscount = Math.max(0, finalDiscount);
+  // Si después de todo esto, seguimos sin precios válidos, asignamos valores por defecto
+  if (actualPrice <= 0) actualPrice = 1000;
+  if (actualDiscountPrice <= 0) actualDiscountPrice = Math.round(actualPrice * 0.7);
   
-  console.log("🏷️ Porcentaje descuento final mostrado:", finalDiscount);
-
+  // Nos aseguramos que el precio con descuento sea menor que el precio original
+  if (actualDiscountPrice >= actualPrice) {
+    actualDiscountPrice = Math.round(actualPrice * 0.7); // 30% de descuento por defecto
+  }
+  
+  // Calculamos el descuento real
+  let finalDiscount = Math.round(((actualPrice - actualDiscountPrice) / actualPrice) * 100);
+  
+  // Nos aseguramos de que el descuento tenga sentido
+  if (finalDiscount < 5) finalDiscount = 5;
+  if (finalDiscount > 80) finalDiscount = 80;
+  
   // Render de estrellas
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, i) => (
@@ -68,6 +84,11 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
       ></i>
     ));
 
+  // Depuración para ver los valores calculados
+  console.log(`Card "${displayTitle}": 
+    Original data - price: ${price}, discountPrice: ${discountPrice}, precio: ${precio}
+    Calculated - actualPrice: ${actualPrice}, actualDiscountPrice: ${actualDiscountPrice}, discount: ${finalDiscount}%`);
+
   return (
     <div
       className={`card h-100 shadow-sm border-0 rounded-4 overflow-hidden ${compact ? "p-2" : ""}`}
@@ -76,9 +97,9 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
     >
       <div className="position-relative">
         <img
-          src={image || defaultImage}
+          src={displayImage}
           className={`card-img-top ${compact ? "object-fit-cover" : ""}`}
-          alt={title}
+          alt={displayTitle}
           style={{ 
             height: compact ? "130px" : "200px", 
             objectFit: "cover",
@@ -100,7 +121,7 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
 
       <div className={compact ? "p-2" : "p-3"}>
         <h5 className={`fw-bold mb-2 ${compact ? "fs-6" : "fs-5"} text-truncate card-title-hover`}>
-          {title}
+          {displayTitle}
         </h5>
 
         <div className="d-flex align-items-center mb-2">
@@ -111,11 +132,11 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
         <div className="d-flex flex-column">
           <div className="d-flex justify-content-start align-items-center mb-1">
             <span className={`fw-bold text-danger ${compact ? "fs-6" : "fs-5"}`}>
-              ${safeDiscountPrice}
+              ${actualDiscountPrice}
             </span>
             {!compact && (
               <small className="text-muted text-decoration-line-through ms-2">
-                ${safeOriginalPrice}
+                ${actualPrice}
               </small>
             )}
           </div>

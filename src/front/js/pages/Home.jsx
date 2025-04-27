@@ -16,7 +16,7 @@ export const Home = () => {
       <LayoutHeader />
       <HeroBanner />
       <CategoriesSection />
-      <SearchFilters />
+      {/* <SearchFilters /> */}
       <FeaturedDeals />
       <RelatedContent />
       <PromoBanner />

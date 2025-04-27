@@ -130,42 +130,57 @@ const getState = ({ getStore, getActions, setStore }) => {
       },
       cargarServiciosViajes: async () => {
         try {
-          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/viajes"); 
-          if (!resp.ok) throw new Error("Error al obtener servicios de viajes");
+          const resp = await fetch(process.env.BACKEND_URL + "/viajes");
           const data = await resp.json();
-          console.log("Servicios de viajes recibidos:", data.viajes); // Verifica los datos que llegan
-          setStore({ serviciosViajes: data.viajes });
-          console.log("estos son los viajes", data.viajes)
-          console.log("esta es la 1er imagen", data.viajes[0]?.image)
-          console.log("este es el price",data.viajes[0]?.price )
-        } catch (error) {
-          console.error("Error cargando viajes:", error);
+          const viajes = data.viajes || [];
+          console.log("Datos de viajes recibidos:", viajes);
+          
+          // Actualizamos el store directamente
+          setStore({ serviciosViajes: viajes });
+          
+          // Devolvemos los viajes para posible uso en componentes
+          return viajes;
+        } catch (e) {
+          console.error("Error al cargar viajes:", e);
+          return [];
         }
       },
-      cargarServiciosGastronomia: async() => {
+      
+      cargarServiciosGastronomia: async () => {
         try {
-          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/gastronomia");
-          if(!resp.ok) throw new Error("Error al obtener servicios gastronomía")
-          const data = await resp.json()
-          console.log("servicios recibidos de gastronomía: ", data.gastronomia) // verificador
-          setStore({ serviciosGastronomia: data.gastronomia});
-          console.log("Esta es la gastonomia", data.gastronomia)
-      } catch (e){
-          console.error("error cargando gastronimia", e);
-      }
-      },
-      cargarServiciosBelleza: async()=>{
-        try{
-          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/belleza");
-          if(!resp.ok) throw new Error("Error al obtener servicios belleza")
-          const data = await resp.json()
-          console.log("servicios recibidos de belleza: ", data.belleza) // verificador
-          setStore({ serviciosBelleza: data.belleza});
-          console.log("Esta es la belleza data", data.belleza)
-        }catch(e){
-          console.error("error al cargar belleza", e);
+          const resp = await fetch(process.env.BACKEND_URL + "/gastronomia");
+          const data = await resp.json();
+          const gastronomia = data.gastronomia || [];
+          console.log("Datos de gastronomía recibidos:", gastronomia);
+          
+          // Actualizamos el store directamente
+          setStore({ serviciosGastronomia: gastronomia });
+          
+          // Devolvemos la gastronomía para posible uso en componentes
+          return gastronomia;
+        } catch (e) {
+          console.error("Error al cargar gastronomía:", e);
+          return [];
         }
-      }
+      },
+      
+      cargarServiciosBelleza: async () => {
+        try {
+          const resp = await fetch(process.env.BACKEND_URL + "/belleza");
+          const data = await resp.json();
+          const belleza = data.belleza || [];
+          console.log("Datos de belleza recibidos:", belleza);
+          
+          // Actualizamos el store directamente
+          setStore({ serviciosBelleza: belleza });
+          
+          // Devolvemos la belleza para posible uso en componentes
+          return belleza;
+        } catch (e) {
+          console.error("Error al cargar belleza:", e);
+          return [];
+        }
+      },
     },
   };
 };

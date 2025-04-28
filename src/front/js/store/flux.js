@@ -43,6 +43,21 @@ const getState = ({ getStore, getActions, setStore }) => {
       cartItems: [], // Aquí se almacenarán los productos en el carrito
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
+      productDetails: {
+        id: 1,
+          title: "Spa de Lujo Completo",
+          description:
+            "Día completo con acceso a todas las instalaciones y 2 tratamientos",
+          image:
+            "https://images.unsplash.com/photo-1559599101-f09722fb4948?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+          city: "Madrid",
+          category: "beauty",
+          discountPrice: 89,
+          originalPrice: 150,
+          rating: 4,
+          reviews: 120,
+          buyers: 250,
+      }
     },
     actions: {
       // Ejemplo de función para cambiar el color
@@ -62,6 +77,11 @@ const getState = ({ getStore, getActions, setStore }) => {
           console.log("Error loading message from backend", error);
         }
       },
+      
+      addProductToCart: async () => {
+        
+      }
+      ,
 
       // Cambiar color de un item en el demo
       changeColor: (index, color) => {

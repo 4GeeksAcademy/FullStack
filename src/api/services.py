@@ -13,13 +13,16 @@ def create_admin_user():
         db.session.commit()
     
 def crear_servicios_ofertas(user_id, ofertas_category_id):
-    if not Ofertas.query.filter_by(category_id=ofertas_category_id).first():
+    # if not Ofertas.query.filter_by(category_id=ofertas_category_id).first():
+     # Borrar ofertas existentes de esa categoría
+        Ofertas.query.filter_by(category_id=ofertas_category_id).delete()
+        db.session.commit()
         ofertas = [
             # Ofertas originales
             Ofertas(
                 title="Clase de yoga al amanecer en la playa",
                 descripcion="Sesión de 90 minutos con instructores certificados frente al mar.",
-                image="https://source.unsplash.com/random/800x600/?yoga,beach",
+                image="https://images.unsplash.com/photo-1646166624994-9bd6876e6520?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 city="Tulum, México",
                 price=35,
                 discountPrice=60,
@@ -32,7 +35,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
             Ofertas(
                 title="Experiencia de cata de cervezas artesanales",
                 descripcion="Degustación de 6 variedades con maridaje incluido.",
-                image="https://source.unsplash.com/random/800x600/?craftbeer,tasting",
+                image="https://img.freepik.com/free-photo/side-view-man-working-beer-factory_23-2150573925.jpg?t=st=1745849209~exp=1745852809~hmac=f6d89b6e1ea85ab4dfdb321b7fe43abf161fae386eb986b92d53a2e96ff47cbb&w=1380",
                 city="Valparaíso, Chile",
                 price=22,
                 discountPrice=40,
@@ -45,7 +48,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
             Ofertas(
                 title="Taller de cerámica con materiales incluidos",
                 descripcion="Creá tus propias piezas con ayuda de artistas locales.",
-                image="https://source.unsplash.com/random/800x600/?pottery,workshop",
+                image="https://img.freepik.com/free-photo/close-up-man-doing-pottery_23-2148986301.jpg?t=st=1745849325~exp=1745852925~hmac=393a269ff0ddbc3840330d67048d1a4048637271de554bcf10efcaf40f38084c&w=1380",
                 city="Montevideo, Uruguay",
                 price=45,
                 discountPrice=80,
@@ -58,7 +61,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
             Ofertas(
                 title="City tour nocturno en bicicleta eléctrica",
                 descripcion="Descubrí los secretos de la ciudad iluminada con guía bilingüe.",
-                image="https://source.unsplash.com/random/800x600/?biketour,citynight",
+                image="https://img.freepik.com/free-photo/close-up-sideways-cyclist-holding-e-bike-with-green-wall-background_23-2148225875.jpg?t=st=1745849436~exp=1745853036~hmac=4da424763d09d35c7ca33f4286707c82765e8669440b33034704326831f2d25e&w=1380",
                 city="Lima, Perú",
                 price=30,
                 discountPrice=50,
@@ -72,7 +75,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
             Ofertas(
                 title="Clase de cocina peruana tradicional",
                 descripcion="Aprendé a preparar ceviche y lomo saltado con chefs locales.",
-                image="https://source.unsplash.com/random/800x600/?peruviancuisine,cookingclass",
+                image="https://img.freepik.com/free-photo/hands-holding-bowl-fajita-mexican-food_181624-45672.jpg?t=st=1745849512~exp=1745853112~hmac=f74a024bbcd3b513fe63ac672cddb60dba8a423b4348161222732d6ba3413372&w=1380",
                 city="Cusco, Perú",
                 price=40,
                 discountPrice=70,
@@ -85,7 +88,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
             Ofertas(
                 title="Paseo en kayak por lagunas escondidas",
                 descripcion="Exploración guiada en kayak por reservas naturales secretas.",
-                image="https://source.unsplash.com/random/800x600/?kayaking,adventure",
+                image="https://img.freepik.com/free-photo/couple-together-kayaking-river_1303-16041.jpg?t=st=1745849568~exp=1745853168~hmac=9a4de2de8e3bb042dc94aee0e40332b5549de342ca87884b9f8ceca824ba88e0&w=1380",
                 city="Bariloche, Argentina",
                 price=50,
                 discountPrice=85,
@@ -98,7 +101,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
             Ofertas(
                 title="Ruta de arte urbano y grafitis",
                 descripcion="Recorrido por murales y arte callejero con un guía especializado.",
-                image="https://source.unsplash.com/random/800x600/?streetart,graffiti",
+                image="https://img.freepik.com/free-photo/close-up-person-s-hand-holding-aerosol-bottle_23-2147827680.jpg?t=st=1745849677~exp=1745853277~hmac=c157ed6f2b68cb5d0fce33d551d6a4e2607015879b9b62f4bcd68cda1086fb9f&w=1380",
                 city="Bogotá, Colombia",
                 price=20,
                 discountPrice=35,
@@ -111,7 +114,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
             Ofertas(
                 title="Workshop de fotografía al atardecer",
                 descripcion="Clase práctica para capturar el atardecer con cámara o celular.",
-                image="https://source.unsplash.com/random/800x600/?sunset,photography",
+                image="https://img.freepik.com/free-photo/backpacker-relax-mountain-with-camera-adn-sunset_1150-7755.jpg?t=st=1745849720~exp=1745853320~hmac=0e3efd4f1092a765c62cd2d8f92f6a6ab8d9bb03027e9eb72b15da0eb28d2511&w=1380",
                 city="Punta del Este, Uruguay",
                 price=55,
                 discountPrice=95,

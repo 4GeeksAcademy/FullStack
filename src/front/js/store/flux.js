@@ -16,9 +16,9 @@ const getState = ({ getStore, getActions, setStore }) => {
       ],
       categories: [
         { id: "top", name: "Top Ofertas", icon: "⭐" },
-        { id: "beauty", name: "Belleza", icon: "💄" },
-        { id: "food", name: "Gastronomía", icon: "🍴" },
-        { id: "travel", name: "Viajes", icon: "✈️" },
+        { id: "belleza", name: "Belleza", icon: "💄" },
+        { id: "gastronomia", name: "Gastronomía", icon: "🍴" },
+        { id: "viajes", name: "Viajes", icon: "✈️" },
       ],
       producto: [
         {
@@ -44,6 +44,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       cartItems: [], // Aquí se almacenarán los productos en el carrito
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
+      user: null, // Aquí almacenaremos los datos del usuario
     },
     actions: {
       // Ejemplo de función para cambiar el color
@@ -129,73 +130,71 @@ const getState = ({ getStore, getActions, setStore }) => {
           0
         );
       },
+
+      // Función para setear los datos del usuario en el store
+      setUser: (userData) => {
+        setStore({ user: userData });
+        // Guardar los datos del usuario en el localStorage
+        localStorage.setItem("user", JSON.stringify(userData));
+      },
+
+      // Función para cargar el usuario desde el localStorage
+      loadUserFromStorage: () => {
+        const user = localStorage.getItem("user");
+        if (user) {
+          setStore({ user: JSON.parse(user) });
+        }
+      },
+
+      // Cargar servicios (viajes, gastronomía, belleza, etc.)
       cargarServiciosViajes: async () => {
         try {
           const resp = await fetch(process.env.BACKEND_URL + "/viajes");
           const data = await resp.json();
           const viajes = data.viajes || [];
-          
-          
-          // Actualizamos el store directamente
           setStore({ serviciosViajes: viajes });
-          
-          // Devolvemos los viajes para posible uso en componentes
           return viajes;
         } catch (e) {
           console.error("Error al cargar viajes:", e);
           return [];
         }
       },
-      
+
       cargarServiciosGastronomia: async () => {
         try {
           const resp = await fetch(process.env.BACKEND_URL + "/gastronomia");
           const data = await resp.json();
           const gastronomia = data.gastronomia || [];
-          
-          
-          // Actualizamos el store directamente
           setStore({ serviciosGastronomia: gastronomia });
-          
-          // Devolvemos la gastronomía para posible uso en componentes
           return gastronomia;
         } catch (e) {
           console.error("Error al cargar gastronomía:", e);
           return [];
         }
       },
-      
+
       cargarServiciosBelleza: async () => {
         try {
           const resp = await fetch(process.env.BACKEND_URL + "/belleza");
           const data = await resp.json();
           const belleza = data.belleza || [];
-          
-          
-          // Actualizamos el store directamente
           setStore({ serviciosBelleza: belleza });
-          
-          // Devolvemos la belleza para posible uso en componentes
           return belleza;
         } catch (e) {
           console.error("Error al cargar belleza:", e);
           return [];
         }
       },
+
       cargarServiciosOfertas: async () => {
         try {
           const resp = await fetch(process.env.BACKEND_URL + "/ofertas");
           const data = await resp.json();
           const ofertas = data.ofertas || [];
-          console.log("DATOSSSSSS OFERTASSSSS FETCHHH FLUXXXX:", ofertas);
-          
-          // Actualizamos el store directamente
           setStore({ serviciosOfertas: ofertas });
-          
-          // Devolvemos la belleza para posible uso en componentes
           return ofertas;
         } catch (e) {
-          console.error("Error al cargar belleza:", e);
+          console.error("Error al cargar ofertas:", e);
           return [];
         }
       },

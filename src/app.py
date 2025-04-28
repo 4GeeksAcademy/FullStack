@@ -258,6 +258,29 @@ def crear_categorias():
 def inicializar_politicas():
     crear_politicas()
 
+# Crear una nueva política
+@app.route('/politicas', methods=['POST'])
+def crear_politica():
+    # Obtener datos de la política desde el cuerpo de la solicitud
+    data = request.get_json()
+
+    # Validar los datos
+    if not data or not data.get('titulo') or not data.get('contenido'):
+        return jsonify({"message": "Datos incompletos"}), 400
+
+    # Crear una nueva instancia de Politica con los datos recibidos
+    nueva_politica = Politica(
+        titulo=data['titulo'],
+        contenido=data['contenido']
+    )
+
+    # Guardar la nueva política en la base de datos
+    db.session.add(nueva_politica)
+    db.session.commit()
+
+    # Retornar la política recién creada con su ID
+    return jsonify(nueva_politica.serialize()), 201
+
 # Obtener todas las políticas
 @app.route('/politicas', methods=['GET'])
 def obtener_politicas():

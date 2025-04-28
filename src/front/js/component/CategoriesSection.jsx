@@ -1,9 +1,19 @@
 import React, { useContext } from "react";
 import { Context } from "../store/appContext";
+import { useNavigate } from "react-router-dom"; // Importa useNavigate
 
 const CategoriesSection = ({ onNavigate }) => {
   const { store } = useContext(Context);
   const categories = store.categories;
+
+  const navigate = useNavigate(); // Llama a useNavigate para obtener la función de navegación
+
+  // Función para manejar la navegación a una categoría específica
+  const handleNavigate = (categoryId) => {
+    // Aquí puedes redirigir a una página específica de la categoría
+    // Por ejemplo, podrías redirigir a /category/:id
+    navigate(`/${categoryId}`);
+  };
 
   return (
     <section className="py-5 bg-white">
@@ -13,7 +23,7 @@ const CategoriesSection = ({ onNavigate }) => {
           {categories.map((category) => (
             <div className="col-6 col-md-3" key={category.id}>
               <button
-                onClick={() => onNavigate(category.id)}
+                onClick={() => handleNavigate(category.id)} // Llamamos a handleNavigate para redirigir
                 className="btn border border-light w-100 py-3 d-flex flex-column align-items-center justify-content-center rounded shadow-sm"
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.backgroundColor = "#ececec")
@@ -34,3 +44,4 @@ const CategoriesSection = ({ onNavigate }) => {
 };
 
 export default CategoriesSection;
+

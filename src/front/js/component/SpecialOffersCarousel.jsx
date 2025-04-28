@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Context } from "../store/appContext"; // Asegúrate de importar tu contexto correctamente
 
-
 const SpecialOffersCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { store, actions } = useContext(Context); // usamos el Contexto
   const specialOffers = store.serviciosOfertas; // agarramos los datos que trae tu Flux
   
-
   useEffect(() => {
     // Llamamos a la acción para cargar las ofertas cuando el componente se monta
     actions.cargarServiciosOfertas();
@@ -45,7 +43,7 @@ const SpecialOffersCarousel = () => {
         <div className="position-relative">
           <div className="row">
             {visibleOffers.map((offer) => (
-              <div key={offer.id} className="col-12 col-md-6 mb-4">
+              <div key={offer.id} className="col-12 col-md-6 col-lg-3 mb-4">
                 <div className="card h-100 shadow-sm">
                   <div
                     className="card-img-top"
@@ -115,3 +113,4 @@ const SpecialOffersCarousel = () => {
 };
 
 export default SpecialOffersCarousel;
+

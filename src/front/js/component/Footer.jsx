@@ -17,23 +17,8 @@ const Footer = () => {
             <h4 className="font-weight-bold mb-3">Explorar</h4>
             <ul className="list-unstyled">
               <li>
-                <Link to="/ofertas" className="hover:text-white">
+                <Link to="/todaslascategorias" className="hover:text-white">
                   Ofertas
-                </Link>
-              </li>
-              <li>
-                <Link to="/categorias" className="hover:text-white">
-                  Categorías
-                </Link>
-              </li>
-              <li>
-                <Link to="/ciudades" className="hover:text-white">
-                  Ciudades
-                </Link>
-              </li>
-              <li>
-                <Link to="/novedades" className="hover:text-white">
-                  Novedades
                 </Link>
               </li>
             </ul>
@@ -44,16 +29,6 @@ const Footer = () => {
               <li>
                 <Link to="/sobre-nosotros" className="hover:text-white">
                   Sobre nosotros
-                </Link>
-              </li>
-              <li>
-                <Link to="/trabaja-con-nosotros" className="hover:text-white">
-                  Trabaja con nosotros
-                </Link>
-              </li>
-              <li>
-                <Link to="/para-negocios" className="hover:text-white">
-                  Para negocios
                 </Link>
               </li>
               <li>

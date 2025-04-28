@@ -38,7 +38,7 @@ const HeroBanner = () => {
                   </p>
 
                   <Link
-                    to="/ofertas"
+                    to="/todaslascategorias"
                     className="btn bg-white text-danger fw-semibold px-4 py-2 rounded-3 shadow-sm"
                   >
                     Explorar ofertas

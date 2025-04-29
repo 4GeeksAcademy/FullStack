@@ -1,18 +1,25 @@
 import React, { useContext } from "react";
 import { Context } from "../store/appContext";
-import { useNavigate } from "react-router-dom"; // Importa useNavigate
+import { useNavigate } from "react-router-dom";
 
 const CategoriesSection = ({ onNavigate }) => {
   const { store } = useContext(Context);
-  const categories = store.categories;
+  // Asegurarnos que tenemos todas las categorías, incluyendo "Top Ofertas"
+  const categories = store.categories || [
+    { id: "belleza", name: "Belleza", icon: "💆‍♀️" },
+    { id: "gastronomia", name: "Gastronomía", icon: "🍽️" },
+    { id: "viajes", name: "Viajes", icon: "✈️" },
+    { id: "ofertas", name: "Top Ofertas", icon: "🔥" }
+  ];
 
-  const navigate = useNavigate(); // Llama a useNavigate para obtener la función de navegación
+  const navigate = useNavigate();
 
   // Función para manejar la navegación a una categoría específica
-  const handleNavigate = (categoryId) => {
-    // Aquí puedes redirigir a una página específica de la categoría
-    // Por ejemplo, podrías redirigir a /category/:id
-    navigate(`/${categoryId}`);
+  const handleNavigate = (categoryId, categoryName) => {
+    // Redirigimos a la ruta de categoría pasando el nombre como state
+    navigate(`/category/${categoryId}`, { 
+      state: { categoryName: categoryName } 
+    });
   };
 
   return (
@@ -23,7 +30,7 @@ const CategoriesSection = ({ onNavigate }) => {
           {categories.map((category) => (
             <div className="col-6 col-md-3" key={category.id}>
               <button
-                onClick={() => handleNavigate(category.id)} // Llamamos a handleNavigate para redirigir
+                onClick={() => handleNavigate(category.id, category.name)}
                 className="btn border border-light w-100 py-3 d-flex flex-column align-items-center justify-content-center rounded shadow-sm"
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.backgroundColor = "#ececec")
@@ -44,4 +51,3 @@ const CategoriesSection = ({ onNavigate }) => {
 };
 
 export default CategoriesSection;
-

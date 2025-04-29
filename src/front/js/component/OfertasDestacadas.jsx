@@ -4,6 +4,7 @@ import { Button, Container, Row, Col, Card } from "react-bootstrap";
 import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
+import { Link } from "react-router-dom";
 
 const OfertasDestacadas = () => {
   const location = useLocation();

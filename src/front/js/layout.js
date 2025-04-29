@@ -11,6 +11,7 @@ import injectContext from "./store/appContext";
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
 import CartPage from "./component/CartPage.jsx"; 
+import { Product } from "./pages/Product.jsx";
 import LoginPage from "./component/LoginPage.jsx";
 import { TodasLasCategorias } from "./pages/TodasLasCategorias.jsx" 
 import { VistasTop } from "./pages/VistasTop.jsx"
@@ -22,7 +23,6 @@ import VistaCookies from "./pages/VistaCookies.jsx"
 import VistaSobreNosotros from "./pages/VistaSobreNosotros.jsx"
 import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
 import VistaContacto from "./pages/VistaContacto.jsx";
-
 
 //create your first component
 const Layout = () => {
@@ -42,6 +42,17 @@ const Layout = () => {
             <Route path="/single/:theid" element={<Single />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/product" element={<Product />} />
+            {/* 
+            Uncomment these when you have these components ready
+            <Route path="/top" element={<TopPage />} />
+            <Route path="/food" element={<FoodPage />} />
+            <Route path="/beauty" element={<BeautyPage />} />
+            <Route path="/activities" element={<ActivitiesPage />} />
+            <Route path="/travel" element={<TravelPage />} />
+            <Route path="/ofertas" element={<OfertasPage />} /> 
+            */}
+            <Route path="*" element={<h1 className="text-center py-5">Not found!</h1>} />
             <Route path="/todaslascategorias" element={<TodasLasCategorias />} />
             <Route path="/top" element={<VistasTop />} />
             <Route path="/viajes" element={<VistasViajes />} />

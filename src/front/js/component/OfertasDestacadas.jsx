@@ -5,7 +5,7 @@ import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
 
-const ProductDetail = () => {
+const OfertasDestacadas = () => {
   const location = useLocation();
   const { offer } = location.state || {};
   const { store, actions } = useContext(Context);
@@ -68,7 +68,7 @@ const ProductDetail = () => {
   if (!offer) {
     return (
       <Container className="my-5">
-        <div className="alert alert-warning">No se encontraron detalles del producto</div>
+        <div className="alert alert-warning">No se encontraron detalles de la oferta destacada</div>
       </Container>
     );
   }
@@ -81,7 +81,7 @@ const ProductDetail = () => {
   const displayImage = displayData.image || displayData.imagen || "https://via.placeholder.com/500x400?text=Sin+imagen";
   
   // Extraer la descripción directamente del objeto completo
-  const displayDescription = displayData.descripcion || displayData.description || "No hay descripción disponible para este producto.";
+  const displayDescription = displayData.descripcion || displayData.description || "No hay descripción disponible para esta oferta destacada.";
   
   console.log("Objeto usado para mostrar:", displayData);
   console.log("Descripción encontrada:", displayDescription);
@@ -133,7 +133,7 @@ const ProductDetail = () => {
       discountPrice: actualDiscountPrice,
       originalPrice: actualPrice
     });
-    alert("Producto agregado al carrito");
+    alert("Oferta destacada agregada al carrito");
   };
 
   // Render de estrellas
@@ -182,7 +182,7 @@ const ProductDetail = () => {
                 <span className="ms-3 text-muted text-decoration-line-through">${actualPrice}</span>
                 <span className="ms-3 badge bg-danger">{finalDiscount}% OFF</span>
               </div>
-              <p className="text-success mt-2 mb-0">{displayData.buyers || 0} personas ya han comprado esta oferta</p>
+              <p className="text-success mt-2 mb-0">{displayData.buyers || 0} personas ya han comprado esta oferta destacada</p>
             </div>
             
             <div className="mb-4">
@@ -218,4 +218,4 @@ const ProductDetail = () => {
   );
 };
 
-export default ProductDetail;
+export default OfertasDestacadas;

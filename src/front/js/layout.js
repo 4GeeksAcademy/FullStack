@@ -11,8 +11,18 @@ import injectContext from "./store/appContext";
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
 import CartPage from "./component/CartPage.jsx"; 
-import LoginPage from "./component/LoginPage.jsx"; 
 import { Product } from "./pages/Product.jsx";
+import LoginPage from "./component/LoginPage.jsx";
+import { TodasLasCategorias } from "./pages/TodasLasCategorias.jsx" 
+import { VistasTop } from "./pages/VistasTop.jsx"
+import { VistasViajes } from "./pages/VistasViajes.jsx";
+import { VistasBelleza } from "./pages/VistasBelleza.jsx";
+import { VistasGastronomia } from "./pages/VistasGastronomia.jsx";
+import VistaPoliticaDePrivacidad from "./pages/PoliticasDePrivacidad.jsx"
+import VistaCookies from "./pages/VistaCookies.jsx"
+import VistaSobreNosotros from "./pages/VistaSobreNosotros.jsx"
+import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
+import VistaContacto from "./pages/VistaContacto.jsx";
 
 //create your first component
 const Layout = () => {
@@ -43,6 +53,16 @@ const Layout = () => {
             <Route path="/ofertas" element={<OfertasPage />} /> 
             */}
             <Route path="*" element={<h1 className="text-center py-5">Not found!</h1>} />
+            <Route path="/todaslascategorias" element={<TodasLasCategorias />} />
+            <Route path="/top" element={<VistasTop />} />
+            <Route path="/viajes" element={<VistasViajes />} />
+            <Route path="/belleza" element={<VistasBelleza />} />
+            <Route path="/gastronomia" element={<VistasGastronomia />} />
+            <Route path="/politica-privacidad" element={<VistaPoliticaDePrivacidad />} />
+            <Route path="/cookies" element={<VistaCookies />} />
+            <Route path="/sobre-nosotros" element={<VistaSobreNosotros />} />
+            <Route path="/terminos" element={<VistaTerminosYCondiciones />} />
+            <Route path="/Contacto" element={<VistaContacto />} />
           </Routes>
           <Footer />
         </ScrollToTop>
@@ -52,3 +72,4 @@ const Layout = () => {
 };
 
 export default injectContext(Layout);
+            

@@ -6,7 +6,7 @@ def crear_politicas():
         politicas = [
             Politica(
                 titulo="Política de Privacidad",
-                contenido="""
+                contenido=""" 
 En GruponClone, tu privacidad es una prioridad. Recopilamos datos personales únicamente para mejorar tu experiencia en nuestra plataforma, facilitar las compras y reservas, y enviarte información relevante. Estos datos incluyen nombre, correo electrónico, preferencias de servicio, historial de compras y ubicación.
 No compartimos tu información con terceros sin tu consentimiento, salvo cuando sea necesario para procesar un servicio o cumplir con requisitos legales.
 Implementamos medidas de seguridad para proteger tus datos y garantizar que se manejen de forma responsable.
@@ -15,7 +15,7 @@ Al utilizar nuestros servicios, aceptás los términos de esta política.
             ),
             Politica(
                 titulo="Términos y Condiciones",
-                contenido="""
+                contenido=""" 
 El uso de GruponClone implica la aceptación de estos términos y condiciones. Nuestra plataforma permite comprar, vender y reservar servicios con descuentos exclusivos.
 Los usuarios deben proporcionar información veraz y mantener la confidencialidad de sus credenciales.
 GruponClone actúa como intermediario entre proveedores y compradores, y no se hace responsable por incumplimientos por parte de terceros.
@@ -25,7 +25,7 @@ El mal uso de la plataforma podrá conllevar la suspensión o eliminación de la
             ),
             Politica(
                 titulo="Política de Cookies",
-                contenido="""
+                contenido=""" 
 GruponClone utiliza cookies y tecnologías similares para personalizar tu experiencia, analizar el tráfico y mostrarte promociones relevantes.
 Estas cookies nos permiten recordar tus preferencias, mantener sesiones activas y mejorar el rendimiento del sitio.
 Podés configurar tu navegador para bloquear o eliminar cookies, aunque esto puede afectar la funcionalidad del sitio.
@@ -34,13 +34,32 @@ Al continuar navegando en GruponClone, aceptás el uso de cookies conforme a est
             ),
             Politica(
                 titulo="Sobre Nosotros",
-                contenido="""
+                contenido=""" 
 En GruponClone, creemos que los mejores momentos no tienen que ser costosos.
 Somos una plataforma especializada en la compra, venta y reserva de experiencias y servicios con descuentos exclusivos.
 Conectamos a usuarios con miles de opciones en gastronomía, belleza, viajes y más, en un solo lugar fácil y seguro.
 Nuestro objetivo es ayudarte a descubrir y disfrutar lo mejor de tu ciudad y del mundo, ahorrando en cada paso.
 """
             ),
+            Politica(
+                titulo="Contactos",
+                contenido=""" 
+¿Tienes alguna pregunta, sugerencia o simplemente quieres saludarnos?
+Estamos aquí para ayudarte. Ponte en contacto con nosotros a través del siguiente formulario o usando los datos que te dejamos a continuación.
+
+Escríbenos
+Correo electrónico: contacto@grouponclone.com
+
+Teléfono: +34 912 345 678
+
+Horario de atención: Lunes a Viernes, de 9:00 a 18:00 (hora local)
+
+Visítanos
+Dirección:
+Avenida de la Innovación 123,
+Madrid, España
+"""
+            )
         ]
         db.session.bulk_save_objects(politicas)
         db.session.commit()

@@ -16,9 +16,9 @@ const getState = ({ getStore, getActions, setStore }) => {
       ],
       categories: [
         { id: "top", name: "Top Ofertas", icon: "⭐" },
-        { id: "beauty", name: "Belleza", icon: "💄" },
-        { id: "food", name: "Gastronomía", icon: "🍴" },
-        { id: "travel", name: "Viajes", icon: "✈️" },
+        { id: "belleza", name: "Belleza", icon: "💄" },
+        { id: "gastronomia", name: "Gastronomía", icon: "🍴" },
+        { id: "viajes", name: "Viajes", icon: "✈️" },
       ],
       producto: [
         {
@@ -40,6 +40,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       serviciosViajes: [],
       serviciosGastronomia: [],
       serviciosBelleza: [],
+      serviciosOfertas: [],
       cartItems: [], // Aquí se almacenarán los productos en el carrito
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
@@ -58,6 +59,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           reviews: 120,
           buyers: 250,
       }
+      user: null, // Aquí almacenaremos los datos del usuario
     },
     actions: {
       // Ejemplo de función para cambiar el color
@@ -148,44 +150,74 @@ const getState = ({ getStore, getActions, setStore }) => {
           0
         );
       },
+
+      // Función para setear los datos del usuario en el store
+      setUser: (userData) => {
+        setStore({ user: userData });
+        // Guardar los datos del usuario en el localStorage
+        localStorage.setItem("user", JSON.stringify(userData));
+      },
+
+      // Función para cargar el usuario desde el localStorage
+      loadUserFromStorage: () => {
+        const user = localStorage.getItem("user");
+        if (user) {
+          setStore({ user: JSON.parse(user) });
+        }
+      },
+
+      // Cargar servicios (viajes, gastronomía, belleza, etc.)
       cargarServiciosViajes: async () => {
         try {
-          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/viajes"); 
-          if (!resp.ok) throw new Error("Error al obtener servicios de viajes");
+          const resp = await fetch(process.env.BACKEND_URL + "/viajes");
           const data = await resp.json();
-          console.log("Servicios de viajes recibidos:", data.viajes); // Verifica los datos que llegan
-          setStore({ serviciosViajes: data.viajes });
-          console.log("estos son los viajes", data.viajes)
-          console.log("esta es la 1er imagen", data.viajes[0]?.image)
-          console.log("este es el price",data.viajes[0]?.price )
-        } catch (error) {
-          console.error("Error cargando viajes:", error);
+          const viajes = data.viajes || [];
+          setStore({ serviciosViajes: viajes });
+          return viajes;
+        } catch (e) {
+          console.error("Error al cargar viajes:", e);
+          return [];
         }
       },
-      cargarServiciosGastronomia: async() => {
+
+      cargarServiciosGastronomia: async () => {
         try {
-          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/gastronomia");
-          if(!resp.ok) throw new Error("Error al obtener servicios gastronomía")
-          const data = await resp.json()
-          console.log("servicios recibidos de gastronomía: ", data.gastronomia) // verificador
-          setStore({ serviciosGastronomia: data.gastronomia});
-          console.log("Esta es la gastonomia", data.gastronomia)
-      } catch (e){
-          console.error("error cargando gastronimia", e);
-      }
-      },
-      cargarServiciosBelleza: async()=>{
-        try{
-          const resp = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/belleza");
-          if(!resp.ok) throw new Error("Error al obtener servicios belleza")
-          const data = await resp.json()
-          console.log("servicios recibidos de belleza: ", data.belleza) // verificador
-          setStore({ serviciosBelleza: data.belleza});
-          console.log("Esta es la belleza data", data.belleza)
-        }catch(e){
-          console.error("error al cargar belleza", e);
+          const resp = await fetch(process.env.BACKEND_URL + "/gastronomia");
+          const data = await resp.json();
+          const gastronomia = data.gastronomia || [];
+          setStore({ serviciosGastronomia: gastronomia });
+          return gastronomia;
+        } catch (e) {
+          console.error("Error al cargar gastronomía:", e);
+          return [];
         }
-      }
+      },
+
+      cargarServiciosBelleza: async () => {
+        try {
+          const resp = await fetch(process.env.BACKEND_URL + "/belleza");
+          const data = await resp.json();
+          const belleza = data.belleza || [];
+          setStore({ serviciosBelleza: belleza });
+          return belleza;
+        } catch (e) {
+          console.error("Error al cargar belleza:", e);
+          return [];
+        }
+      },
+
+      cargarServiciosOfertas: async () => {
+        try {
+          const resp = await fetch(process.env.BACKEND_URL + "/ofertas");
+          const data = await resp.json();
+          const ofertas = data.ofertas || [];
+          setStore({ serviciosOfertas: ofertas });
+          return ofertas;
+        } catch (e) {
+          console.error("Error al cargar ofertas:", e);
+          return [];
+        }
+      },
     },
   };
 };

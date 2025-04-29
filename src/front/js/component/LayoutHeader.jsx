@@ -14,11 +14,11 @@ const LayoutHeader = () => {
     <>
       <header className="sticky-top bg-white shadow-sm">
         <div className="container d-flex align-items-center py-3 flex-wrap">
-          {/* Logo groupon*/}
+          {/* Logo Groupon */}
           <div
             className="d-flex align-items-center me-auto me-md-4"
             role="button"
-            onClick={() => actions.navigateTo("home")}
+            onClick={() => navigate("/")}
           >
             <i className="bi bi-house-fill fs-2 text-danger me-2"></i>
             <h1 className="fs-4 fw-bold mb-0">GrouponClone</h1>
@@ -35,7 +35,7 @@ const LayoutHeader = () => {
                 </span>
               )}
             </Link>
-            
+
             {/* Icono de login */}
             <Link to="/login" role="button">
               <i className="bi bi-person-circle fs-4 text-dark"></i>

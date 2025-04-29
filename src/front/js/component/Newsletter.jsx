@@ -8,9 +8,18 @@ const Newsletter = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Obtener la URL del backend desde el archivo .env
+    const backendUrl = process.env.BACKEND_URL;
+
+    // Verificar si la URL del backend está definida
+    if (!backendUrl) {
+      setError("La URL del backend no está definida.");
+      return;
+    }
+
     // Hacer la solicitud POST a la API de Flask
     try {
-      const response = await fetch("https://improved-space-robot-w65r5g6575xh97qv-3001.app.github.dev/newsletter", {
+      const response = await fetch(`${backendUrl}/newsletter`, {
         method: "POST", // Método de la solicitud
         headers: {
           "Content-Type": "application/json", // Especificamos que los datos están en formato JSON
@@ -88,3 +97,4 @@ const Newsletter = () => {
 };
 
 export default Newsletter;
+

@@ -4,8 +4,15 @@ import CategoryCard from "./CategoryCard.jsx";
 
 const FeaturedDeals = ({ onViewService = () => {} }) => {
   const { store } = useContext(Context);
-  const producto = store.producto[0]; // Tomamos solo el primer producto
-  const deals = Array(4).fill(producto); // Lo clonamos 4 veces
+
+  // Asegurarte que los servicios existen antes de acceder a ellos
+  const gastronomia = store.serviciosGastronomia[0];
+  const belleza = store.serviciosBelleza[0];
+  const viajes = store.serviciosViajes.slice(0, 2); // Primeros 2 de viajes
+
+  // Ahora armás un array combinando todo
+  const deals = [gastronomia, belleza, ...viajes].filter(Boolean); 
+  // filter(Boolean) elimina posibles undefined si algún array está vacío
 
   return (
     <section className="py-5">

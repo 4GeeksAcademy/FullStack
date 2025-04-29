@@ -1,69 +1,66 @@
-import React, { useContext, useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Context } from "../store/appContext";
 import CategoryCard from "./CategoryCard.jsx";
+import { useNavigate } from "react-router-dom"; // Importar useNavigate
 
-const RelatedContent = ({ onNavigate = () => { } }) => {
+const RelatedContent = () => {
   const { store, actions } = useContext(Context);
+  const navigate = useNavigate(); // Usar useNavigate para redirigir al usuario
+
+  const [currentIndex, setCurrentIndex] = useState(0); // Para controlar el índice de las tarjetas mostradas
 
   useEffect(() => {
-    if (store.serviciosViajes.length === 0) {
-      actions.cargarServiciosViajes();
-    }
-    if (store.serviciosGastronomia.length === 0) {
-      actions.cargarServiciosGastronomia();
-    }
-    if (store.serviciosBelleza.length === 0) {
-      actions.cargarServiciosBelleza();
-    }
-    console.log("servicios viajes desde componente:", store.serviciosViajes);
-    console.log("servicios gastronomia desde componente:", store.serviciosGastronomia);
-    console.log("servicios belleza desde componente:", store.serviciosBelleza);
-  }, [store.serviciosViajes, store.serviciosGastronomia, store.serviciosBelleza, actions]);
+    const fetchData = async () => {
+      if (store.serviciosViajes.length === 0) {
+        await actions.cargarServiciosViajes();
+      }
+      if (store.serviciosGastronomia.length === 0) {
+        await actions.cargarServiciosGastronomia();
+      }
+      if (store.serviciosBelleza.length === 0) {
+        await actions.cargarServiciosBelleza();
+      }
+    };
 
-  const defaultOffer =
-    store.producto && store.producto.length > 0 ? store.producto[0] : null;
+    fetchData();
+  }, []);
 
+  const defaultOffer = store.producto && store.producto.length > 0 ? store.producto[0] : null;
+
+  // Construimos las categorías con los datos disponibles
   const categories = [
     {
-      id: "beauty",
+      id: "Belleza",
       name: "Belleza",
-      deals: store.serviciosBelleza && store.serviciosBelleza.length > 0
-        ? store.serviciosBelleza
-        : defaultOffer
-          ? Array(4).fill(defaultOffer)
-          : [],
+      deals: store.serviciosBelleza || [],
     },
     {
-      id: "food",
+      id: "gastronomia",
       name: "Gastronomía",
-      deals: store.serviciosGastronomia && store.serviciosGastronomia.length > 0
-        ? store.serviciosGastronomia
-        : defaultOffer
-          ? Array(4).fill({ ...defaultOffer, category: "food" })
-          : [],
+      deals: store.serviciosGastronomia || [],
     },
     {
-      id: "travel",
+      id: "viajes",
       name: "Viajes",
-      deals: store.serviciosViajes && store.serviciosViajes.length > 0
-        ? store.serviciosViajes
-        : defaultOffer
-          ? Array(4).fill({ ...defaultOffer, category: "travel" })
-          : [],
+      deals: store.serviciosViajes || [],
     },
   ];
 
-  const scrollContainerRef = useRef({});
-
-  const scroll = (categoryId, direction) => {
-    const container = scrollContainerRef.current[categoryId];
-    if (container) {
-      const scrollAmount = container.offsetWidth / 1.2;
-      container.scrollBy({
-        left: direction === "right" ? scrollAmount : -scrollAmount,
-        behavior: "smooth",
-      });
+  // Función para manejar el desplazamiento de las tarjetas
+  const scroll = (direction) => {
+    if (direction === "left" && currentIndex > 0) {
+      setCurrentIndex(currentIndex - 4);
+    } else if (direction === "right" && currentIndex + 4 < categories[0].deals.length) {
+      setCurrentIndex(currentIndex + 4);
     }
+  };
+
+  // Verificamos si alguna categoría tiene datos para mostrar
+  const hasAnyData = categories.some(category => category.deals && category.deals.length > 0);
+
+  // Función que maneja la navegación al hacer clic en "Explorar"
+  const handleNavigate = (categoryId) => {
+    navigate(`${categoryId.toLowerCase()}`); // Usar el ID de la categoría para la ruta
   };
 
   return (
@@ -71,34 +68,33 @@ const RelatedContent = ({ onNavigate = () => { } }) => {
       <div>
         <h2 className="fs-3 fw-bold mb-4">También te puede interesar</h2>
 
-        {categories.map((category) => (
-          <div key={category.id} className="mb-5">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h3 className="fs-4 fw-bold mb-0">{category.name}</h3>
-              <button
-                onClick={() => onNavigate(category.id)}
-                className="btn btn-link text-danger text-decoration-none p-0"
-              >
-                Explorar {category.name.toLowerCase()} →
-              </button>
-            </div>
+        {hasAnyData ? (
+          categories.map((category) => (
+            <div key={category.id} className="mb-5">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h3 className="fs-4 fw-bold mb-0">{category.name}</h3>
+                <button
+                  onClick={() => handleNavigate(category.id)} // Llamar a la función handleNavigate
+                  className="btn btn-link text-danger text-decoration-none p-0"
+                >
+                  Explorar {category.name.toLowerCase()} →
+                </button>
+              </div>
 
-            <div className="position-relative">
-              <button
-                className="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-1"
-                onClick={() => scroll(category.id, "left")}
-                style={{ zIndex: 2 }}
-              >
-                ◀
-              </button>
+              <div className="position-relative">
+                {/* Flecha izquierda */}
+                <button
+                  className="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-1"
+                  onClick={() => scroll("left")}
+                  style={{ zIndex: 2 }}
+                  disabled={currentIndex === 0} // Desactivar si estamos en la primera posición
+                >
+                  &#8592; {/* Flecha hacia la izquierda */}
+                </button>
 
-              <div
-                className="d-flex overflow-auto gap-3 px-4"
-                style={{ scrollBehavior: "smooth" }}
-                ref={(el) => (scrollContainerRef.current[category.id] = el)}
-              >
-                {category.deals.length > 0 ? (
-                  category.deals.map((deal, index) => {
+                {/* Contenedor de tarjetas */}
+                <div className="row gx-3"> {/* Cambié el contenedor de tarjetas a row */}
+                  {category.deals.slice(currentIndex, currentIndex + 4).map((deal, index) => {
                     const offer = {
                       title: deal.nombre || deal.title || "Sin título",
                       image:
@@ -122,30 +118,32 @@ const RelatedContent = ({ onNavigate = () => { } }) => {
                     return (
                       <div
                         key={`${category.id}-${index}`}
-                        style={{ minWidth: "250px", flex: "0 0 auto" }}
+                        className="col-12 col-sm-6 col-md-3" // 1 tarjeta por fila en móvil, 2 por fila en tablet, 4 por fila en escritorio
                       >
                         <CategoryCard
                           offer={offer}
-                          onViewService={() => onNavigate(category.id)}
+                          onViewService={() => handleNavigate(category.id)} // Llamar a la función handleNavigate también aquí si lo necesitas
                         />
                       </div>
                     );
-                  })
-                ) : (
-                  <p>No hay datos</p>
-                )}
-              </div>
+                  })}
+                </div>
 
-              <button
-                className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y z-1"
-                onClick={() => scroll(category.id, "right")}
-                style={{ zIndex: 2 }}
-              >
-                ▶
-              </button>
+                {/* Flecha derecha */}
+                <button
+                  className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y z-1"
+                  onClick={() => scroll("right")}
+                  style={{ zIndex: 2 }}
+                  disabled={currentIndex + 4 >= category.deals.length} // Desactivar si estamos en la última página
+                >
+                  &#8594; {/* Flecha hacia la derecha */}
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p>Cargando información...</p> // Mensaje mientras se cargan los datos
+        )}
       </div>
     </section>
   );

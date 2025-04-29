@@ -206,21 +206,58 @@ def crear_usuario():
 
     return jsonify({"mensaje": "Usuario creado correctamente"}), 201
 
-# Ruta para obtener todos los usuarios
-@app.route('/usuarios', methods=['GET'])
+@app.route('/usuarios/me', methods=['GET'])
 @jwt_required()
-def obtener_usuarios():
-    usuarios = User.query.all()
-    return jsonify([usuario.serialize() for usuario in usuarios]), 200
+def obtener_usuario_logueado():
+    user_email = get_jwt_identity()
+    usuario = User.query.filter_by(correo=user_email).first()
 
-# Ruta para obtener un usuario por ID
-@app.route('/usuarios/<int:id>', methods=['GET'])
+    if usuario:
+        return jsonify(usuario.serialize())
+    else:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+
+# Ruta PUT: Actualizar perfil
+@app.route('/usuarios/me', methods=['PUT'])
 @jwt_required()
-def obtener_usuario_por_id(id):
+def actualizar_perfil():
+    user_email = get_jwt_identity()
+    data = request.get_json()
+
+    usuario = User.query.filter_by(correo=user_email).first()
+    if not usuario:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+
+    usuario.telefono = data.get('telefono', usuario.telefono)
+    usuario.ciudad = data.get('ciudad', usuario.ciudad)
+    usuario.direccion_line1 = data.get('direccion', usuario.direccion_line1)
+
+    try:
+        db.session.commit()
+        return jsonify({"msg": "Perfil actualizado correctamente"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error al actualizar el perfil", "error": str(e)}), 500
+
+
+# Ruta para actualizar el perfil del usuario
+@app.route('/usuarios/<int:id>', methods=['PUT'])
+@jwt_required()
+def actualizar_usuario(id):
     usuario = User.query.get(id)
     if not usuario:
         return jsonify({"error": "Usuario no encontrado"}), 404
+    
+    # Actualiza los campos del usuario
+    data = request.get_json()
+    usuario.nombre = data.get('nombre', usuario.nombre)
+    usuario.email = data.get('email', usuario.email)
+    usuario.ciudad = data.get('ciudad', usuario.ciudad)
+    usuario.descripcion = data.get('descripcion', usuario.descripcion)
+
+    db.session.commit()
     return jsonify(usuario.serialize()), 200
+
 
 # Ruta para iniciar sesión
 @app.route('/login', methods=['POST'])
@@ -237,7 +274,7 @@ def iniciar_sesion():
         return jsonify({"error": "Correo o contraseña incorrectos"}), 401
 
     access_token = create_access_token(identity=usuario.correo)
-    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token}, "user_id": usuario.id), 200
+    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token, "user_id": usuario.id}), 200
 
 # Ruta para editar usuario (cambiar contraseña)
 @app.route('/editar', methods=['PUT'])
@@ -627,8 +664,6 @@ def obtener_belleza_por_id(id):
         return {'message': 'Belleza no encontrada'}, 404
 
     return jsonify(belleza.serialize()), 200
-
-# RUTA PARA CREAR UNA COMPRA
 
 
     

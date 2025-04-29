@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Context } from '../store/appContext';
+import { useContext } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const LoginPage = () => {
+    const { actions } = useContext(Context);
     const [isLogin, setIsLogin] = useState(true);
-    const [email, setEmail] = useState('');
+    const [correo, setCorreo] = useState('');
     const [password, setPassword] = useState('');
-    const [name, setName] = useState('');
+    const [telefono, setTelefono] = useState('');
+    const [direccion, setDireccion] = useState('');
+    const [ciudad, setCiudad] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -17,33 +22,27 @@ const LoginPage = () => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
-
-        const endpoint = isLogin ? '/api/login' : '/api/register';
-        const body = isLogin ? { email, password } : { email, password, name };
-
         try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Something went wrong');
-            }
-
             if (isLogin) {
-                localStorage.setItem('token', data.token);
-                navigate('/'); // redirect after login
+                const success = await actions.loginUser({ correo, password });
+                if (success) {
+                    navigate('/');
+                } else {
+                    setError('Credenciales inválidas o error al iniciar sesión.');
+                }
             } else {
-                // After successful registration
-                setEmail('');
-                setPassword('');
-                setName('');
-                setIsLogin(true);
-                setError('Registration successful! Please login.');
+                const success = await actions.registerUser({ correo, password, telefono, direccion, ciudad });
+                if (success) {
+                    setError('¡Registro exitoso! Ahora puedes iniciar sesión.');
+                    setIsLogin(true);
+                    setCorreo('');
+                    setPassword('');
+                    setTelefono('');
+                    setDireccion('');
+                    setCiudad('');
+                } else {
+                    setError('Error al registrarse.');
+                }
             }
         } catch (err) {
             setError(err.message);
@@ -53,145 +52,76 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="container d-flex justify-content-center align-items-center min-vh-100">
-            <div className="card shadow p-4" style={{ maxWidth: '450px', width: '100%' }}>
+        <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-light">
+            <div className="card shadow-lg p-4" style={{ maxWidth: '500px', width: '100%' }}>
                 <div className="text-center mb-4">
-                    <i className="bi bi-person-circle text-danger" style={{ fontSize: '3rem' }}></i>
-                    <h2 className="mt-2">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+                    <i className="bi bi-person-circle text-danger" style={{ fontSize: '3.5rem' }}></i>
+                    <h2 className="mt-3 fw-bold">{isLogin ? 'Iniciar Sesión' : 'Registrarse'}</h2>
                     <p className="text-muted">
-                        {isLogin ? 'Sign in to continue' : 'Join us to get started'}
+                        {isLogin ? 'Ingresa tus credenciales para continuar' : 'Crea una cuenta para comenzar'}
                     </p>
                 </div>
-
                 {error && (
-                    <div className={`alert ${error.includes('successful') ? 'alert-success' : 'alert-danger'}`}>
+                    <div className={`alert ${error.includes('éxito') ? 'alert-success' : 'alert-danger'}`}>
                         {error}
                     </div>
                 )}
-
                 <form onSubmit={handleSubmit}>
                     {!isLogin && (
-                        <div className="mb-3">
-                            <label className="form-label">Full Name</label>
-                            <div className="input-group">
-                                <span className="input-group-text">
-                                    <i className="bi bi-person"></i>
-                                </span>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                    placeholder="Enter your name"
-                                />
+                        <>
+                            <div className="mb-3">
+                                <label className="form-label">Teléfono</label>
+                                <div className="input-group">
+                                    <span className="input-group-text"><i className="bi bi-telephone"></i></span>
+                                    <input type="tel" className="form-control" value={telefono} onChange={(e) => setTelefono(e.target.value)} required />
+                                </div>
                             </div>
-                        </div>
+                            <div className="mb-3">
+                                <label className="form-label">Dirección</label>
+                                <div className="input-group">
+                                    <span className="input-group-text"><i className="bi bi-house-door"></i></span>
+                                    <input type="text" className="form-control" value={direccion} onChange={(e) => setDireccion(e.target.value)} required />
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Ciudad</label>
+                                <div className="input-group">
+                                    <span className="input-group-text"><i className="bi bi-geo-alt"></i></span>
+                                    <input type="text" className="form-control" value={ciudad} onChange={(e) => setCiudad(e.target.value)} required />
+                                </div>
+                            </div>
+                        </>
                     )}
-
                     <div className="mb-3">
-                        <label className="form-label">Email address</label>
+                        <label className="form-label">Correo electrónico</label>
                         <div className="input-group">
-                            <span className="input-group-text">
-                                <i className="bi bi-envelope"></i>
-                            </span>
-                            <input
-                                type="email"
-                                className="form-control"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                placeholder="Enter your email"
-                            />
+                            <span className="input-group-text"><i className="bi bi-envelope-at"></i></span>
+                            <input type="email" className="form-control" value={correo} onChange={(e) => setCorreo(e.target.value)} required />
                         </div>
                     </div>
-
                     <div className="mb-4">
-                        <label className="form-label">Password</label>
+                        <label className="form-label">Contraseña</label>
                         <div className="input-group">
-                            <span className="input-group-text">
-                                <i className="bi bi-lock"></i>
-                            </span>
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                className="form-control"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                placeholder="Enter your password"
-                                minLength="6"
-                            />
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
+                            <span className="input-group-text"><i className="bi bi-key"></i></span>
+                            <input type={showPassword ? "text" : "password"} className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="6" />
+                            <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword(!showPassword)}>
                                 <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                             </button>
                         </div>
-                        {!isLogin && (
-                            <small className="text-muted">Password must be at least 6 characters</small>
-                        )}
                     </div>
-
-                    {isLogin && (
-                        <div className="d-flex justify-content-end mb-3">
-                            <Link to="/forgot-password" className="text-decoration-none small">
-                                Forgot password?
-                            </Link>
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        className="btn btn-danger w-100 py-2 mb-3"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <>
-                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                {isLogin ? 'Logging in...' : 'Registering...'}
-                            </>
-                        ) : (
-                            isLogin ? 'Login' : 'Register'
-                        )}
+                    <button type="submit" className="btn btn-danger w-100" disabled={isLoading}>
+                        {isLoading ? (isLogin ? 'Iniciando...' : 'Registrando...') : (isLogin ? 'Iniciar Sesión' : 'Registrarse')}
                     </button>
-
-                    <div className="text-center">
-                        <button
-                            type="button"
-                            className="btn btn-link text-decoration-none"
-                            onClick={() => {
-                                setIsLogin(!isLogin);
-                                setError('');
-                            }}
-                        >
-                            {isLogin ? (
-                                <>
-                                    Don't have an account? <span className="text-danger">Register</span>
-                                </>
-                            ) : (
-                                <>
-                                    Already have an account? <span className="text-danger">Login</span>
-                                </>
-                            )}
+                    <div className="text-center mt-3">
+                        <button type="button" className="btn btn-link text-decoration-none" onClick={() => { setIsLogin(!isLogin); setError(''); }}>
+                            {isLogin ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión'}
                         </button>
                     </div>
-
                     {isLogin && (
-                        <div className="text-center mt-3">
-                            <p className="text-muted">Or continue with</p>
-                            <div className="d-flex justify-content-center gap-3">
-                                <button type="button" className="btn btn-outline-danger rounded-circle">
-                                    <i className="bi bi-google"></i>
-                                </button>
-                                <button type="button" className="btn btn-outline-danger rounded-circle">
-                                    <i className="bi bi-facebook"></i>
-                                </button>
-                                <button type="button" className="btn btn-outline-danger rounded-circle">
-                                    <i className="bi bi-twitter"></i>
-                                </button>
-                            </div>
+                        <div className="text-center mt-2">
+                            <Link to="/recuperar-contrasena" className="text-decoration-none small">
+                                ¿Olvidaste tu contraseña?
+                            </Link>
                         </div>
                     )}
                 </form>
@@ -201,4 +131,6 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+
+
 

@@ -23,6 +23,7 @@ from api.payment import payment_bp
 from flask_cors import CORS 
 from api.politicas import crear_politicas, Politica
 from flask_cors import CORS
+from sqlalchemy import or_
 
 
 load_dotenv()
@@ -68,9 +69,6 @@ setup_commands(app)
 
 app.register_blueprint(payment_bp)
 
-# Add all endpoints form the API with a "api" prefix
-app.register_blueprint(api, url_prefix='/api')
-
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
@@ -91,6 +89,90 @@ def serve_any_other_file(path):
     response = send_from_directory(static_file_dir, path)
     response.cache_control.max_age = 0  # avoid cache memory
     return response
+
+@app.route('/search', methods=['GET'])
+def search_all_services():
+    query = request.args.get('query', '')
+    if not query:
+        return jsonify({"error": "Missing query"}), 400
+
+    # Buscamos en todas las tablas relevantes
+    ofertas = Ofertas.query.filter(
+        or_(
+            Ofertas.title.ilike(f"%{query}%"),
+            Ofertas.descripcion.ilike(f"%{query}%")
+        )
+    ).all()
+
+    viajes = Viajes.query.filter(
+        or_(
+            Viajes.title.ilike(f"%{query}%"),
+            Viajes.descripcion.ilike(f"%{query}%")
+        )
+    ).all()
+
+    tops = Top.query.filter(
+        or_(
+            Top.title.ilike(f"%{query}%"),
+            Top.descripcion.ilike(f"%{query}%")
+        )
+    ).all()
+
+    bellezas = Belleza.query.filter(
+        or_(
+            Belleza.title.ilike(f"%{query}%"),
+            Belleza.descripcion.ilike(f"%{query}%")
+        )
+    ).all()
+
+    gastronomias = Gastronomia.query.filter(
+        or_(
+            Gastronomia.title.ilike(f"%{query}%"),
+            Gastronomia.descripcion.ilike(f"%{query}%")
+        )
+    ).all()
+
+    politicas = Politica.query.filter(
+        or_(
+            Politica.titulo.ilike(f"%{query}%"),
+            Politica.contenido.ilike(f"%{query}%")
+        )
+    ).all()
+
+    # Combinamos todos los resultados
+    all_results = []
+    
+    for oferta in ofertas:
+        result = oferta.serialize()
+        result["type"] = "oferta"
+        all_results.append(result)
+
+    for viaje in viajes:
+        result = viaje.serialize()
+        result["type"] = "viaje"
+        all_results.append(result)
+
+    for top in tops:
+        result = top.serialize()
+        result["type"] = "top"
+        all_results.append(result)
+
+    for belleza in bellezas:
+        result = belleza.serialize()
+        result["type"] = "belleza"
+        all_results.append(result)
+
+    for gastronomia in gastronomias:
+        result = gastronomia.serialize()
+        result["type"] = "gastronomia"
+        all_results.append(result)
+
+    for politica in politicas:
+        result = politica.serialize()
+        result["type"] = "politica"
+        all_results.append(result)
+
+    return jsonify(all_results), 200
 
 @app.route('/registro', methods=['POST'])
 def crear_usuario():
@@ -155,7 +237,7 @@ def iniciar_sesion():
         return jsonify({"error": "Correo o contraseña incorrectos"}), 401
 
     access_token = create_access_token(identity=usuario.correo)
-    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token}), 200
+    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token}, "user_id": usuario.id), 200
 
 # Ruta para editar usuario (cambiar contraseña)
 @app.route('/editar', methods=['PUT'])
@@ -787,6 +869,10 @@ def delte_producto():
             return jsonify({'message': 'Producto no encontrado en el carrito'}), 404
     else:
         return jsonify({'message':'Usuario o carrito no encontrado'}), 404
+    
+    # Add all endpoints form the API with a "api" prefix
+app.register_blueprint(api, url_prefix='/api')
+
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))

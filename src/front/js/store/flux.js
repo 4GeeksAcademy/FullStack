@@ -179,6 +179,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const data = await resp.json();
           const belleza = data.belleza || [];
           setStore({ serviciosBelleza: belleza });
+          console.log("SERVICOSSS BELLEZAAAAAAAA", belleza)
           return belleza;
         } catch (e) {
           console.error("Error al cargar belleza:", e);

@@ -22,6 +22,7 @@ import VistaCookies from "./pages/VistaCookies.jsx"
 import VistaSobreNosotros from "./pages/VistaSobreNosotros.jsx"
 import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
 import VistaContacto from "./pages/VistaContacto.jsx";
+import ProductDetail from "./component/ProductDetail.jsx";
 
 
 //create your first component
@@ -52,6 +53,7 @@ const Layout = () => {
             <Route path="/sobre-nosotros" element={<VistaSobreNosotros />} />
             <Route path="/terminos" element={<VistaTerminosYCondiciones />} />
             <Route path="/Contacto" element={<VistaContacto />} />
+            <Route path="/product-detail" element={<ProductDetail />} />
           </Routes>
           <Footer />
         </ScrollToTop>

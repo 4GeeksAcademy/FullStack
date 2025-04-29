@@ -237,7 +237,7 @@ def iniciar_sesion():
         return jsonify({"error": "Correo o contraseña incorrectos"}), 401
 
     access_token = create_access_token(identity=usuario.correo)
-    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token}), 200
+    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token}, "user_id": usuario.id), 200
 
 # Ruta para editar usuario (cambiar contraseña)
 @app.route('/editar', methods=['PUT'])

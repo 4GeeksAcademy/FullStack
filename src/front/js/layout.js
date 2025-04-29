@@ -11,6 +11,7 @@ import injectContext from "./store/appContext";
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
 import CartPage from "./component/CartPage.jsx"; 
+import { Product } from "./pages/Product.jsx";
 import LoginPage from "./component/LoginPage.jsx";
 import { TodasLasCategorias } from "./pages/TodasLasCategorias.jsx" 
 import { VistasTop } from "./pages/VistasTop.jsx"
@@ -23,7 +24,6 @@ import VistaSobreNosotros from "./pages/VistaSobreNosotros.jsx"
 import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
 import VistaContacto from "./pages/VistaContacto.jsx";
 import SearchResults from "./pages/SearchResults.jsx";
-
 
 
 //create your first component
@@ -44,7 +44,6 @@ const Layout = () => {
             <Route path="/single/:theid" element={<Single />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/search/:query" element={<SearchResults />} />
             <Route path="/todaslascategorias" element={<TodasLasCategorias />} />
             <Route path="/top" element={<VistasTop />} />
             <Route path="/viajes" element={<VistasViajes />} />

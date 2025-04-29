@@ -11,6 +11,7 @@ import injectContext from "./store/appContext";
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
 import CartPage from "./component/CartPage.jsx"; 
+import { Product } from "./pages/Product.jsx";
 import LoginPage from "./component/LoginPage.jsx";
 import { TodasLasCategorias } from "./pages/TodasLasCategorias.jsx" 
 import { VistasTop } from "./pages/VistasTop.jsx"
@@ -24,6 +25,8 @@ import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
 import VistaContacto from "./pages/VistaContacto.jsx";
 import ProductDetail from "./component/ProductDetail.jsx";
 import OfertasDestacadas from "./component/OfertasDestacadas.jsx";
+import SearchResults from "./pages/SearchResults.jsx";
+
 
 
 //create your first component

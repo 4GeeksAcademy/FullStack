@@ -44,6 +44,21 @@ const getState = ({ getStore, getActions, setStore }) => {
       cartItems: [], // Aquí se almacenarán los productos en el carrito
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
+      productDetails: {
+        id: 1,
+          title: "Spa de Lujo Completo",
+          description:
+            "Día completo con acceso a todas las instalaciones y 2 tratamientos",
+          image:
+            "https://images.unsplash.com/photo-1559599101-f09722fb4948?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+          city: "Madrid",
+          category: "beauty",
+          discountPrice: 89,
+          originalPrice: 150,
+          rating: 4,
+          reviews: 120,
+          buyers: 250,
+      },
       user: null, // Aquí almacenaremos los datos del usuario
     },
     actions: {
@@ -51,7 +66,54 @@ const getState = ({ getStore, getActions, setStore }) => {
       exampleFunction: () => {
         getActions().changeColor(0, "green");
       },
-
+      loginUser: async ({ correo, password }) => {
+        try {
+            const resp = await fetch(process.env.BACKEND_URL + '/login', {
+                method: 'POST',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ correo, password })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                console.error("Login error:", data);
+                return false;
+            }
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user', JSON.stringify({
+                correo: data.mensaje.split(', ')[1].replace('', ''),
+                role: data.role || 'cliente'
+            }));
+            return true;
+        } catch (error) {
+            console.error("Login error:", error);
+            return false;
+        }
+    },
+    registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
+        try {
+            const resp = await fetch(process.env.BACKEND_URL + '/registro', {
+                method: 'POST',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    correo,
+                    password,
+                    telefono,
+                    direccion_line1: direccion,
+                    ciudad,
+                    role: "cliente"
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                console.error("Register error:", data);
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error("Register error:", error);
+            return false;
+        }
+    },
       // Obtener un mensaje del backend (puedes adaptarlo a tu necesidad)
       getMessage: async () => {
         try {
@@ -64,6 +126,11 @@ const getState = ({ getStore, getActions, setStore }) => {
           console.log("Error loading message from backend", error);
         }
       },
+      
+      addProductToCart: async () => {
+        
+      }
+      ,
 
       // Cambiar color de un item en el demo
       changeColor: (index, color) => {

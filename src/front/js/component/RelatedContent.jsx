@@ -29,12 +29,14 @@ const RelatedContent = () => {
     { id: "viajes", name: "Viajes", deals: store.serviciosViajes || [] },
   ];
 
-  const handleNavigate = (categoryId) => {
-    navigate(`${categoryId.toLowerCase()}`);
+  const handleNavigate = (deal) => {
+    // Usamos navigate para pasar los datos de la oferta al componente ProductDetail
+    navigate(`/product-detail`, {
+      state: { offer: deal }
+    });
   };
 
   const scroll = (categoryId, direction, e) => {
-    // Prevenir comportamiento por defecto y propagación
     e.preventDefault();
     e.stopPropagation();
     e.nativeEvent.stopImmediatePropagation();
@@ -67,7 +69,7 @@ const RelatedContent = () => {
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h3 className="fs-4 fw-bold mb-0">{category.name}</h3>
                   <button
-                    onClick={() => handleNavigate(category.id)}
+                    onClick={() => navigate(`/category/${category.id.toLowerCase()}`)}
                     className="btn btn-link text-danger text-decoration-none p-0"
                   >
                     Explorar {category.name.toLowerCase()} →
@@ -75,17 +77,14 @@ const RelatedContent = () => {
                 </div>
 
                 <div className="position-relative">
-                  {/* Flecha izquierda */}
                   <button
                     className="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-1"
                     onClick={(e) => scroll(category.id, "left", e)}
                     disabled={currentIndex === 0}
-                    style={{ pointerEvents: currentIndex === 0 ? 'none' : 'auto' }}
                   >
                     &#8592;
                   </button>
 
-                  {/* Tarjetas */}
                   <div className="row gx-3">
                     {category.deals.slice(currentIndex, currentIndex + 4).map((deal, index) => {
                       const offer = {
@@ -102,19 +101,17 @@ const RelatedContent = () => {
                         <div key={`${category.id}-${index}`} className="col-12 col-sm-6 col-md-3">
                           <CategoryCard
                             offer={offer}
-                            onViewService={() => {}} // Esto anula la navegación
+                            onViewService={() => handleNavigate(offer)} // Pasamos la oferta al hacer click
                           />
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Flecha derecha */}
                   <button
                     className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y z-1"
                     onClick={(e) => scroll(category.id, "right", e)}
                     disabled={currentIndex + 4 >= category.deals.length}
-                    style={{ pointerEvents: currentIndex + 4 >= category.deals.length ? 'none' : 'auto' }}
                   >
                     &#8594;
                   </button>

@@ -23,6 +23,7 @@ import VistaSobreNosotros from "./pages/VistaSobreNosotros.jsx"
 import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
 import VistaContacto from "./pages/VistaContacto.jsx";
 import ProductDetail from "./component/ProductDetail.jsx";
+import OfertasDestacadas from "./component/OfertasDestacadas.jsx";
 
 
 //create your first component
@@ -54,6 +55,7 @@ const Layout = () => {
             <Route path="/terminos" element={<VistaTerminosYCondiciones />} />
             <Route path="/Contacto" element={<VistaContacto />} />
             <Route path="/product-detail" element={<ProductDetail />} />
+            <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
           </Routes>
           <Footer />
         </ScrollToTop>

@@ -23,9 +23,12 @@ import VistaCookies from "./pages/VistaCookies.jsx"
 import VistaSobreNosotros from "./pages/VistaSobreNosotros.jsx"
 import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
 import VistaContacto from "./pages/VistaContacto.jsx";
+import ProductDetail from "./component/ProductDetail.jsx";
+import OfertasDestacadas from "./component/OfertasDestacadas.jsx";
 import SearchResults from "./pages/SearchResults.jsx";
 import VistaCrearServicio from "./pages/VistaCrearServicio.jsx";
 import VistaMiPerFil from "./pages/VistaMiPerfil.jsx"
+
 
 
 //create your first component
@@ -58,6 +61,8 @@ const Layout = () => {
             <Route path="/Contacto" element={<VistaContacto />} />
             <Route path="/crear-servicio" element={< VistaCrearServicio/>} />
             <Route path="/perfil" element={< VistaMiPerFil/>} />
+            <Route path="/product-detail" element={<ProductDetail />} />
+            <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
           </Routes>
           <Footer />
         </ScrollToTop>

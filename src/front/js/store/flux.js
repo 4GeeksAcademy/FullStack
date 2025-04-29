@@ -246,6 +246,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const data = await resp.json();
           const belleza = data.belleza || [];
           setStore({ serviciosBelleza: belleza });
+          console.log("SERVICOSSS BELLEZAAAAAAAA", belleza)
           return belleza;
         } catch (e) {
           console.error("Error al cargar belleza:", e);
@@ -265,6 +266,54 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
+      loginUser: async ({ correo, password }) => {
+        try {
+            const resp = await fetch(process.env.BACKEND_URL + '/login', {
+                method: 'POST',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ correo, password })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                console.error("Login error:", data);
+                return false;
+            }
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user', JSON.stringify({
+                correo: data.mensaje.split(', ')[1].replace('', ''),
+                role: data.role || 'cliente'
+            }));
+            return true;
+        } catch (error) {
+            console.error("Login error:", error);
+            return false;
+        }
+    },
+    registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
+        try {
+            const resp = await fetch(process.env.BACKEND_URL + '/registro', {
+                method: 'POST',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    correo,
+                    password,
+                    telefono,
+                    direccion_line1: direccion,
+                    ciudad,
+                    role: "cliente"
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                console.error("Register error:", data);
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error("Register error:", error);
+            return false;
+        }
+    },
     },
   };
 };

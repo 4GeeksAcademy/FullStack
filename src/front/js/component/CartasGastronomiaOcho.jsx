@@ -87,7 +87,7 @@ const CartasGastronomiaOcho = ({ onViewService = () => {} }) => {
               <div className="col-12 col-md-6 col-lg-3" key={index}>
                 <CategoryCard
                   offer={offer}
-                  onViewService={onViewService}
+                  onViewService={() => {}} // Esto anula la navegación
                 />
               </div>
             );

@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom"; 
 import { Button, Container, Row, Col, Card } from "react-bootstrap";
 import { Context } from "../store/appContext";
+import LayoutHeader from "./LayoutHeader.jsx";
+import Footer from "./Footer.jsx";
 
 const ProductDetail = () => {
   const location = useLocation();
@@ -144,7 +146,10 @@ const ProductDetail = () => {
     ));
 
   return (
+    <>
+    <LayoutHeader />
     <Container className="my-5">
+      
       <Row>
         <Col md={6} className="d-flex justify-content-center mb-4">
           {/* Card con la imagen del producto */}
@@ -206,7 +211,10 @@ const ProductDetail = () => {
           </div>
         </Col>
       </Row>
+     
     </Container>
+     <Footer />
+     </>
   );
 };
 

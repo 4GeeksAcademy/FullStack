@@ -33,10 +33,17 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.correo}>'
 
+    # Método para serializar el objeto User a un diccionario
     def serialize(self):
         return {
             "id": self.id,
             "correo": self.correo,
+            "telefono": self.telefono,
+            "direccion_line1": self.direccion_line1,
+            "direccion_line2": self.direccion_line2,
+            "ciudad": self.ciudad,
+            "codigo_postal": self.codigo_postal,
+            "pais": self.pais,
             "role": self.role,
             "is_active": self.is_active
         }

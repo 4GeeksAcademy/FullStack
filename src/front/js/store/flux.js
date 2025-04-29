@@ -58,7 +58,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           rating: 4,
           reviews: 120,
           buyers: 250,
-      }
+      },
       user: null, // Aquí almacenaremos los datos del usuario
     },
     actions: {

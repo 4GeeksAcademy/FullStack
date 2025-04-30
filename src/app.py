@@ -1012,7 +1012,7 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-stripe.api_key = 'sk_test_51RHkEqFNyrX4spGdLp3S1sqTcmsgdp6yE7ZJCwEEgnqopR57UZFTJzKuB85aOdLmSAe54XxVvmOidUQk5mMnSdDn00VCJSYzde'
+
 YOUR_DOMAIN = "https://glowing-garbanzo-x5v7q4ggw64phv9x6-3000.app.github.dev"  # Cambia esta URL si es otro entorno
 
 @app.route('/create-checkout-session', methods=['POST'])

@@ -5,6 +5,7 @@ import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
 
+
 const ProductDetail = () => {
   const location = useLocation();
   const { offer } = location.state || {};

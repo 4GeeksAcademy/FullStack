@@ -32,6 +32,7 @@ import VistaMiPerFil from "./pages/VistaMiPerfil.jsx"
 
 
 
+
 //create your first component
 const Layout = () => {
   const basename = process.env.BASENAME || "";
@@ -65,6 +66,8 @@ const Layout = () => {
             <Route path="/product-detail" element={<ProductDetail />} />
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
+            
+
           </Routes>
           <Footer />
         </ScrollToTop>

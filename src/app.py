@@ -1012,7 +1012,6 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-
 YOUR_DOMAIN = "https://glowing-garbanzo-x5v7q4ggw64phv9x6-3000.app.github.dev"  # Cambia esta URL si es otro entorno
 
 @app.route('/create-checkout-session', methods=['POST'])

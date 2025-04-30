@@ -2,6 +2,8 @@ import React, { useState, useContext, useEffect } from "react";
 import { Context } from "../store/appContext.js";
 import { Link, useNavigate } from "react-router-dom";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+
 
 const LayoutHeader = () => {
   const { store, actions } = useContext(Context);
@@ -168,6 +170,7 @@ const LayoutHeader = () => {
                     id="userDropdownDesktop"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
+                    onClick={() => console.log('Dropdown aria-expanded:', document.getElementById('userDropdownMobile').getAttribute('aria-expanded'))}
                   >
                     <i className="bi bi-person-circle fs-4 text-dark"></i>
                   </button>

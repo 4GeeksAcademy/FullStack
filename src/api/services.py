@@ -13,10 +13,7 @@ def create_admin_user():
         db.session.commit()
     
 def crear_servicios_ofertas(user_id, ofertas_category_id):
-    # if not Ofertas.query.filter_by(category_id=ofertas_category_id).first():
-     # Borrar ofertas existentes de esa categoría
-        Ofertas.query.filter_by(category_id=ofertas_category_id).delete()
-        db.session.commit()
+    if not Ofertas.query.filter_by(category_id=ofertas_category_id).first():
         ofertas = [
             # Ofertas originales
             Ofertas(
@@ -131,9 +128,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
 
 # Función para crear los servicios de Viajes
 def crear_servicios_viajes(user_id, viajes_category_id):
-    # if not Viajes.query.filter_by(category_id=viajes_category_id).first():
-        Viajes.query.filter_by(category_id=viajes_category_id).delete()
-        db.session.commit()
+    if not Viajes.query.filter_by(category_id=viajes_category_id).first():
         viajes_services = [
             Viajes(
                 title="Aventura en la Patagonia",
@@ -358,9 +353,7 @@ def crear_servicios_top(user_id, top_category_id):
 
 # Función para crear los servicios de Belleza
 def crear_servicios_belleza(user_id, belleza_category_id):
-    # if not Belleza.query.filter_by(category_id=belleza_category_id).first():
-        Belleza.query.filter_by(category_id=belleza_category_id).delete()
-        db.session.commit()
+    if not Belleza.query.filter_by(category_id=belleza_category_id).first():
         belleza_services = [
             Belleza(
                 title="Masaje relajante con aromaterapia",
@@ -472,9 +465,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
 
 # Función para crear los servicios de Gastronomía
 def crear_servicios_gastronomia(user_id, gastronomia_category_id):
-    # if not Gastronomia.query.filter_by(category_id=gastronomia_category_id).first():
-        Gastronomia.query.filter_by(category_id=gastronomia_category_id).delete()
-        db.session.commit()
+    if not Gastronomia.query.filter_by(category_id=gastronomia_category_id).first():
         gastronomia_services = [
             Gastronomia(
                 title="Cena gourmet italiana",
@@ -583,6 +574,13 @@ def crear_servicios_gastronomia(user_id, gastronomia_category_id):
         ]
         db.session.bulk_save_objects(gastronomia_services)
         db.session.commit()
+
+def limpiar_tablas():
+    eliminar_duplicados_gastronomia()
+    eliminar_duplicados_viajes()
+    eliminar_duplicados_top()
+    eliminar_duplicados_belleza()
+    eliminar_duplicados_ofertas()
 
 # Función para inicializar todos los servicios
 def inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_category_id, gastronomia_category_id, ofertas_category_id):

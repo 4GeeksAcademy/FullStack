@@ -71,6 +71,8 @@ class Payment(db.Model):
     paypal_payment_id = db.Column(db.String(255), unique=True, nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    servicio_id = db.Column(db.Integer, nullable=True)  # Nuevo campo opcional por ahora
+
     reservation = db.relationship('Reservation', back_populates='payment', uselist=False)
 
     def serialize(self):
@@ -78,9 +80,11 @@ class Payment(db.Model):
             "id": self.id,
             "currency": self.currency,
             "amount": self.amount,
-            "payment_date": self.payment_date,
-            "user_id": self.user_id
+            "payment_date": self.payment_date.isoformat(),
+            "user_id": self.user_id,
+            "servicio_id": self.servicio_id  # Lo agregamos también en el JSON
         }
+
 
 class Reservation(db.Model):
     __tablename__ = 'reservations'
@@ -176,7 +180,6 @@ class Viajes(db.Model):
             "user_id": self.user_id,
             "category_id": self.category_id
         }
-
 
 class Top(db.Model):
     __tablename__ = 'top'

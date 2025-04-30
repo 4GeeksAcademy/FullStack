@@ -25,6 +25,7 @@ import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
 import VistaContacto from "./pages/VistaContacto.jsx";
 import ProductDetail from "./component/ProductDetail.jsx";
 import OfertasDestacadas from "./component/OfertasDestacadas.jsx";
+import CategoryPage from "./component/CategoryPage.jsx";
 import SearchResults from "./pages/SearchResults.jsx";
 import VistaCrearServicio from "./pages/VistaCrearServicio.jsx";
 import VistaMiPerFil from "./pages/VistaMiPerfil.jsx"
@@ -63,6 +64,7 @@ const Layout = () => {
             <Route path="/perfil" element={< VistaMiPerFil/>} />
             <Route path="/product-detail" element={<ProductDetail />} />
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
+            <Route path="/category/:categoryId" element={<CategoryPage />} />
           </Routes>
           <Footer />
         </ScrollToTop>

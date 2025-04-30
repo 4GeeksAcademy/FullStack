@@ -206,6 +206,93 @@ def crear_usuario():
 
     return jsonify({"mensaje": "Usuario creado correctamente"}), 201
 
+
+@app.route('/usuariospag', methods=['GET'])
+def paged_users():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(User, sort_field, User.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(User).count();
+
+    users = User.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{'id': u.id, 'correo': u.correo, 'telefono': u.telefono, 'direccion 1': u.direccion_line1, 'direccion 2': u.direccion_line2, 'ciudad': u.ciudad, 'pais': u.pais, 'rol': u.role, 'activo': u.is_active} for u in users]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = total
+    return response
+
+@app.route('/usuario/<int:id>', methods=['PUT'])
+def edit_user_info(id):
+    user = User.query.get(id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    data = request.get_json()
+
+    if data.get('correo'): user.correo = data['correo']
+    if data.get('telefono'): user.telefono = data['telefono']
+    if data.get('direccion 1'): user.direccion_line1 = data['direccion 1']
+    if data.get('direccion 2'): user.direccion_line2 = data['direccion 2']
+    if data.get('ciudad'): user.ciudad = data['ciudad']
+    if data.get('pais'): user.pais = data['pais']
+    if data.get('rol'): user.role = data['rol']
+    if 'activo' in data: user.is_active = data['activo']  # puede ser False, por eso no usar if directo
+
+    db.session.commit()
+
+    return jsonify({
+        'id': user.id,
+        'correo': user.correo,
+        'telefono': user.telefono,
+        'direccion 1': user.direccion_line1,
+        'direccion 2': user.direccion_line2,
+        'ciudad': user.ciudad,
+        'pais': user.pais,
+        'rol': user.role,
+        'activo': user.is_active
+    }), 200
+
+        
+@app.route('/usuario/<int:id>', methods=['GET'])
+def get_user_info(id):
+    user = User.query.get(id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    data = {
+        'id': user.id,
+        'correo': user.correo,
+        'telefono': user.telefono,
+        'direccion 1': user.direccion_line1,
+        'direccion 2': user.direccion_line2,
+        'ciudad': user.ciudad,
+        'pais': user.pais,
+        'rol': user.role,
+        'activo': user.is_active
+    }
+    return jsonify(data)
+
+@app.route('/usuario/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    user = User.query.get(id)
+
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+    
+    db.session.delete(user)
+    db.session.commit()
+
 @app.route('/usuarios/me', methods=['GET'])
 @jwt_required()
 def obtener_usuario_logueado():

@@ -29,7 +29,7 @@ import CategoryPage from "./component/CategoryPage.jsx";
 import SearchResults from "./pages/SearchResults.jsx";
 import VistaCrearServicio from "./pages/VistaCrearServicio.jsx";
 import VistaMiPerFil from "./pages/VistaMiPerfil.jsx"
-
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 
 
 //create your first component
@@ -65,6 +65,7 @@ const Layout = () => {
             <Route path="/product-detail" element={<ProductDetail />} />
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
+            <Route path="/admin/*" element={<AdminDashboard />} />
           </Routes>
           <Footer />
         </ScrollToTop>

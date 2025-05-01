@@ -1,30 +1,27 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Context } from "../store/appContext"; // Asegúrate de importar tu contexto correctamente
+import { useNavigate } from "react-router-dom"; // 🔴 Agregado para navegar
+import { Context } from "../store/appContext"; // Contexto de tu Flux
 
 const SpecialOffersCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { store, actions } = useContext(Context); // usamos el Contexto
-  const specialOffers = store.serviciosOfertas; // agarramos los datos que trae tu Flux
-  
+  const { store, actions } = useContext(Context);
+  const navigate = useNavigate(); // 🔴 Hook para navegación
+  const specialOffers = store.serviciosOfertas;
+
   useEffect(() => {
-    // Llamamos a la acción para cargar las ofertas cuando el componente se monta
-    actions.cargarServiciosOfertas();
-  }, []); // <-- Solo al montar el componente
+    actions.cargarServiciosOfertas(); // Carga de datos al montar
+  }, []);
 
   const CARDS_PER_PAGE = 4;
   const totalPages = Math.ceil(specialOffers.length / CARDS_PER_PAGE);
 
-  // Función para ir al siguiente set de ofertas (avanzar)
   const nextSlide = () => {
-    // No permitimos avanzar si estamos en la última página
     if (currentIndex + CARDS_PER_PAGE < specialOffers.length) {
       setCurrentIndex(currentIndex + CARDS_PER_PAGE);
     }
   };
 
-  // Función para retroceder (ir a la página anterior)
   const prevSlide = () => {
-    // No permitimos retroceder más allá de la primera página
     if (currentIndex - CARDS_PER_PAGE >= 0) {
       setCurrentIndex(currentIndex - CARDS_PER_PAGE);
     }
@@ -62,7 +59,12 @@ const SpecialOffersCarousel = () => {
                     <p className="card-text text-muted small flex-grow-1">
                       {offer.descripcion}
                     </p>
-                    <button className="btn btn-outline-danger btn-sm mt-3 w-100">
+                    <button
+                      className="btn btn-outline-danger btn-sm mt-3 w-100"
+                      onClick={() =>
+                        navigate("/product-detail", { state: { offer } }) // 🔴 Navegamos al detalle
+                      }
+                    >
                       Más información
                     </button>
                   </div>
@@ -71,26 +73,23 @@ const SpecialOffersCarousel = () => {
             ))}
           </div>
 
-          {/* Botón de retroceso */}
           <button
             onClick={prevSlide}
             className="btn btn-light position-absolute top-50 start-0 translate-middle-y"
-            disabled={currentIndex === 0} // Desactiva el botón si estamos en el primer set de datos
+            disabled={currentIndex === 0}
           >
             &#8592;
           </button>
 
-          {/* Botón de avance */}
           <button
             onClick={nextSlide}
             className="btn btn-light position-absolute top-50 end-0 translate-middle-y"
-            disabled={currentIndex + CARDS_PER_PAGE >= specialOffers.length} // Desactiva el botón si estamos en la última página
+            disabled={currentIndex + CARDS_PER_PAGE >= specialOffers.length}
           >
             &#8594;
           </button>
         </div>
 
-        {/* Indicadores de página */}
         {totalPages > 1 && (
           <div className="d-flex justify-content-center mt-3">
             {Array.from({ length: totalPages }).map((_, index) => (
@@ -113,4 +112,3 @@ const SpecialOffersCarousel = () => {
 };
 
 export default SpecialOffersCarousel;
-

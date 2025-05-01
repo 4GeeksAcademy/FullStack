@@ -34,6 +34,7 @@ import Checkout from "./pages/Checkout.jsx";
 
 
 
+
 //create your first component
 const Layout = () => {
   const basename = process.env.BASENAME || "";
@@ -67,8 +68,13 @@ const Layout = () => {
             <Route path="/product-detail" element={<ProductDetail />} />
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
+
+            
+
+
             <Route path="/mis-compras" element={<VistaMisCompras />} /> 
             <Route path="/checkout/:categoria/:id" element={<Checkout />} />
+
           </Routes>
           <Footer />
         </ScrollToTop>

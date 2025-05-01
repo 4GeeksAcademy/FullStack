@@ -29,6 +29,8 @@ import CategoryPage from "./component/CategoryPage.jsx";
 import SearchResults from "./pages/SearchResults.jsx";
 import VistaCrearServicio from "./pages/VistaCrearServicio.jsx";
 import VistaMiPerFil from "./pages/VistaMiPerfil.jsx"
+import VistaMisCompras from "./pages/VistaMisCompras.jsx"
+import Checkout from "./pages/Checkout.jsx";
 
 
 
@@ -66,7 +68,12 @@ const Layout = () => {
             <Route path="/product-detail" element={<ProductDetail />} />
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
+
             
+
+
+            <Route path="/mis-compras" element={<VistaMisCompras />} /> 
+            <Route path="/checkout/:categoria/:id" element={<Checkout />} />
 
           </Routes>
           <Footer />

@@ -6,53 +6,50 @@ const FormCrearServicio = () => {
   const [precio, setPrecio] = useState('');
   const [ciudad, setCiudad] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [userId, setUserId] = useState(null);  // Estado para almacenar el userId
-  const [loading, setLoading] = useState(true); // Para mostrar un mensaje de carga
-  const [error, setError] = useState(null); // Estado para mostrar el error
+  const [userId, setUserId] = useState(null);
+  const [imagen, setImagen] = useState(''); // Nuevo campo para imagen
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const backendUrl = process.env.BACKEND_URL;
 
   const categorias = [
-    { id: 1, nombre: 'Viajes', ruta: '/viajes' },
-    { id: 3, nombre: 'Top', ruta: '/top' },
-    { id: 2, nombre: 'Belleza', ruta: '/belleza' },
-    { id: 4, nombre: 'Gastronomía', ruta: '/gastronomia' },
+    { id: 1, nombre: 'Viajes', ruta: `${backendUrl}/viajes` },
+    { id: 3, nombre: 'Top', ruta: `${backendUrl}/top` },
+    { id: 2, nombre: 'Belleza', ruta: `${backendUrl}/belleza` },
+    { id: 4, nombre: 'Gastronomía', ruta: `${backendUrl}/gastronomia` },
   ];
 
-  // Obtener el user_id del usuario logueado
   useEffect(() => {
     const obtenerUsuario = async () => {
-      const token = localStorage.getItem('token');  // Suponiendo que el token se guarda en el localStorage
-
+      const token = localStorage.getItem('token');
       if (!token) {
         alert('No estás logueado.');
+        setLoading(false);
         return;
       }
 
-      console.log('Token encontrado:', token); // Verificar el token
-
       try {
-        const response = await fetch('/usuarios/me', {
+        const response = await fetch(`${backendUrl}/usuarios/me`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
 
-        console.log('Respuesta de la API:', response); // Verificar la respuesta de la API
-
         if (response.ok) {
           const data = await response.json();
-          console.log('Datos del usuario:', data); // Verificar los datos obtenidos
-          setUserId(data.id);  // Guardamos el user_id
+          setUserId(data.id);
         } else {
-          const errorResponse = await response.json();
-          console.error('Error al obtener usuario:', errorResponse);
-          setError(errorResponse.msg || 'Error desconocido');
+          const errorText = await response.text();
+          console.error('Respuesta del backend:', errorText);
+          setError('Error al obtener los datos del usuario.');
         }
       } catch (error) {
         console.error('Error en la petición de usuario:', error);
         setError('Error inesperado al obtener los datos del usuario.');
       } finally {
-        setLoading(false); // Finaliza la carga
+        setLoading(false);
       }
     };
 
@@ -61,6 +58,12 @@ const FormCrearServicio = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('No estás logueado.');
+      return;
+    }
 
     if (!userId) {
       alert('No se pudo obtener el ID del usuario.');
@@ -74,24 +77,29 @@ const FormCrearServicio = () => {
     }
 
     const data = {
-      buyers: null,
+      buyers: null, // Se deja null si no se tiene valor
       category_id: categoriaSeleccionada.id,
       city: ciudad,
       descripcion,
-      discountPrice: null,
+      discountPrice: null, // Se deja null si no se tiene valor
       id: null,
-      image: null,
+      image: imagen || null, // Enviar imagen si se proporciona
       price: parseFloat(precio),
-      rating: null,
-      reviews: null,
+      rating: null, // Se deja null si no se tiene valor
+      reviews: null, // Se deja null si no se tiene valor
       title: titulo,
-      user_id: userId,  // Usamos el userId obtenido
+      user_id: userId, // Se toma el ID del usuario que está logueado
     };
+
+    console.log('Datos a enviar:', data);
 
     try {
       const response = await fetch(categoriaSeleccionada.ruta, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(data),
       });
 
@@ -102,8 +110,11 @@ const FormCrearServicio = () => {
         setPrecio('');
         setCiudad('');
         setCategoryId('');
+        setImagen(''); // Limpiar imagen
       } else {
-        alert('Error al crear el servicio.');
+        const errorText = await response.text();
+        console.error('Error del servidor:', errorText);
+        alert(`Error al crear el servicio: ${response.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -111,15 +122,8 @@ const FormCrearServicio = () => {
     }
   };
 
-  // Mostrar un mensaje de carga mientras obtenemos el usuario
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
-
-  // Si hay un error, mostrarlo
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  if (loading) return <div>Cargando...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="container d-flex justify-content-center mt-5">
@@ -170,6 +174,17 @@ const FormCrearServicio = () => {
             />
           </div>
 
+          {/* Nuevo campo para la imagen */}
+          <div className="mb-3">
+            <label className="form-label">URL de la Imagen</label>
+            <input
+              type="text"
+              className="form-control"
+              value={imagen}
+              onChange={(e) => setImagen(e.target.value)} // Guardar la URL de la imagen
+            />
+          </div>
+
           <div className="mb-4">
             <label className="form-label">Categoría</label>
             <select
@@ -195,3 +210,4 @@ const FormCrearServicio = () => {
 };
 
 export default FormCrearServicio;
+

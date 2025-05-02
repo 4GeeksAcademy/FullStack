@@ -65,7 +65,11 @@ const Layout = () => {
             <Route path="/product-detail" element={<ProductDetail />} />
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
-            <Route path="/admin/*" element={<AdminDashboard />} />
+
+            
+
+            <Route path="/admin/*" element={<AdminDashboard />}/>
+
           </Routes>
           <Footer />
         </ScrollToTop>

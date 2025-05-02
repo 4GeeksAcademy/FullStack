@@ -10,7 +10,15 @@ const customRoutes = {
         list: 'usuariospag',
         one: 'usuario',
         update: 'usuario',
-        delete: 'usuario'
+        delete: 'usuario',
+        create: 'usuario'
+    },
+    oferta: {
+        list: 'ofertaspag',
+        one: 'oferta',
+        update: 'oferta',
+        delete: 'oferta',
+        create: 'oferta'
     }
 };
 
@@ -96,6 +104,17 @@ const dataProvider = {
             )
         );
         return { data: responses.map(r => r.id) };
+    },
+
+    create: async (resource, params) => {
+        const endpoint = getEndpoint(resource, 'create');
+        const response = await fetch(`${baseUrl}${endpoint}`, {
+            method: 'POST',
+            body: JSON.stringify(params.data),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        return { data };
     }
 };
 

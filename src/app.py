@@ -23,7 +23,7 @@ from api.payment import payment_bp
 from flask_cors import CORS 
 from api.politicas import crear_politicas, Politica
 from flask_cors import CORS
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 
 load_dotenv()
@@ -36,6 +36,8 @@ app.config["JWT_SECRET_KEY"] = "6Smc-TWCMZkUXJ5DN6ZUmOq5OHHzjZID8NGt7c1VxpxK0TJ7
 jwt = JWTManager(app)
 
 bcrypt = Bcrypt(app)
+
+db_initialized = False
 
 app.url_map.strict_slashes = False
 CORS(app, origins=["*"])
@@ -206,6 +208,129 @@ def crear_usuario():
 
     return jsonify({"mensaje": "Usuario creado correctamente"}), 201
 
+@app.route('/ofertaspag', methods=['GET'])
+def paginated_offrts():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Ofertas, sort_field, Ofertas.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+
+    total = db.session.query(Ofertas).count()
+    ofertas = Ofertas.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': o.id,
+        'nombre': o.title,
+        'descripcion': o.descripcion,
+        'ciudad': o.city,
+        'precio': o.price,
+        'precio descuento': o.discountPrice,
+        'categoria': o.category.nombre
+    } for o in ofertas]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/oferta/<int:id>', methods=['PUT'])
+def edit_ofert(id):
+
+    oferta = Ofertas.query.get(id)
+    if not oferta:
+        return jsonify({'error': 'Oferta no encontrada'}), 404
+    
+    data = request.get_json()
+
+    oferta.title = data['nombre']
+    oferta.descripcion = data['descripcion']
+    oferta.city = data['ciudad']
+    oferta.price = data['precio']
+    oferta.discountPrice = data['precio descuento']
+    oferta.category_id = data['categoria']
+    oferta.image = data['imagen']
+    
+    db.session.commit()
+
+    return jsonify({'id': oferta.id, 'nombre': oferta.title, 'descripcion': oferta.descripcion, 'ciudad': oferta.city, 'precio': oferta.price, 'precio descuento': oferta.discountPrice, 'cateogria': oferta.category.nombre}), 200
+
+@app.route('/oferta/<int:id>', methods=['GET'])
+def get_one_ofert(id):
+    oferta = Ofertas.query.get(id)
+    if not oferta:
+        return jsonify({'error': 'Oferta no encontrada'}), 404
+    
+    data = {
+        'id': oferta.id, 
+        'nombre': oferta.title, 
+        'descripcion': oferta.descripcion, 
+        'ciudad': oferta.city, 
+        'precio': oferta.price, 
+        'precio descuento': oferta.discountPrice, 
+        'categoria': oferta.category.nombre,
+        'imagen': oferta.image,
+        'categoria_id': oferta.category_id
+        }
+    return jsonify(data)
+
+@app.route('/oferta', methods=['POST'])
+def create_oferta_dashboard():
+    data = request.get_json()
+
+    oferta = Ofertas(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        category_id = data['categoria'],
+        user_id = data['usuario'],
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+
+    db.session.add(oferta)
+    db.session.commit()
+
+    data = {
+        'id': oferta.id, 
+        'nombre': oferta.title, 
+        'descripcion': oferta.descripcion, 
+        'ciudad': oferta.city, 
+        'precio': oferta.price, 
+        'precio descuento': oferta.discountPrice, 
+        'cateogria': oferta.category.nombre,
+        'categoria_id': oferta.category_id
+        }
+    return jsonify(data), 201
+
+@app.route('/oferta/<int:id>', methods=['DELETE'])
+def delete_oferta_dashboard(id):
+    oferta = Ofertas.query.get(id)
+
+    if not oferta:
+        return jsonify({'error': 'Oferta no encontrada'}), 404
+    
+    db.session.delete(oferta)
+    db.session.commit()
+    return jsonify({'message': 'Oferta eliminada exitosamente'}), 200
+
+@app.route('/usuarios', methods=['GET'])
+def get_all_users():
+    usuarios = User.query.filter(func.upper(User.role) != "ADMINISTRADOR").all()
+    usrs = []
+    for u in usuarios:
+        usrs.append({'id': u.id, 'correo': u.correo})
+    return jsonify({'usuarios': usrs}), 200
 
 @app.route('/usuariospag', methods=['GET'])
 def paged_users():
@@ -247,7 +372,7 @@ def edit_user_info(id):
     if data.get('ciudad'): user.ciudad = data['ciudad']
     if data.get('pais'): user.pais = data['pais']
     if data.get('rol'): user.role = data['rol']
-    if 'activo' in data: user.is_active = data['activo']  # puede ser False, por eso no usar if directo
+    if 'activo' in data: user.is_active = data['activo'] 
 
     db.session.commit()
 
@@ -283,15 +408,78 @@ def get_user_info(id):
     }
     return jsonify(data)
 
+@app.route('/usuario', methods=['POST'])
+def create_user_dashboard():
+    data = request.get_json()
+    user = User.query.filter_by(correo=data['correo']).first()
+    if not user:
+        pw_hash = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+        user = User(
+            correo = data['correo'],
+            password = pw_hash,
+            telefono = data['telefono'],
+            direccion_line1 = data['direccion 1'],
+            direccion_line2 = data['direccion 2'],
+            ciudad = data['ciudad'],
+            pais = data['pais'],
+            codigo_postal = data['codigo postal'],
+            role = data['rol'],
+            is_active = data['activo']
+        )
+        db.session.add(user)
+        db.session.commit()
+    
+    return jsonify({
+        'id': user.id,
+        'correo': user.correo,
+        'telefono': user.telefono,
+        'direccion 1': user.direccion_line1,
+        'direccion 2': user.direccion_line2,
+        'ciudad': user.ciudad,
+        'pais': user.pais,
+        'rol': user.role,
+        'activo': user.is_active
+    }), 201
+
+
 @app.route('/usuario/<int:id>', methods=['DELETE'])
 def delete_user(id):
     user = User.query.get(id)
 
     if not user:
         return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    # Eliminar objetos relacionados
+    for viaje in user.viajes_list:
+        db.session.delete(viaje)
     
+    for top in user.top_list:
+        db.session.delete(top)
+    
+    for belleza in user.belleza_list:
+        db.session.delete(belleza)
+    
+    for gastronomia in user.gastronomia_list:
+        db.session.delete(gastronomia)
+    
+    for oferta in user.ofertas_list:
+        db.session.delete(oferta)
+    
+    for payment in user.payments:
+        db.session.delete(payment)
+    
+    for reservation in user.reservations:
+        db.session.delete(reservation)
+
+    # Verificar si el carrito (cart) existe antes de eliminarlo
+    if user.cart:
+        db.session.delete(user.cart)
+
+    # Finalmente, eliminar al propio usuario
     db.session.delete(user)
     db.session.commit()
+
+    return jsonify({'message': 'Usuario eliminado exitosamente'}), 200
 
 @app.route('/usuarios/me', methods=['GET'])
 @jwt_required()
@@ -430,7 +618,6 @@ def crear_categoria():
     }), 201
 
 # Crear categorías si no existen al iniciar la app
-# Crear categorías si no existen al iniciar la app
 @app.before_request
 def crear_categorias():
     # Verifica si las categorías existen al principio de cada solicitud
@@ -517,7 +704,6 @@ def obtener_categorias():
     } for categoria in categorias]
 
     return jsonify({"categorias": categorias_serializadas}), 200
-
 
 @app.before_request
 def inicializar_db():

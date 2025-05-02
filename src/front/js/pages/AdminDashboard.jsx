@@ -8,11 +8,20 @@ import dataProvider from "../dp/dataProvider";
 import UserList from "../component/UserList.jsx";
 import UserEdit from "../component/UserEdit.jsx";
 import UserShow from "../component/UserShow.jsx";
+import CreateUser from "../component/CreateUser.jsx";
 
-const AdminDashboard = () => (
+import OfertEdit from "../component/OfertEdit.jsx";
+import OfertShow from "../component/OfertShow.jsx";
+import OfertList from "../component/OfertList.jsx";
+import OfertCreate from "../component/OfertCreate.jsx";
+
+const AdminDashboard = () => {
+  return (
     <Admin basename="/admin" dataProvider={dataProvider}>
-      <Resource name="users" list={UserList} show={UserShow} edit={UserEdit} />
+      <Resource name="users" list={UserList} show={UserShow} edit={UserEdit} create={CreateUser} />
+      <Resource name="oferta" list={OfertList} show={OfertShow} edit={OfertEdit} create={OfertCreate}/>
     </Admin>
-  );
+  )
+};
 
 export default AdminDashboard;

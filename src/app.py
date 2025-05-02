@@ -12,10 +12,10 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas, Payment
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
-from api.models import db, Payment
+from api.models import db
 from datetime import datetime
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_bcrypt import Bcrypt
@@ -24,6 +24,7 @@ from flask_cors import CORS
 from api.politicas import crear_politicas, Politica
 from flask_cors import CORS
 from sqlalchemy import or_, func
+import traceback
 
 
 load_dotenv()
@@ -42,6 +43,7 @@ db_initialized = False
 app.url_map.strict_slashes = False
 CORS(app, origins=["*"])
 
+
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
@@ -53,6 +55,7 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
+
 
 datos = {
     "newsletter": []
@@ -713,7 +716,7 @@ def inicializar_db():
     top_category_id = 3     # Reemplaza con el ID válido para la categoría 'Top'
     belleza_category_id = 2 # Reemplaza con el ID válido para la categoría 'Belleza'
     gastronomia_category_id = 4  # Reemplaza con el ID válido para la categoría 'Gastronomía'
-    ofertas_category_id = 1  # ID asignado a la nueva categoría 'Ofertas'
+    ofertas_category_id = 5  # ID asignado a la nueva categoría 'Ofertas'
 
     # Inicializa los servicios en la base de datos (ahora incluyendo Ofertas)
     inicializar_servicios(
@@ -756,14 +759,6 @@ def obtener_ofertas():
 
     return jsonify({"ofertas": ofertas_serializadas}), 200
 
-@app.route('/ofertas/<int:id>', methods=['GET'])
-def obtener_oferta(id):
-    oferta = Ofertas.query.get(id)
-
-    if oferta is None:
-        return {'message': 'Oferta no encontrada'}, 404
-
-    return jsonify(oferta.serialize()), 200
 
 @app.route('/ofertas/<int:id>', methods=['DELETE'])
 @jwt_required()
@@ -778,17 +773,16 @@ def eliminar_oferta(id):
 
     return jsonify({"message": f"Oferta con ID {id} eliminada correctamente"}), 200
 
-
 @app.route('/viajes', methods=['POST'])
 @jwt_required()
 def crear_viaje():
     data = request.get_json()
 
     nuevo_viaje = Viajes(
-        title=data.get('title'),  # Nombre cambiado por title
+        title=data.get('title'),
         descripcion=data.get('descripcion'),
-        price=data.get('price'),  # Precio cambiado por Price
-        city=data.get('city'),  # Ubicación cambiada por city
+        price=data.get('price'),
+        city=data.get('city'),
         image=data.get('image'),
         discountPrice=data.get('discountPrice'),
         rating=data.get('rating'),
@@ -797,6 +791,7 @@ def crear_viaje():
         user_id=data.get('user_id'),
         category_id=data.get('category_id')
     )
+
     db.session.add(nuevo_viaje)
     db.session.commit()
 
@@ -804,19 +799,11 @@ def crear_viaje():
 
 @app.route('/viajes', methods=['GET'])
 def obtener_viajes():
-    viajes = Viajes.query.all()
-    viajes_serializados = [viaje.serialize() for viaje in viajes]
+    viajes_items = Viajes.query.all()
+    viajes_serializados = [viaje.serialize() for viaje in viajes_items]
 
     return jsonify({"viajes": viajes_serializados}), 200
 
-@app.route('/viajes/<int:id>', methods=['GET'])
-def obtener_viaje(id):
-    viaje = Viajes.query.get(id)
-
-    if viaje is None:
-        return {'message': 'Viaje no encontrado'}, 404
-
-    return jsonify(viaje.serialize()), 200
 
 @app.route('/top', methods=['POST'])
 @jwt_required()
@@ -849,25 +836,17 @@ def obtener_top():
 
     return jsonify({"top": top_serializados}), 200
 
-@app.route('/top/<int:id>', methods=['GET'])
-def obtener_top_por_id(id):
-    top = Top.query.get(id)
-
-    if top is None:
-        return {'message': 'Top no encontrado'}, 404
-
-    return jsonify(top.serialize()), 200
 
 @app.route('/gastronomia', methods=['POST'])
 @jwt_required()
 def crear_gastronomia():
     data = request.get_json()
 
-    nueva_gastronomia = Gastronomia(
-        title=data.get('title'),  # Nombre cambiado por title
+    nuevo_gastronomia = Gastronomia(
+        title=data.get('title'),
         descripcion=data.get('descripcion'),
-        price=data.get('price'),  # Precio cambiado por Price
-        city=data.get('city'),  # Ubicación cambiada por city
+        price=data.get('price'),
+        city=data.get('city'),
         image=data.get('image'),
         discountPrice=data.get('discountPrice'),
         rating=data.get('rating'),
@@ -877,10 +856,10 @@ def crear_gastronomia():
         category_id=data.get('category_id')
     )
 
-    db.session.add(nueva_gastronomia)
+    db.session.add(nuevo_gastronomia)
     db.session.commit()
 
-    return jsonify(nueva_gastronomia.serialize()), 201
+    return jsonify(nuevo_gastronomia.serialize()), 201
 
 @app.route('/gastronomia', methods=['GET'])
 def obtener_gastronomia():
@@ -889,25 +868,17 @@ def obtener_gastronomia():
 
     return jsonify({"gastronomia": gastronomia_serializados}), 200
 
-@app.route('/gastronomia/<int:id>', methods=['GET'])
-def obtener_gastronomia_por_id(id):
-    gastronomia = Gastronomia.query.get(id)
-
-    if gastronomia is None:
-        return {'message': 'Gastronomía no encontrada'}, 404
-
-    return jsonify(gastronomia.serialize()), 200
 
 @app.route('/belleza', methods=['POST'])
 @jwt_required()
 def crear_belleza():
     data = request.get_json()
 
-    nueva_belleza = Belleza(
-        title=data.get('title'),  # Nombre cambiado por title
+    nuevo_belleza = Belleza(
+        title=data.get('title'),
         descripcion=data.get('descripcion'),
-        price=data.get('price'),  # Precio cambiado por Price
-        city=data.get('city'),  # Ubicación cambiada por city
+        price=data.get('price'),
+        city=data.get('city'),
         image=data.get('image'),
         discountPrice=data.get('discountPrice'),
         rating=data.get('rating'),
@@ -917,10 +888,10 @@ def crear_belleza():
         category_id=data.get('category_id')
     )
 
-    db.session.add(nueva_belleza)
+    db.session.add(nuevo_belleza)
     db.session.commit()
 
-    return jsonify(nueva_belleza.serialize()), 201
+    return jsonify(nuevo_belleza.serialize()), 201
 
 @app.route('/belleza', methods=['GET'])
 def obtener_belleza():
@@ -929,17 +900,8 @@ def obtener_belleza():
 
     return jsonify({"belleza": belleza_serializados}), 200
 
-@app.route('/belleza/<int:id>', methods=['GET'])
-def obtener_belleza_por_id(id):
-    belleza = Belleza.query.get(id)
-
-    if belleza is None:
-        return {'message': 'Belleza no encontrada'}, 404
-
-    return jsonify(belleza.serialize()), 200
 
 
-    
 # Ruta para manejar el webhook de Stripe
 
 @app.route('/webhook', methods=['POST'])
@@ -1038,22 +1000,25 @@ def obtener_reservas():
         "reservas": reservas_serializadas
     }), 200
 
+
+
 # Ruta para obtener todas las compras de un usuario desde la base de datos
 @app.route('/compras/<int:user_id>', methods=['GET'])
-@jwt_required()
-def obtener_compras_usuario(user_id):
-    # 🔍 Consultamos todas las compras asociadas al usuario
+def obtener_compras(user_id):
     compras = Payment.query.filter_by(user_id=user_id).all()
+    compras_data = []
 
-    if not compras:
-        return jsonify({"mensaje": "No se encontraron compras para este usuario"}), 404
+    for compra in compras:
+        compras_data.append({
+            'id': compra.id,
+            'monto': compra.amount,
+            'fecha': compra.payment_date,
+            'servicio_id': compra.servicio_id
+        })
 
-    compras_serializadas = [compra.serialize() for compra in compras]
+    return jsonify({'compras': compras_data}), 200
 
-    return jsonify({
-        "total": len(compras_serializadas),
-        "compras": compras_serializadas
-    }), 200
+
 
 # Ruta para obtener todas las compras
 @app.route('/compras', methods=['GET'])
@@ -1072,6 +1037,24 @@ def obtener_todas_las_compras():
         "compras": compras_serializadas
     }), 200
 
+@app.route('/compras', methods=['POST'])
+@jwt_required()
+def registrar_compra():
+    data = request.get_json()
+    user_id = get_jwt_identity()  # ID del usuario desde el token
+
+    nueva_compra = Payment(
+        user_id=user_id,
+        servicio_id=data.get('servicio_id'),
+        monto=data.get('monto'),
+        fecha=datetime.utcnow()
+    )
+
+    db.session.add(nueva_compra)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Compra registrada correctamente", "compra": nueva_compra.serialize()}), 201
+
 @app.route('/reservas/proveedor/<int:proveedor_id>', methods=['GET'])
 @jwt_required()
 def reservas_por_proveedor(proveedor_id):
@@ -1088,6 +1071,36 @@ def reservas_por_proveedor(proveedor_id):
         "reservas": reservas_serializadas,
         "total": len(reservas_serializadas)
     })
+
+@app.route('/compras/test', methods=['POST'])
+def crear_compra_test():
+    data = request.get_json()  # Obtén los datos enviados por el cliente
+    
+    print("Datos recibidos:", data)  # Imprime los datos para revisar su contenido
+    
+    # Asegúrate de que 'currency' esté presente y no sea None
+    currency = data.get('currency')
+    if not currency:
+        return jsonify({'error': 'El campo currency es requerido'}), 400
+    
+    # Procesar los datos y guardarlos en la base de datos
+    nuevo_pago = Payment(
+        currency=currency,
+        amount=data.get('monto'),
+        payment_date=datetime.utcnow(),
+        paypal_payment_id=data.get('paypal_payment_id'),
+        user_id=data.get('user_id'),
+        servicio_id=data.get('servicio_id')
+    )
+    
+    try:
+        db.session.add(nuevo_pago)
+        db.session.commit()
+        return jsonify({'mensaje': 'Compra creada exitosamente'}), 201
+    except Exception as e:
+        db.session.rollback()
+        print("Error al guardar en la base de datos:", e)
+        return jsonify({'error': 'Error al crear la compra'}), 500
 
 
 # Agrego producto al carrito
@@ -1177,6 +1190,144 @@ def delte_producto():
             return jsonify({'message': 'Producto no encontrado en el carrito'}), 404
     else:
         return jsonify({'message':'Usuario o carrito no encontrado'}), 404
+    
+@app.route('/<categoria>/<int:id>', methods=['GET'])
+def obtener_producto(categoria, id):
+    modelos = {
+        'viajes': Viajes,
+        'belleza': Belleza,
+        'gastronomia': Gastronomia,
+        'top': Top,
+        'ofertas': Ofertas
+    }
+
+    # Verificamos que la categoría sea válida
+    modelo = modelos.get(categoria.lower())
+    if not modelo:
+        return jsonify({'message': f'Categoría "{categoria}" no válida'}), 400
+
+    # Buscamos el producto por ID
+    producto = modelo.query.get(id)
+    if not producto:
+        return jsonify({'message': f'{categoria.capitalize()} con ID {id} no encontrada'}), 404
+
+    return jsonify(producto.serialize()), 200
+
+
+def eliminar_duplicados_gastronomia():
+    # Eliminar duplicados de la tabla Gastronomia
+    servicios_gastronomia = Gastronomia.query.all()
+    seen = set()
+    for servicio in servicios_gastronomia:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def eliminar_duplicados_viajes():
+    # Eliminar duplicados de la tabla Viajes
+    servicios_viajes = Viajes.query.all()
+    seen = set()
+    for servicio in servicios_viajes:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def eliminar_duplicados_top():
+    # Eliminar duplicados de la tabla Top
+    servicios_top = Top.query.all()
+    seen = set()
+    for servicio in servicios_top:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def eliminar_duplicados_belleza():
+    # Eliminar duplicados de la tabla Belleza
+    servicios_belleza = Belleza.query.all()
+    seen = set()
+    for servicio in servicios_belleza:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def eliminar_duplicados_ofertas():
+    # Eliminar duplicados de la tabla Ofertas
+    servicios_ofertas = Ofertas.query.all()
+    seen = set()
+    for servicio in servicios_ofertas:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+# Función para limpiar todas las tablas
+def limpiar_tablas():
+    eliminar_duplicados_gastronomia()
+    eliminar_duplicados_viajes()
+    eliminar_duplicados_top()
+    eliminar_duplicados_belleza()
+    eliminar_duplicados_ofertas()
+    print("Tablas limpiadas exitosamente.")
+
+# Ruta para limpiar las tablas
+@app.route('/limpiar_tablas', methods=['POST'])
+def limpiar_tablas_api():
+    limpiar_tablas()
+    return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
+
+YOUR_DOMAIN = "https://glowing-garbanzo-x5v7q4ggw64phv9x6-3000.app.github.dev"  # Cambia esta URL si es otro entorno
+
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    try:
+        # Recibimos los datos del carrito
+        data = request.get_json()
+        cart_items = data.get("items", [])
+        total_price = data.get("total", 0)
+
+        # Creamos una sesión de Stripe con los productos del carrito
+        line_items = []
+        for item in cart_items:
+            line_items.append({
+                'price_data': {
+                    'currency': 'eur',
+                    'product_data': {
+                        'name': item['title'],
+                        'description': item['description'],
+                    },
+                    'unit_amount': int(item['discountPrice'] * 100),  # Convertimos a centavos
+                },
+                'quantity': item['quantity'],
+            })
+
+        # Crear la sesión de pago
+        session = stripe.checkout.Session.create(
+            line_items=line_items,
+            mode='payment',
+            success_url=YOUR_DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=YOUR_DOMAIN + '/cancel',
+        )
+
+        return jsonify({'sessionId': session.id})
+
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+
+
+@app.route('/session-status', methods=['GET'])
+def session_status():
+    session_id = request.args.get('session_id')
+    session = stripe.checkout.Session.retrieve(session_id)
+    return jsonify(status=session.status, customer_email=session.customer_details.email)
     
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')

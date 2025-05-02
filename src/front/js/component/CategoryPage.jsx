@@ -38,6 +38,7 @@ const CategoryPage = () => {
         let categoryProducts = [];
         
         // Determinar qué datos cargar basado en el categoryId
+        console.log("Categoría recibida:", categoryId);
         switch (categoryId) {
           case "belleza":
             if (store.serviciosBelleza.length === 0) {
@@ -63,14 +64,13 @@ const CategoryPage = () => {
             setCategoryName("Viajes");
             break;
           
-          case "ofertas":
+          case "top":
             if (store.serviciosOfertas.length === 0) {
               await actions.cargarServiciosOfertas();
             }
             categoryProducts = store.serviciosOfertas;
             setCategoryName("Top Ofertas");
-            break;
-            break;
+            break; // CORREGIDO: Eliminado el break redundante que causaba el error
           
           default:
             setError("Categoría no encontrada");

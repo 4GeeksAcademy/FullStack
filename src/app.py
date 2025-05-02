@@ -243,6 +243,24 @@ def actualizar_perfil():
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar el perfil", "error": str(e)}), 500
 
+# Ruta para obtener todos los usuarios
+@app.route('/usuarios', methods=['GET'])
+
+def obtener_usuarios():
+    try:
+        # Obtener todos los usuarios de la base de datos
+        usuarios = User.query.all()
+        
+        # Serializar cada usuario
+        usuarios_serializados = [usuario.serialize() for usuario in usuarios]
+        
+        return jsonify({
+            "total": len(usuarios_serializados),
+            "usuarios": usuarios_serializados
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Ruta para actualizar el perfil del usuario
 @app.route('/usuarios/<int:id>', methods=['PUT'])

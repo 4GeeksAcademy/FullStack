@@ -1,6 +1,7 @@
 # services.py
 from api.models import db, Viajes, Top, Belleza, Gastronomia, User, Ofertas
 
+
 def create_admin_user():
     user = User.query.filter_by(correo='admin@outlook.com').first()
     if not user:
@@ -11,7 +12,67 @@ def create_admin_user():
         )
         db.session.add(user)
         db.session.commit()
-    
+
+
+# Funciones para eliminar duplicados
+def eliminar_duplicados_gastronomia():
+    servicios_gastronomia = Gastronomia.query.all()
+    seen = set()
+    for servicio in servicios_gastronomia:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def eliminar_duplicados_viajes():
+    servicios_viajes = Viajes.query.all()
+    seen = set()
+    for servicio in servicios_viajes:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def eliminar_duplicados_top():
+    servicios_top = Top.query.all()
+    seen = set()
+    for servicio in servicios_top:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def eliminar_duplicados_belleza():
+    servicios_belleza = Belleza.query.all()
+    seen = set()
+    for servicio in servicios_belleza:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def eliminar_duplicados_ofertas():
+    servicios_ofertas = Ofertas.query.all()
+    seen = set()
+    for servicio in servicios_ofertas:
+        if servicio.title in seen:
+            db.session.delete(servicio)
+        else:
+            seen.add(servicio.title)
+    db.session.commit()
+
+def limpiar_tablas():
+    eliminar_duplicados_gastronomia()
+    eliminar_duplicados_viajes()
+    eliminar_duplicados_top()
+    eliminar_duplicados_belleza()
+    eliminar_duplicados_ofertas()
+    print("Tablas limpiadas exitosamente.")
+
 def crear_servicios_ofertas(user_id, ofertas_category_id):
     if not Ofertas.query.filter_by(category_id=ofertas_category_id).first():
         ofertas = [
@@ -575,12 +636,8 @@ def crear_servicios_gastronomia(user_id, gastronomia_category_id):
         db.session.bulk_save_objects(gastronomia_services)
         db.session.commit()
 
-def limpiar_tablas():
-    eliminar_duplicados_gastronomia()
-    eliminar_duplicados_viajes()
-    eliminar_duplicados_top()
-    eliminar_duplicados_belleza()
-    eliminar_duplicados_ofertas()
+
+    
 
 # Función para inicializar todos los servicios
 def inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_category_id, gastronomia_category_id, ofertas_category_id):

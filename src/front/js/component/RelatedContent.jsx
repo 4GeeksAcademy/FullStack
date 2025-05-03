@@ -7,12 +7,21 @@ const RelatedContent = () => {
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
 
+  // Estado para guardar el índice actual de cada categoría
   const [currentIndices, setCurrentIndices] = useState({
     Belleza: 0,
     gastronomia: 0,
     viajes: 0,
   });
 
+  // Categorías disponibles
+  const categories = [
+    { id: "Belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
+    { id: "gastronomia", name: "Gastronomía", deals: store.serviciosGastronomia || [] },
+    { id: "viajes", name: "Viajes", deals: store.serviciosViajes || [] },
+  ];
+
+  // Cargar datos iniciales
   useEffect(() => {
     const fetchData = async () => {
       if (store.serviciosViajes.length === 0) await actions.cargarServiciosViajes();
@@ -23,36 +32,44 @@ const RelatedContent = () => {
     fetchData();
   }, []);
 
-  const categories = [
-    { id: "Belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
-    { id: "gastronomia", name: "Gastronomía", deals: store.serviciosGastronomia || [] },
-    { id: "viajes", name: "Viajes", deals: store.serviciosViajes || [] },
-  ];
-
+  // Manejar navegación al detalle del producto
   const handleNavigate = (deal) => {
-    // Usamos navigate para pasar los datos de la oferta al componente ProductDetail
     navigate(`/product-detail`, {
       state: { offer: deal }
     });
   };
 
+  // Función para manejar el scroll/paginación
   const scroll = (categoryId, direction, e) => {
     e.preventDefault();
     e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
 
     setCurrentIndices((prev) => {
       const current = prev[categoryId] || 0;
-      const totalDeals = categories.find(cat => cat.id === categoryId)?.deals.length || 0;
-      const newIndex =
-        direction === "left" ? Math.max(current - 4, 0) :
-        direction === "right" ? Math.min(current + 4, totalDeals - 4) :
-        current;
+      const category = categories.find(cat => cat.id === categoryId);
+      const totalDeals = category?.deals.length || 0;
+      const visibleCount = 4; // Máximo de cards a mostrar
+      
+      // Calcular nuevo índice basado en la dirección
+      let newIndex;
+      if (direction === "left") {
+        // Retroceder: ir al grupo anterior de 4 o al inicio
+        newIndex = Math.max(current - visibleCount, 0);
+      } else {
+        // Avanzar: ir al siguiente grupo de 4 o quedarse si no hay más
+        newIndex = Math.min(current + visibleCount, totalDeals - 1);
+        
+        // Si al avanzar no hay suficientes elementos, mostrar los que quedan
+        if (newIndex + visibleCount > totalDeals) {
+          newIndex = totalDeals - (totalDeals % visibleCount || visibleCount);
+        }
+      }
 
       return { ...prev, [categoryId]: newIndex };
     });
   };
 
+  // Verificar si hay datos para mostrar
   const hasAnyData = categories.some(cat => cat.deals.length > 0);
 
   return (
@@ -63,6 +80,12 @@ const RelatedContent = () => {
         {hasAnyData ? (
           categories.map((category) => {
             const currentIndex = currentIndices[category.id] || 0;
+            const totalDeals = category.deals.length;
+            const remainingDeals = totalDeals - currentIndex;
+            const dealsToShow = category.deals.slice(
+              currentIndex, 
+              Math.min(currentIndex + 4, totalDeals) // Mostrar hasta 4 o los que queden
+            );
 
             return (
               <div key={category.id} className="mb-5">
@@ -77,6 +100,7 @@ const RelatedContent = () => {
                 </div>
 
                 <div className="position-relative">
+                  {/* Botón izquierdo */}
                   <button
                     className="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-1"
                     onClick={(e) => scroll(category.id, "left", e)}
@@ -85,9 +109,11 @@ const RelatedContent = () => {
                     &#8592;
                   </button>
 
+                  {/* Cards */}
                   <div className="row gx-3">
-                    {category.deals.slice(currentIndex, currentIndex + 4).map((deal, index) => {
+                    {dealsToShow.map((deal) => {
                       const offer = {
+                        id: deal.id,
                         title: deal.nombre || deal.title || "Sin título",
                         image: deal.imagen || deal.image || "https://via.placeholder.com/300x200?text=Sin+imagen",
                         rating: deal.rating || 4,
@@ -98,20 +124,28 @@ const RelatedContent = () => {
                       };
 
                       return (
-                        <div key={`${category.id}-${index}`} className="col-12 col-sm-6 col-md-3">
+                        <div key={`${category.id}-${deal.id}`} className="col-12 col-sm-6 col-md-3">
                           <CategoryCard
                             offer={offer}
-                            onViewService={() => handleNavigate(offer)} // Pasamos la oferta al hacer click
+                            onViewService={() => handleNavigate(offer)}
                           />
                         </div>
                       );
                     })}
+
+                    {/* Espacios vacíos si hay menos de 4 cards */}
+                    {dealsToShow.length < 4 && 
+                      Array.from({ length: 4 - dealsToShow.length }).map((_, i) => (
+                        <div key={`empty-${i}`} className="col-12 col-sm-6 col-md-3" style={{ visibility: 'hidden' }} />
+                      ))
+                    }
                   </div>
 
+                  {/* Botón derecho */}
                   <button
                     className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y z-1"
                     onClick={(e) => scroll(category.id, "right", e)}
-                    disabled={currentIndex + 4 >= category.deals.length}
+                    disabled={currentIndex + 4 >= totalDeals}
                   >
                     &#8594;
                   </button>

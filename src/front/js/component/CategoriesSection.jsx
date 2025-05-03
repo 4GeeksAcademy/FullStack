@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 
 const CategoriesSection = ({ onNavigate }) => {
   const { store } = useContext(Context);
-  // Asegurarnos que tenemos todas las categorías, incluyendo "Top Ofertas"
+  const navigate = useNavigate();
+
+  // Asegurar que tenemos todas las categorías necesarias
   const categories = store.categories || [
     { id: "belleza", name: "Belleza", icon: "💆‍♀️" },
     { id: "gastronomia", name: "Gastronomía", icon: "🍽️" },
@@ -12,13 +14,9 @@ const CategoriesSection = ({ onNavigate }) => {
     { id: "ofertas", name: "Top Ofertas", icon: "🔥" }
   ];
 
-  const navigate = useNavigate();
-
-  // Función para manejar la navegación a una categoría específica
   const handleNavigate = (categoryId, categoryName) => {
-    // Redirigimos a la ruta de categoría pasando el nombre como state
     navigate(`/category/${categoryId}`, { 
-      state: { categoryName: categoryName } 
+      state: { categoryName } 
     });
   };
 

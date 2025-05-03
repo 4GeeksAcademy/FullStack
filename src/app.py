@@ -534,31 +534,53 @@ def eliminar_oferta(id):
 def crear_viaje():
     data = request.get_json()
 
-    nuevo_viaje = Viajes(
-        title=data.get('title'),
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),
-        city=data.get('city'),
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación básica de campos requeridos
+    if not data.get('title') or not data.get('descripcion') or not data.get('price'):
+        return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    db.session.add(nuevo_viaje)
-    db.session.commit()
+    try:
+        nuevo_viaje = Viajes(
+            title=data.get('title'),
+            descripcion=data.get('descripcion'),
+            price=data.get('price'),
+            city=data.get('city', ''),  # Valor por defecto si no se proporciona
+            image=data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.0),  # Valor por defecto
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data.get('user_id'),
+            category_id=data.get('category_id', 1)  # Valor por defecto para viajes
+        )
 
-    return jsonify(nuevo_viaje.serialize()), 201
+        db.session.add(nuevo_viaje)
+        db.session.commit()
+
+        # Devolver el viaje creado con su ID
+        return jsonify({
+            "message": "Viaje creado exitosamente",
+            "viaje": nuevo_viaje.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/viajes', methods=['GET'])
 def obtener_viajes():
-    viajes_items = Viajes.query.all()
-    viajes_serializados = [viaje.serialize() for viaje in viajes_items]
+    try:
+        # Ordenar por ID descendente para obtener los más recientes primero
+        viajes_items = Viajes.query.order_by(Viajes.id.desc()).all()
+        viajes_serializados = [viaje.serialize() for viaje in viajes_items]
 
-    return jsonify({"viajes": viajes_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(viajes_serializados),
+            "viajes": viajes_serializados
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/top', methods=['POST'])

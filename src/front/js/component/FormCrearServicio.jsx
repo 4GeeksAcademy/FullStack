@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { Context } from "../store/appContext";
+import { useNavigate } from "react-router-dom";
 
 const FormCrearServicio = () => {
+  const { actions } = useContext(Context);
+  const navigate = useNavigate();
+  
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
   const [ciudad, setCiudad] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [userId, setUserId] = useState(null);
-  const [imagen, setImagen] = useState(''); // Nuevo campo para imagen
+  const [imagen, setImagen] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -42,11 +47,9 @@ const FormCrearServicio = () => {
           setUserId(data.id);
         } else {
           const errorText = await response.text();
-          console.error('Respuesta del backend:', errorText);
           setError('Error al obtener los datos del usuario.');
         }
       } catch (error) {
-        console.error('Error en la petición de usuario:', error);
         setError('Error inesperado al obtener los datos del usuario.');
       } finally {
         setLoading(false);
@@ -54,7 +57,7 @@ const FormCrearServicio = () => {
     };
 
     obtenerUsuario();
-  }, []);
+  }, [backendUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,21 +80,18 @@ const FormCrearServicio = () => {
     }
 
     const data = {
-      buyers: null, // Se deja null si no se tiene valor
+      buyers: null,
       category_id: categoriaSeleccionada.id,
       city: ciudad,
       descripcion,
-      discountPrice: null, // Se deja null si no se tiene valor
-      id: null,
-      image: imagen || null, // Enviar imagen si se proporciona
+      discountPrice: null,
+      image: imagen || null,
       price: parseFloat(precio),
-      rating: null, // Se deja null si no se tiene valor
-      reviews: null, // Se deja null si no se tiene valor
+      rating: null,
+      reviews: null,
       title: titulo,
-      user_id: userId, // Se toma el ID del usuario que está logueado
+      user_id: userId,
     };
-
-    console.log('Datos a enviar:', data);
 
     try {
       const response = await fetch(categoriaSeleccionada.ruta, {
@@ -104,26 +104,49 @@ const FormCrearServicio = () => {
       });
 
       if (response.ok) {
+        const nuevoServicio = await response.json();
+        
+        // Actualizar el estado global según la categoría
+        switch(categoriaSeleccionada.id) {
+          case 1: // Viajes
+            await actions.cargarServiciosViajes();
+            break;
+          case 2: // Belleza
+            await actions.cargarServiciosBelleza();
+            break;
+          case 3: // Top
+            await actions.cargarServiciosOfertas();
+            break;
+          case 4: // Gastronomía
+            await actions.cargarServiciosGastronomia();
+            break;
+        }
+
         alert('Servicio creado correctamente.');
-        setTitulo('');
-        setDescripcion('');
-        setPrecio('');
-        setCiudad('');
-        setCategoryId('');
-        setImagen(''); // Limpiar imagen
+        // Redirigir a la página de la categoría
+        navigate(`/category/${categoriaSeleccionada.nombre.toLowerCase()}`);
       } else {
         const errorText = await response.text();
-        console.error('Error del servidor:', errorText);
-        alert(`Error al crear el servicio: ${response.status} - ${errorText}`);
+        alert(`Error al crear el servicio: ${errorText}`);
       }
     } catch (error) {
-      console.error('Error:', error);
       alert('Ocurrió un error al enviar los datos.');
     }
   };
 
-  if (loading) return <div>Cargando...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return (
+    <div className="container d-flex justify-content-center mt-5">
+      <div className="spinner-border" role="status">
+        <span className="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="container d-flex justify-content-center mt-5">
+      <div className="alert alert-danger">{error}</div>
+    </div>
+  );
 
   return (
     <div className="container d-flex justify-content-center mt-5">
@@ -143,12 +166,12 @@ const FormCrearServicio = () => {
 
           <div className="mb-3">
             <label className="form-label">Descripción</label>
-            <input
-              type="text"
+            <textarea
               className="form-control"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               required
+              rows="3"
             />
           </div>
 
@@ -160,6 +183,8 @@ const FormCrearServicio = () => {
               value={precio}
               onChange={(e) => setPrecio(e.target.value)}
               required
+              min="0"
+              step="0.01"
             />
           </div>
 
@@ -174,14 +199,14 @@ const FormCrearServicio = () => {
             />
           </div>
 
-          {/* Nuevo campo para la imagen */}
           <div className="mb-3">
             <label className="form-label">URL de la Imagen</label>
             <input
-              type="text"
+              type="url"
               className="form-control"
               value={imagen}
-              onChange={(e) => setImagen(e.target.value)} // Guardar la URL de la imagen
+              onChange={(e) => setImagen(e.target.value)}
+              placeholder="https://ejemplo.com/imagen.jpg"
             />
           </div>
 
@@ -210,4 +235,3 @@ const FormCrearServicio = () => {
 };
 
 export default FormCrearServicio;
-

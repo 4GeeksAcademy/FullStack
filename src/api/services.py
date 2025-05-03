@@ -189,7 +189,7 @@ def crear_servicios_ofertas(user_id, ofertas_category_id):
 
 # Función para crear los servicios de Viajes
 def crear_servicios_viajes(user_id, viajes_category_id):
-    if not Viajes.query.filter_by(category_id=viajes_category_id).first():
+    # if not Viajes.query.filter_by(category_id=viajes_category_id).first():
         viajes_services = [
             Viajes(
                 title="Aventura en la Patagonia",
@@ -296,8 +296,15 @@ def crear_servicios_viajes(user_id, viajes_category_id):
                 category_id=viajes_category_id
             ),
         ]
-        db.session.bulk_save_objects(viajes_services)
-        db.session.commit()
+        # Verificar cuáles ya existen para no duplicar
+        existing_titles = {v.title for v in Viajes.query.filter_by(category_id=viajes_category_id).all()}
+        new_services = [v for v in viajes_services if v.title not in existing_titles]
+    
+        if new_services:
+            db.session.bulk_save_objects(new_services)
+            db.session.commit()
+        # db.session.bulk_save_objects(viajes_services)
+        # db.session.commit()
 
 
 # Función para crear los servicios de Top

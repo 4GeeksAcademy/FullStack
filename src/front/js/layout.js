@@ -31,6 +31,7 @@ import VistaCrearServicio from "./pages/VistaCrearServicio.jsx";
 import VistaMiPerFil from "./pages/VistaMiPerfil.jsx"
 import VistaMisCompras from "./pages/VistaMisCompras.jsx"
 import Checkout from "./pages/Checkout.jsx";
+import Return from "./pages/Return.jsx";
 
 
 
@@ -68,13 +69,9 @@ const Layout = () => {
             <Route path="/product-detail" element={<ProductDetail />} />
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
-
-            
-
-
             <Route path="/mis-compras" element={<VistaMisCompras />} /> 
-            <Route path="/checkout/:categoria/:id" element={<Checkout />} />
-
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/return" element={<Return />} />
           </Routes>
           <Footer />
         </ScrollToTop>

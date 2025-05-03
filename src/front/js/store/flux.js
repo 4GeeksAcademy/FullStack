@@ -44,7 +44,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       serviciosBelleza: [],
       serviciosOfertas: [],
       serviciosTop: [],
-      cartItems: [], // Aquí se almacenarán los productos en el carrito
+      cartItems: [],
       selectedCategory: null,
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
       productDetails: {
@@ -69,6 +69,65 @@ const getState = ({ getStore, getActions, setStore }) => {
       exampleFunction: () => {
         getActions().changeColor(0, "green");
       },
+
+      saveCartToLocalStorage: () => {
+        const store = getStore();
+        localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+      },
+
+      // Cargar el carrito desde localStorage (por si no se inicializó arriba)
+      loadCartFromLocalStorage: () => {
+        const storedCart = localStorage.getItem("cartItems");
+        if (storedCart) {
+          setStore({ cartItems: JSON.parse(storedCart) });
+        }
+      },
+
+      addToCart: (item) => {
+        const store = getStore();
+        const existingItem = store.cartItems.find(
+          (cartItem) => cartItem.id === item.id
+        );
+
+        let updatedCart;
+
+        if (existingItem) {
+          updatedCart = store.cartItems.map((cartItem) =>
+            cartItem.id === item.id
+              ? { ...cartItem, quantity: cartItem.quantity + 1 }
+              : cartItem
+          );
+        } else {
+          updatedCart = [...store.cartItems, { ...item, quantity: 1 }];
+        }
+
+        setStore({ cartItems: updatedCart });
+        getActions().saveCartToLocalStorage(); // Guardar
+      },
+
+      removeItemFromCart: (id) => {
+        const store = getStore();
+        const updatedCart = store.cartItems.filter((item) => item.id !== id);
+        setStore({ cartItems: updatedCart });
+        getActions().saveCartToLocalStorage(); // Guardar
+      },
+
+      updateQuantity: (id, newQuantity) => {
+        if (newQuantity < 1) return;
+        const store = getStore();
+        const updatedCart = store.cartItems.map((item) =>
+          item.id === id ? { ...item, quantity: newQuantity } : item
+        );
+        setStore({ cartItems: updatedCart });
+        getActions().saveCartToLocalStorage(); // Guardar
+      },
+
+      // Puedes llamar esto desde el layout o componente principal al iniciar
+      initializeApp: () => {
+        getActions().loadCartFromLocalStorage();
+        getActions().loadUserFromStorage();
+      },
+      
       loginUser: async ({ correo, password }) => {
         try {
             const resp = await fetch(process.env.BACKEND_URL + '/login', {

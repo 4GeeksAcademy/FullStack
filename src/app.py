@@ -569,8 +569,8 @@ def crear_viaje():
 @app.route('/viajes', methods=['GET'])
 def obtener_viajes():
     try:
-        # Ordenar por ID descendente para obtener los más recientes primero
-        viajes_items = Viajes.query.order_by(Viajes.id.desc()).all()
+       # Ordenar por ID ascendente para mantener el orden original (último al final)
+        viajes_items = Viajes.query.order_by(Viajes.id.asc()).all()
         viajes_serializados = [viaje.serialize() for viaje in viajes_items]
 
         return jsonify({
@@ -588,63 +588,107 @@ def obtener_viajes():
 def crear_top():
     data = request.get_json()
 
-    nuevo_top = Top(
-        title=data.get('title'),  # Nombre cambiado por title
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),  # Precio cambiado por Price
-        city=data.get('city'),  # Ubicación cambiada por city
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación de campos requeridos
+    required_fields = ['title', 'descripcion', 'price', 'user_id']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"error": f"Campo requerido faltante: {field}"}), 400
 
-    db.session.add(nuevo_top)
-    db.session.commit()
+    try:
+        nuevo_top = Top(
+            title=data['title'],
+            descripcion=data['descripcion'],
+            price=data['price'],
+            city=data.get('city', ''),
+            image=data.get('image', 'https://img.freepik.com/free-photo/beautiful-shot-u-s-route-66-arizona-usa-with-clear-blue-sky-background_181624-53248.jpg'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.5),
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data['user_id'],
+            category_id=data.get('category_id', 3)  # ID de categoría para Top
+        )
 
-    return jsonify(nuevo_top.serialize()), 201
+        db.session.add(nuevo_top)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Top creado exitosamente",
+            "top": nuevo_top.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/top', methods=['GET'])
 def obtener_top():
-    top_items = Top.query.all()
-    top_serializados = [top.serialize() for top in top_items]
+    try:
+        # Ordenar por ID descendente para mostrar los más recientes primero
+        top_items = Top.query.order_by(Top.id.desc()).all()
+        top_serializados = [top.serialize() for top in top_items]
 
-    return jsonify({"top": top_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(top_serializados),
+            "top": top_serializados
+        }), 200
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/gastronomia', methods=['POST'])
 @jwt_required()
 def crear_gastronomia():
     data = request.get_json()
 
-    nuevo_gastronomia = Gastronomia(
-        title=data.get('title'),
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),
-        city=data.get('city'),
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación básica de campos requeridos
+    if not data.get('title') or not data.get('descripcion') or not data.get('price'):
+        return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    db.session.add(nuevo_gastronomia)
-    db.session.commit()
+    try:
+        nuevo_gastronomia = Gastronomia(
+            title=data.get('title'),
+            descripcion=data.get('descripcion'),
+            price=data.get('price'),
+            city=data.get('city', ''),  # Valor por defecto si no se proporciona
+            image=data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.0),  # Valor por defecto
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data.get('user_id'),
+            category_id=data.get('category_id', 4)  # Valor por defecto para gastronomía
+        )
 
-    return jsonify(nuevo_gastronomia.serialize()), 201
+        db.session.add(nuevo_gastronomia)
+        db.session.commit()
+
+        # Devolver el gastronomía creado con su ID
+        return jsonify({
+            "message": "Servicio de gastronomía creado exitosamente",
+            "gastronomia": nuevo_gastronomia.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/gastronomia', methods=['GET'])
 def obtener_gastronomia():
-    gastronomia_items = Gastronomia.query.all()
-    gastronomia_serializados = [gastronomia.serialize() for gastronomia in gastronomia_items]
+    try:
+        # Ordenar por ID ascendente para mantener el orden original (último al final)
+        gastronomia_items = Gastronomia.query.order_by(Gastronomia.id.asc()).all()
+        gastronomia_serializados = [gastronomia.serialize() for gastronomia in gastronomia_items]
 
-    return jsonify({"gastronomia": gastronomia_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(gastronomia_serializados),
+            "gastronomia": gastronomia_serializados
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/belleza', methods=['POST'])

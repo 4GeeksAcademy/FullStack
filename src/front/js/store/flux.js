@@ -316,19 +316,19 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
       },
 
-      // cargarServiciosTop: async () => {
-      //   try {
-      //     const resp = await fetch(process.env.BACKEND_URL + "/top");
-      //     const data = await resp.json();
-      //     const top = data.top || [];
-      //     setStore({ serviciosTop: top });
-      //     console.log("SERVICOSSS TOOOOOPPPP", top)
-      //     return top;
-      //   } catch (e) {
-      //     console.error("Error al cargar top:", e);
-      //     return [];
-      //   }
-      // },
+      cargarServiciosTop: async () => {
+        try {
+          const resp = await fetch(process.env.BACKEND_URL + "/top");
+          const data = await resp.json();
+          const top = data.top || [];
+          setStore({ serviciosTop: top });
+          console.log("SERVICOSSS TOOOOOPPPP", top)
+          return top;
+        } catch (e) {
+          console.error("Error al cargar top:", e);
+          return [];
+        }
+      },
 
 
       cargarServiciosOfertas: async () => {

@@ -22,12 +22,15 @@ const CategoryPage = () => {
     if (location.state && location.state.categoryName) {
       setCategoryName(location.state.categoryName);
     } else {
-      const foundCategory = store.categories.find(cat => cat.id === categoryId);
-      if (foundCategory) {
-        setCategoryName(foundCategory.name);
-      } else {
-        setCategoryName("Productos");
-      }
+      // Nombres consistentes con el formulario
+      const categoryNames = {
+        'belleza': 'Belleza',
+        'gastronomia': 'Gastronomía',
+        'viajes': 'Viajes',
+        'ofertas': 'Top Ofertas',
+        'top': 'Top Ofertas'
+      };
+      setCategoryName(categoryNames[categoryId] || "Productos");
     }
 
     const loadCategoryProducts = async () => {
@@ -39,36 +42,24 @@ const CategoryPage = () => {
         
         switch (categoryId) {
           case "belleza":
-            if (store.serviciosBelleza.length === 0) {
-              await actions.cargarServiciosBelleza();
-            }
+            await actions.cargarServiciosBelleza();
             categoryProducts = store.serviciosBelleza;
-            setCategoryName("Belleza");
             break;
           
           case "gastronomia":
-            if (store.serviciosGastronomia.length === 0) {
-              await actions.cargarServiciosGastronomia();
-            }
+            await actions.cargarServiciosGastronomia();
             categoryProducts = store.serviciosGastronomia;
-            setCategoryName("Gastronomía");
             break;
           
           case "viajes":
-            if (store.serviciosViajes.length === 0) {
-              await actions.cargarServiciosViajes();
-            }
+            await actions.cargarServiciosViajes();
             categoryProducts = store.serviciosViajes;
-            setCategoryName("Viajes");
             break;
           
           case "ofertas":
           case "top":
-            if (store.serviciosOfertas.length === 0) {
-              await actions.cargarServiciosOfertas();
-            }
+            await actions.cargarServiciosOfertas();
             categoryProducts = store.serviciosOfertas;
-            setCategoryName("Top Ofertas");
             break;
           
           default:
@@ -77,9 +68,9 @@ const CategoryPage = () => {
         }
         
         setProducts(categoryProducts);
-        setCurrentPage(0); // Resetear a la primera página al cambiar de categoría
+        setCurrentPage(0);
       } catch (err) {
-        console.error(`Error al cargar productos de la categoría ${categoryId}:`, err);
+        console.error(`Error al cargar productos de ${categoryId}:`, err);
         setError(`Hubo un error al cargar los productos de ${categoryName}`);
       } finally {
         setLoading(false);
@@ -87,7 +78,7 @@ const CategoryPage = () => {
     };
 
     loadCategoryProducts();
-  }, [categoryId, actions, store]);
+  }, [categoryId, location.state]);
 
   const handleViewProductDetail = (offer) => {
     navigate("/product-detail", { state: { offer } });
@@ -103,7 +94,7 @@ const CategoryPage = () => {
     });
   };
 
-  // Calcular los productos a mostrar
+  // Calcular productos visibles
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const visibleProducts = products.slice(startIndex, endIndex);
@@ -173,24 +164,23 @@ const CategoryPage = () => {
           </div>
           
           <div className="row g-4">
-            {visibleProducts.map((product, index) => {
+            {visibleProducts.map((product) => {
               const offer = {
                 id: product.id,
-                title: product.title || product.nombre || "Sin título",
-                image: product.image || product.imagen || "https://via.placeholder.com/300x200?text=Sin+imagen",
+                title: product.title || "Sin título",
+                image: product.image || "https://via.placeholder.com/300x200?text=Sin+imagen",
                 rating: product.rating || 4,
                 reviews: product.reviews || 20,
-                discountPrice: product.discountPrice || product.precio || 0,
-                originalPrice: product.originalPrice || 
-                  (product.precio ? Math.round(product.precio * 1.2) : 
-                  product.discountPrice ? Math.round(product.discountPrice * 1.2) : 0),
-                buyers: product.buyers || 5,
-                descripcion: product.descripcion || product.description || "",
+                price: product.price || 0, // Precio directo
+                discountPrice: product.discountPrice || null, // Opcional
+                originalPrice: product.originalPrice || null, // Opcional
+                buyers: product.buyers || 0,
+                descripcion: product.descripcion || "",
                 city: product.city || ""
               };
               
               return (
-                <div className="col-12 col-md-6 col-lg-3" key={`${product.id}-${index}`}>
+                <div className="col-12 col-md-6 col-lg-3" key={product.id}>
                   <CategoryCard
                     offer={offer}
                     onViewService={() => handleViewProductDetail(offer)}

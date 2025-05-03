@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Context } from "../store/appContext";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const FormCrearServicio = () => {
-  const { actions } = useContext(Context);
-  const navigate = useNavigate();
-  
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
@@ -15,14 +11,15 @@ const FormCrearServicio = () => {
   const [imagen, setImagen] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  
+  const navigate = useNavigate();
   const backendUrl = process.env.BACKEND_URL;
 
   const categorias = [
-    { id: 1, nombre: 'Viajes', ruta: `${backendUrl}/viajes` },
-    { id: 3, nombre: 'Top', ruta: `${backendUrl}/top` },
-    { id: 2, nombre: 'Belleza', ruta: `${backendUrl}/belleza` },
-    { id: 4, nombre: 'Gastronomía', ruta: `${backendUrl}/gastronomia` },
+    { id: 1, nombre: 'Viajes', ruta: `${backendUrl}/viajes`, path: 'viajes' },
+    { id: 3, nombre: 'Top', ruta: `${backendUrl}/top`, path: 'ofertas' },
+    { id: 2, nombre: 'Belleza', ruta: `${backendUrl}/belleza`, path: 'belleza' },
+    { id: 4, nombre: 'Gastronomía', ruta: `${backendUrl}/gastronomia`, path: 'gastronomia' },
   ];
 
   useEffect(() => {
@@ -47,9 +44,11 @@ const FormCrearServicio = () => {
           setUserId(data.id);
         } else {
           const errorText = await response.text();
+          console.error('Respuesta del backend:', errorText);
           setError('Error al obtener los datos del usuario.');
         }
       } catch (error) {
+        console.error('Error en la petición de usuario:', error);
         setError('Error inesperado al obtener los datos del usuario.');
       } finally {
         setLoading(false);
@@ -57,7 +56,7 @@ const FormCrearServicio = () => {
     };
 
     obtenerUsuario();
-  }, [backendUrl]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -79,14 +78,21 @@ const FormCrearServicio = () => {
       return;
     }
 
+    const precioNumerico = parseFloat(precio);
+    if (isNaN(precioNumerico)) {
+      alert('Por favor ingresa un precio válido.');
+      return;
+    }
+
     const data = {
       buyers: null,
       category_id: categoriaSeleccionada.id,
       city: ciudad,
       descripcion,
       discountPrice: null,
+      id: null,
       image: imagen || null,
-      price: parseFloat(precio),
+      price: precioNumerico,
       rating: null,
       reviews: null,
       title: titulo,
@@ -104,49 +110,34 @@ const FormCrearServicio = () => {
       });
 
       if (response.ok) {
-        const nuevoServicio = await response.json();
-        
-        // Actualizar el estado global según la categoría
-        switch(categoriaSeleccionada.id) {
-          case 1: // Viajes
-            await actions.cargarServiciosViajes();
-            break;
-          case 2: // Belleza
-            await actions.cargarServiciosBelleza();
-            break;
-          case 3: // Top
-            await actions.cargarServiciosOfertas();
-            break;
-          case 4: // Gastronomía
-            await actions.cargarServiciosGastronomia();
-            break;
-        }
-
         alert('Servicio creado correctamente.');
-        // Redirigir a la página de la categoría
-        navigate(`/category/${categoriaSeleccionada.nombre.toLowerCase()}`);
+        // Redirigir a la categoría correspondiente
+        navigate(`/category/${categoriaSeleccionada.path}`, {
+          state: { 
+            categoryName: categoriaSeleccionada.nombre === 'Top' ? 'Top Ofertas' : categoriaSeleccionada.nombre,
+            forceRefresh: true
+          }
+        });
+        // Limpiar el formulario
+        setTitulo('');
+        setDescripcion('');
+        setPrecio('');
+        setCiudad('');
+        setCategoryId('');
+        setImagen('');
       } else {
         const errorText = await response.text();
-        alert(`Error al crear el servicio: ${errorText}`);
+        console.error('Error del servidor:', errorText);
+        alert(`Error al crear el servicio: ${response.status} - ${errorText}`);
       }
     } catch (error) {
+      console.error('Error:', error);
       alert('Ocurrió un error al enviar los datos.');
     }
   };
 
-  if (loading) return (
-    <div className="container d-flex justify-content-center mt-5">
-      <div className="spinner-border" role="status">
-        <span className="visually-hidden">Cargando...</span>
-      </div>
-    </div>
-  );
-
-  if (error) return (
-    <div className="container d-flex justify-content-center mt-5">
-      <div className="alert alert-danger">{error}</div>
-    </div>
-  );
+  if (loading) return <div>Cargando...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="container d-flex justify-content-center mt-5">
@@ -166,12 +157,12 @@ const FormCrearServicio = () => {
 
           <div className="mb-3">
             <label className="form-label">Descripción</label>
-            <textarea
+            <input
+              type="text"
               className="form-control"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               required
-              rows="3"
             />
           </div>
 
@@ -182,9 +173,9 @@ const FormCrearServicio = () => {
               className="form-control"
               value={precio}
               onChange={(e) => setPrecio(e.target.value)}
-              required
               min="0"
               step="0.01"
+              required
             />
           </div>
 
@@ -202,11 +193,11 @@ const FormCrearServicio = () => {
           <div className="mb-3">
             <label className="form-label">URL de la Imagen</label>
             <input
-              type="url"
+              type="text"
               className="form-control"
               value={imagen}
               onChange={(e) => setImagen(e.target.value)}
-              placeholder="https://ejemplo.com/imagen.jpg"
+              placeholder="Ejemplo: https://ejemplo.com/imagen.jpg"
             />
           </div>
 

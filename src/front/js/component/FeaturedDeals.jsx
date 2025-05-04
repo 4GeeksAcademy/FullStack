@@ -5,32 +5,54 @@ import { useNavigate } from "react-router-dom";
 
 const FeaturedDeals = ({ onViewService = () => {} }) => {
   const { store } = useContext(Context);
-  const navigate = useNavigate(); // Agregamos useNavigate
-  
-  // Asegurarte que los servicios existen antes de acceder a ellos
-  const gastronomia = store.serviciosGastronomia[0];
-  const belleza = store.serviciosBelleza[0];
-  const viajes = store.serviciosViajes.slice(0, 2); // Primeros 2 de viajes
-  
-  // Ahora armás un array combinando todo
-  const deals = [gastronomia, belleza, ...viajes].filter(Boolean);
-  // filter(Boolean) elimina posibles undefined si algún array está vacío
-  
-  // Esta es la única función nueva que necesitamos agregar
-  const handleViewOffer = (offer) => {
-    navigate(".", { state: { offer } });
+  const navigate = useNavigate();
+
+  // Obtener las ofertas asegurando que existan y tengan ID
+  const getValidOffers = (offers, count) => {
+    return offers
+      .filter(offer => offer && offer.id) // Filtramos ofertas válidas con ID
+      .slice(0, count); // Tomamos solo el número necesario
   };
-  
+
+  // Obtener ofertas destacadas
+  const gastronomia = getValidOffers(store.serviciosGastronomia, 1)[0];
+  const belleza = getValidOffers(store.serviciosBelleza, 1)[0];
+  const viajes = getValidOffers(store.serviciosViajes, 2);
+
+  // Combinar todas las ofertas
+  const deals = [gastronomia, belleza, ...viajes].filter(offer => offer);
+
+  // Función para determinar categoría
+  const getCategory = (offerId) => {
+    if (store.serviciosGastronomia.some(o => o.id === offerId)) return 'gastronomia';
+    if (store.serviciosBelleza.some(o => o.id === offerId)) return 'belleza';
+    if (store.serviciosViajes.some(o => o.id === offerId)) return 'viajes';
+    return '';
+  };
+
+  // Manejar click en card
+  const handleViewOffer = (offer) => {
+    if (!offer || !offer.id) return;
+    
+    navigate("/product-detail", {
+      state: {
+        offer,
+        category: getCategory(offer.id)
+      }
+    });
+    onViewService(offer);
+  };
+
   return (
     <section className="py-5">
       <div className="col-12 col-sm-10 col-md-9 col-lg-9 mx-auto px-3 px-sm-4">
         <h2 className="mb-4 fw-bold fs-4">Ofertas destacadas</h2>
         <div className="row g-4">
-          {deals.map((deal, index) => (
-            <div className="col-12 col-md-6 col-lg-3" key={index}>
+          {deals.map((deal) => (
+            <div className="col-12 col-md-6 col-lg-3" key={deal.id}>
               <CategoryCard 
                 offer={deal} 
-                onViewService={() => handleViewOffer(deal)} // Usamos la nueva función
+                onViewService={() => handleViewOffer(deal)}
               />
             </div>
           ))}

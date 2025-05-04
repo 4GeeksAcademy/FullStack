@@ -17,7 +17,7 @@ const FormCrearServicio = () => {
 
   const categorias = [
     { id: 1, nombre: 'Viajes', ruta: `${backendUrl}/viajes`, path: 'viajes' },
-    { id: 3, nombre: 'Top', ruta: `${backendUrl}/top`, path: 'ofertas' },
+    { id: 3, nombre: 'Top', ruta: `${backendUrl}/top`, path: 'top' }, // Cambiado a 'top'
     { id: 2, nombre: 'Belleza', ruta: `${backendUrl}/belleza`, path: 'belleza' },
     { id: 4, nombre: 'Gastronomía', ruta: `${backendUrl}/gastronomia`, path: 'gastronomia' },
   ];
@@ -111,10 +111,10 @@ const FormCrearServicio = () => {
 
       if (response.ok) {
         alert('Servicio creado correctamente.');
-        // Redirigir a la categoría correspondiente
+        // Redirigir a la categoría correcta
         navigate(`/category/${categoriaSeleccionada.path}`, {
           state: { 
-            categoryName: categoriaSeleccionada.nombre === 'Top' ? 'Top Ofertas' : categoriaSeleccionada.nombre,
+            categoryName: categoriaSeleccionada.nombre,
             forceRefresh: true
           }
         });
@@ -135,7 +135,6 @@ const FormCrearServicio = () => {
       alert('Ocurrió un error al enviar los datos.');
     }
   };
-
   if (loading) return <div>Cargando...</div>;
   if (error) return <div>Error: {error}</div>;
 

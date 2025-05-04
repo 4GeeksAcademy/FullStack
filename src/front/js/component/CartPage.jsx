@@ -1,24 +1,23 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext } from 'react';
 import { Context } from '../store/appContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const CartPage = () => {
     const { store, actions } = useContext(Context);
-    const [cartItems, setCartItems] = useState(store.cartItems || []);
+    const cartItems = store.cartItems || [];
+    const navigate = useNavigate();
 
     const updateQuantity = (id, newQuantity) => {
         if (newQuantity < 1) return;
         const updatedItems = cartItems.map(item =>
             item.id === id ? { ...item, quantity: newQuantity } : item
         );
-        setCartItems(updatedItems);
         actions.updateCart(updatedItems);
     };
 
     const removeItem = (id) => {
         const updatedItems = cartItems.filter(item => item.id !== id);
-        setCartItems(updatedItems);
         actions.updateCart(updatedItems);
     };
 
@@ -27,6 +26,19 @@ const CartPage = () => {
         0
     );
 
+    const checkLoginStatus = () => {
+        const token = localStorage.getItem("token");
+        return !!token;
+    };
+
+    const handleProceedToPayment = () => {
+        if (checkLoginStatus()) {
+            navigate('/checkout');
+        } else {
+            navigate('/login');
+        }
+    };
+
     return (
         <div className="container py-5">
             <h2 className="mb-4">My Cart</h2>
@@ -34,9 +46,9 @@ const CartPage = () => {
             {cartItems.length === 0 ? (
                 <div className="text-center py-5">
                     <p className="text-muted mb-3">Your Cart is Empty</p>
-                    <Link to="/" className="btn btn-danger">
+                    <button className="btn btn-danger" onClick={() => navigate('/')}>
                         Browse Offers
-                    </Link>
+                    </button>
                 </div>
             ) : (
                 <>
@@ -60,7 +72,7 @@ const CartPage = () => {
                                             >
                                                 -
                                             </button>
-                                            <span className="btn btn-outline-light border">{item.quantity}</span>
+                                            <span className="btn btn-outline-light border text-dark">{item.quantity}</span>
                                             <button
                                                 className="btn btn-outline-secondary"
                                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
@@ -94,9 +106,12 @@ const CartPage = () => {
                             <span>Total</span>
                             <span>€{subtotal.toFixed(2)}</span>
                         </div>
-                        <Link to="/checkout" className="btn btn-danger w-100">
-                            Proceed to Payment
-                        </Link>
+                        <button 
+                            onClick={handleProceedToPayment} 
+                            className="btn btn-danger w-100"
+                        >
+                            Pagar Ahora
+                        </button>
                     </div>
                 </>
             )}
@@ -105,3 +120,4 @@ const CartPage = () => {
 };
 
 export default CartPage;
+

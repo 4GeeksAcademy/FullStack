@@ -1,98 +1,69 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Context } from '../store/appContext';
-import { useHistory } from 'react-router-dom';
+import React, { useCallback, useContext, useState, useEffect } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+import { Context } from "../store/appContext";
 
-const CheckoutPage = () => {
-    const { store } = useContext(Context);
-    const [cartItems, setCartItems] = useState(store.cartItems || []);
-    const [subtotal, setSubtotal] = useState(store.subtotal || 0);
-    const [loading, setLoading] = useState(false);
-    const history = useHistory();
+const stripePromise = loadStripe("pk_test_51RHkEqFNyrX4spGdBv11uJQXp9SbJRaSxzsolRbEeZVVYuzxZqtdF4uBytcTV0BkfQRgMemgaA2DnGI4lriZZpWb00g736yfzD");
 
-    useEffect(() => {
-        if (cartItems.length === 0) {
-            history.push('/cart');
+const Checkout = () => {
+  const { store } = useContext(Context);
+  const cartItems = store.cartItems || [];
+
+  const subtotal = cartItems.reduce((acc, item) => acc + item.discountPrice * item.quantity, 0);
+  const [clientSecret, setClientSecret] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Función para obtener el client secret
+  const fetchClientSecret = useCallback(() => {
+    setError(null);
+
+    fetch(`${process.env.BACKEND_URL}/create-checkout-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: cartItems,
+        total: subtotal
+      })
+    })
+      .then(async (res) => {
+        const contentType = res.headers.get("content-type");
+        if (!res.ok || !contentType.includes("application/json")) {
+          const text = await res.text();
+          console.error("Unexpected response:", text);
+          throw new Error("Invalid response from server.");
         }
-    }, [cartItems, history]);
-
-    const handleCheckout = async () => {
-        setLoading(true);
-        try {
-            const backendUrl = process.env.BACKEND_URL 
-            const response = await fetch(`${backendUrl}/create-checkout-session`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    items: cartItems,
-                    total: subtotal,
-                }),
-            });
-
-            const data = await response.json();
-            if (data.sessionId) {
-                const stripe = window.Stripe('pk_test_51RHkEqFNyrX4spGdBv11uJQXp9SbJRaSxzsolRbEeZVVYuzxZqtdF4uBytcTV0BkfQRgMemgaA2DnGI4lriZZpWb00g736yfzD');
-                await stripe.redirectToCheckout({ sessionId: data.sessionId });
-            }
-        } catch (error) {
-            console.error('Error in checkout:', error);
-        } finally {
-            setLoading(false);
+        return res.json();
+      })
+      .then((data) => {
+        if (!data.clientSecret) {
+          throw new Error("Client secret not found in response.");
         }
-    };
+        setClientSecret(data.clientSecret);
+      })
+      .catch((error) => {
+        console.error("Error fetching client secret:", error);
+        setError(error.message);
+      });
+  }, [cartItems, subtotal]);
 
-    return (
-        <div className="container py-5">
-            <h2 className="mb-4">Checkout</h2>
-            {cartItems.length === 0 ? (
-                <div className="text-center py-5">
-                    <p className="text-muted mb-3">Your Cart is Empty</p>
-                </div>
-            ) : (
-                <>
-                    <div className="list-group mb-4">
-                        {cartItems.map(item => (
-                            <div key={item.id} className="list-group-item d-flex align-items-center">
-                                <img
-                                    src={item.image}
-                                    alt={item.title}
-                                    className="rounded me-3"
-                                    style={{ width: 100, height: 100, objectFit: 'cover' }}
-                                />
-                                <div className="flex-grow-1">
-                                    <h5 className="mb-1">{item.title}</h5>
-                                    <small className="text-muted">{item.city}</small>
-                                    <div className="d-flex justify-content-between align-items-center mt-2">
-                                        <span className="fw-medium">€{(item.discountPrice * item.quantity).toFixed(2)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+  // Llamar a fetchClientSecret cuando el componente se monte
+  useEffect(() => {
+    fetchClientSecret();
+  }, [fetchClientSecret]);
 
-                    <div className="border-top pt-3">
-                        <div className="d-flex justify-content-between mb-2">
-                            <span>Subtotal</span>
-                            <span>€{subtotal.toFixed(2)}</span>
-                        </div>
-                        <div className="d-flex justify-content-between mb-2">
-                            <span>Shipping</span>
-                            <span>Free</span>
-                        </div>
-                        <div className="d-flex justify-content-between fw-bold fs-5 mb-4">
-                            <span>Total</span>
-                            <span>€{subtotal.toFixed(2)}</span>
-                        </div>
-                        <button onClick={handleCheckout} className="btn btn-danger w-100" disabled={loading}>
-                            {loading ? 'Processing...' : 'Proceed to Stripe Payment'}
-                        </button>
-                    </div>
-                </>
-            )}
-        </div>
-    );
+  const options = { clientSecret };
+
+  return (
+    <div id="checkout">
+      {error && <div style={{ color: "red", marginBottom: "10px" }}>{error}</div>}
+
+      <EmbeddedCheckoutProvider stripe={stripePromise} options={options}>
+        <EmbeddedCheckout />
+      </EmbeddedCheckoutProvider>
+    </div>
+  );
 };
 
-export default CheckoutPage;
-
+export default Checkout;
 
 

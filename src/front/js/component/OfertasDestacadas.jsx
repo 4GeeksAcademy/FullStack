@@ -134,7 +134,7 @@ const OfertasDestacadas = () => {
       discountPrice: actualDiscountPrice,
       originalPrice: actualPrice
     });
-    alert("Oferta destacada agregada al carrito");
+  // alert("Oferta destacada agregada al carrito");
   };
 
   // Render de estrellas

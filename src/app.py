@@ -25,7 +25,8 @@ from api.politicas import crear_politicas, Politica
 from flask_cors import CORS
 from sqlalchemy import or_, func
 import traceback
-
+from datetime import timedelta
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 load_dotenv()
 
@@ -34,6 +35,7 @@ static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = "6Smc-TWCMZkUXJ5DN6ZUmOq5OHHzjZID8NGt7c1VxpxK0TJ7Nzv0bFJ3wD7lTGiYiNk1TUnRhjM"
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 
 bcrypt = Bcrypt(app)
@@ -990,6 +992,24 @@ def actualizar_perfil():
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar el perfil", "error": str(e)}), 500
 
+# Ruta para obtener todos los usuarios
+@app.route('/usuarios', methods=['GET'])
+
+def obtener_usuarios():
+    try:
+        # Obtener todos los usuarios de la base de datos
+        usuarios = User.query.all()
+        
+        # Serializar cada usuario
+        usuarios_serializados = [usuario.serialize() for usuario in usuarios]
+        
+        return jsonify({
+            "total": len(usuarios_serializados),
+            "usuarios": usuarios_serializados
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Ruta para actualizar el perfil del usuario
 @app.route('/usuarios/<int:id>', methods=['PUT'])
@@ -1026,6 +1046,12 @@ def iniciar_sesion():
 
     access_token = create_access_token(identity=usuario.correo)
     return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token, "user_id": usuario.id}), 200
+
+@app.route('/api/verify-token', methods=['GET'])
+@jwt_required()
+def verificar_token():
+    usuario = get_jwt_identity()
+    return jsonify({"user": usuario, "valid": True}), 200 
 
 # Ruta para editar usuario (cambiar contraseña)
 @app.route('/editar', methods=['PUT'])
@@ -1381,65 +1407,58 @@ def obtener_belleza():
 def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
-    endpoint_secret = "whsec_MMNDXmbt4VJAhPs0vCjAFmNvOWVMff64"
 
+    event = None
+
+    # Verificar la firma del webhook
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError as e:
-        print(f"❌ Payload inválido: {str(e)}")
-        return 'Invalid payload', 400
+        print('Invalid payload')
+        return jsonify({'error': 'Invalid payload'}), 400
     except stripe.error.SignatureVerificationError as e:
-        print(f"❌ Firma inválida: {str(e)}")
-        return 'Invalid signature', 400
+        print('Invalid signature')
+        return jsonify({'error': 'Invalid signature'}), 400
 
+    # Manejo de eventos de Stripe
     if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
+        session = event['data']['object']  # Contiene la información de la sesión de pago
+
+        # Extraer la información relevante de la sesión
         session_id = session['id']
-        print(f"✅ Pago completado para la sesión {session_id}")
+        status = session['payment_status']  # 'paid' si el pago fue exitoso
+        amount_total = session['amount_total']  # El total en centavos
+        payment_method = session.get('payment_method_types', ['unknown'])[0]  # Método de pago
+        customer_email = session.get('customer_email', 'unknown')  # Email del cliente
+
+        # Crear una nueva entrada de pago en la base de datos
+        new_payment = Payment(
+            session_id=session_id,
+            status=status,
+            amount_total=amount_total,
+            payment_method=payment_method,
+            customer_email=customer_email
+        )
 
         try:
-            # Recuperamos la sesión con los line_items
-            session_with_items = stripe.checkout.Session.retrieve(session_id, expand=['line_items'])
-            line_items = session_with_items['line_items']['data']
-
-            # ⚠️ Extraer información crítica desde metadata
-            metadata = session.get('metadata', {})
-            user_id = int(metadata.get('user_id'))
-            service_id = int(metadata.get('service_id'))
-            service_type = metadata.get('service_type')
-
-            if not all([user_id, service_id, service_type]):
-                raise ValueError("Faltan datos necesarios en metadata")
-
-            # Guardar el pago
-            payment = Payment(
-                currency=session['currency'],
-                amount=int(session['amount_total']),
-                paypal_payment_id=session_id,
-                user_id=user_id,
-                payment_date=datetime.utcnow()
-            )
-            db.session.add(payment)
-            db.session.flush()  # para obtener el ID del pago antes de hacer commit
-
-            # Crear reserva y vincularla con el pago
-            reservation = Reservation(
-                user_id=user_id,
-                service_id=service_id,
-                service_type=service_type,
-                payment_id=payment.id,
-                date=datetime.utcnow()
-            )
-            db.session.add(reservation)
+            # Guardar la transacción en la base de datos
+            db.session.add(new_payment)
             db.session.commit()
-
-            print(f"✅ Reserva y pago registrados: {reservation.serialize()}")
-
+            print(f"Payment for session {session_id} saved to database.")
         except Exception as e:
-            print(f"❌ Error al procesar webhook: {str(e)}")
             db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+            print(f"Error saving payment to database: {e}")
+            return jsonify({'error': 'Error saving payment'}), 500
 
+    elif event['type'] == 'checkout.session.async_payment_failed':
+        session = event['data']['object']
+        print(f"Payment for session {session['id']} failed.")
+        # Aquí puedes manejar el caso de pago fallido si lo necesitas
+
+    else:
+        print(f"Unhandled event type {event['type']}")
+
+    # Responder a Stripe que hemos procesado el webhook correctamente
     return '', 200
 
 
@@ -1762,45 +1781,67 @@ YOUR_DOMAIN = "https://glowing-garbanzo-x5v7q4ggw64phv9x6-3000.app.github.dev"  
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
     try:
-        # Recibimos los datos del carrito
+        if not request.is_json:
+            return jsonify({'error': 'Missing or invalid JSON'}), 400
+
         data = request.get_json()
         cart_items = data.get("items", [])
         total_price = data.get("total", 0)
 
-        # Creamos una sesión de Stripe con los productos del carrito
+        if not cart_items:
+            return jsonify({'error': 'No items in cart'}), 400
+
         line_items = []
         for item in cart_items:
+            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
+                return jsonify({'error': 'Invalid item data'}), 400
+
             line_items.append({
                 'price_data': {
-                    'currency': 'eur',
+                    'currency': 'usd',
                     'product_data': {
                         'name': item['title'],
-                        'description': item['description'],
                     },
-                    'unit_amount': int(item['discountPrice'] * 100),  # Convertimos a centavos
+                    'unit_amount': int(item['discountPrice'] * 100),
                 },
                 'quantity': item['quantity'],
             })
 
-        # Crear la sesión de pago
         session = stripe.checkout.Session.create(
             line_items=line_items,
             mode='payment',
-            success_url=YOUR_DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=YOUR_DOMAIN + '/cancel',
+            ui_mode='embedded',
+            return_url=f"{YOUR_DOMAIN}/return"
         )
 
-        return jsonify({'sessionId': session.id})
+        print("Session created successfully:", session.id)
+        return jsonify({'sessionId': session.id, 'clientSecret': session.client_secret})
 
     except Exception as e:
-        return jsonify(error=str(e)), 500
+        print("Error creating session:", e)
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    
+    
+
 
 
 @app.route('/session-status', methods=['GET'])
 def session_status():
     session_id = request.args.get('session_id')
+
+    # Aquí obtienes el estado de la sesión de Stripe o lo que sea necesario
+    # Supón que obtienes el estado desde Stripe:
     session = stripe.checkout.Session.retrieve(session_id)
-    return jsonify(status=session.status, customer_email=session.customer_details.email)
+
+    if session:
+        return jsonify({
+            "status": session["payment_status"],  # O lo que sea relevante
+            "customer_email": session.get("customer_email", "unknown")
+        })
+    else:
+        return jsonify({"error": "Session not found"}), 404
+    
     
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')

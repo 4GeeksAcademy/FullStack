@@ -41,11 +41,13 @@ const getState = ({ getStore, getActions, setStore }) => {
       ],
       serviciosViajes: [],
       serviciosGastronomia: [],
+      comboCategorias: [],
       serviciosBelleza: [],
       serviciosOfertas: [],
       serviciosTop: [],
       cartItems: [],
       selectedCategory: null,
+      usersCombo: [],
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
       productDetails: {
         id: 1,
@@ -391,6 +393,40 @@ const getState = ({ getStore, getActions, setStore }) => {
             return false;
         }
     },
+    
+    getCategorias: async() => {
+      let categorias = []
+      await fetch(`${process.env.BACKEND_URL}categorias`)
+              .then(res => res.json())
+              .then(data => {
+                  // Asegurate de acceder a data.categorias
+                  data.categorias.forEach(categoria => {
+                      categorias.push({
+                          id: categoria.id,
+                          nombre: categoria.nombre
+                      });
+                  });
+                  setStore({ comboCategorias: categorias });
+              })
+              .catch(error => {
+                  console.log('Error al obtener categorias', error)
+              });
+    },
+    getUsersCombo: async() => {
+      let usuarios = []
+      await fetch(`${process.env.BACKEND_URL}usuarios`)
+      .then(res => res.json())
+      .then(data => {
+        data.usuarios.forEach(usuario => {
+          usuarios.push(usuario)
+        })
+
+        setStore({ usersCombo: usuarios });
+      })
+      .catch(error => {
+        console.log('Error al obtener usuarios para los combos', error);
+      })
+    }
     },
   };
 };

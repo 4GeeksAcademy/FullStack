@@ -26,8 +26,8 @@ const CategoryPage = () => {
         'belleza': 'Belleza',
         'gastronomia': 'Gastronomía',
         'viajes': 'Viajes',
-        'ofertas': 'Top Ofertas',
-        'top': 'Top Ofertas'
+        'ofertas': 'Ofertas Especiales',
+        'top': 'Top Ofertas Premium'
       };
       setCategoryName(categoryNames[categoryId] || "Productos");
     }
@@ -56,9 +56,20 @@ const CategoryPage = () => {
             break;
           
           case "ofertas":
-          case "top":
             await actions.cargarServiciosOfertas();
             categoryProducts = [...store.serviciosOfertas];
+            break;
+          
+          case "top":
+            await actions.cargarServiciosTop();
+            // Usamos serviciosTop del store y filtramos productos válidos
+            categoryProducts = [...store.serviciosTop]
+              .filter(product => product && product.title && (product.image || product.descripcion))
+              .sort((a, b) => {
+                // Ordenar por rating (desc), luego por reviews (desc)
+                if (b.rating !== a.rating) return (b.rating || 0) - (a.rating || 0);
+                return (b.reviews || 0) - (a.reviews || 0);
+              });
             break;
           
           default:
@@ -79,6 +90,7 @@ const CategoryPage = () => {
     loadCategoryProducts();
   }, [categoryId, location.state]);
 
+  // ... (resto del código permanece igual)
   const handleViewProductDetail = (product) => {
     navigate("/product-detail", { 
       state: { 
@@ -95,7 +107,7 @@ const CategoryPage = () => {
           descripcion: product.descripcion || "",
           city: product.city || ""
         },
-        category: categoryId // Pasamos la categoría actual
+        category: categoryId
       }
     });
   };
@@ -157,25 +169,27 @@ const CategoryPage = () => {
               >
                 <i className="bi bi-house-door me-2"></i>Volver al inicio
               </button>
-              <div className="btn-group">
-                <button 
-                  className="btn btn-outline-secondary" 
-                  onClick={() => handlePageChange("prev")}
-                  disabled={currentPage === 0}
-                >
-                  &#8592;
-                </button>
-                <span className="px-3 d-flex align-items-center">
-                  Página {currentPage + 1} de {totalPages}
-                </span>
-                <button 
-                  className="btn btn-outline-secondary" 
-                  onClick={() => handlePageChange("next")}
-                  disabled={currentPage >= totalPages - 1}
-                >
-                  &#8594;
-                </button>
-              </div>
+              {products.length > itemsPerPage && (
+                <div className="btn-group">
+                  <button 
+                    className="btn btn-outline-secondary" 
+                    onClick={() => handlePageChange("prev")}
+                    disabled={currentPage === 0}
+                  >
+                    &#8592;
+                  </button>
+                  <span className="px-3 d-flex align-items-center">
+                    Página {currentPage + 1} de {totalPages}
+                  </span>
+                  <button 
+                    className="btn btn-outline-secondary" 
+                    onClick={() => handlePageChange("next")}
+                    disabled={currentPage >= totalPages - 1}
+                  >
+                    &#8594;
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           

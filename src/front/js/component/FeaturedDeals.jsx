@@ -18,7 +18,7 @@ const FeaturedDeals = ({ onViewService = () => {} }) => {
   
   // Esta es la única función nueva que necesitamos agregar
   const handleViewOffer = (offer) => {
-    navigate("/ofertas-destacadas", { state: { offer } });
+    navigate(".", { state: { offer } });
   };
   
   return (

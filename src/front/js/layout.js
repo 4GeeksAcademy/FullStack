@@ -32,6 +32,7 @@ import VistaMiPerFil from "./pages/VistaMiPerfil.jsx"
 import VistaMisCompras from "./pages/VistaMisCompras.jsx"
 import Checkout from "./pages/Checkout.jsx";
 import Return from "./pages/Return.jsx";
+import VistaReservas from "./component/VistaReservas.jsx";
 
 
 
@@ -72,6 +73,7 @@ const Layout = () => {
             <Route path="/mis-compras" element={<VistaMisCompras />} /> 
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/return" element={<Return />} />
+            <Route path="/mis-reservas" element={<VistaReservas />} />
           </Routes>
           <Footer />
         </ScrollToTop>

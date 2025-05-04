@@ -22,7 +22,6 @@ from flask_bcrypt import Bcrypt
 from api.payment import payment_bp
 from flask_cors import CORS 
 from api.politicas import crear_politicas, Politica
-from flask_cors import CORS
 from sqlalchemy import or_, func
 import traceback
 from datetime import timedelta
@@ -285,7 +284,7 @@ def get_one_gastronomia(id):
         }
     return jsonify(data)
 
-@app.route('/gastronomia', methods=['POST'])
+@app.route('/dashboard/gastronomia', methods=['POST'])
 def create_gastronomia_dashboard():
     data = request.get_json()
 
@@ -318,7 +317,7 @@ def create_gastronomia_dashboard():
     }
     return jsonify(data), 201
 
-@app.route('/gastronomia/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/gastronomia/<int:id>', methods=['DELETE'])
 def delete_gastronomia_dashboard(id):
     gastronomia = Gastronomia.query.get(id)
 
@@ -404,7 +403,7 @@ def get_one_top(id):
     
     return jsonify(data)
 
-@app.route('/top', methods=['POST'])
+@app.route('/dashboard/top', methods=['POST'])
 def create_top_dashboard():
     data = request.get_json()
 
@@ -437,7 +436,7 @@ def create_top_dashboard():
     }
     return jsonify(data), 201
 
-@app.route('/top/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/top/<int:id>', methods=['DELETE'])
 def delete_top_dashboard(id):
     top = Top.query.get(id)
 
@@ -521,7 +520,7 @@ def get_one_viaje(id):
         }
     return jsonify(data)
 
-@app.route('/viajes', methods=['POST'])
+@app.route('/dashboard/viajes', methods=['POST'])
 def create_viaje_dashboard():
     data = request.get_json();
 
@@ -555,7 +554,7 @@ def create_viaje_dashboard():
     }
     return jsonify(data), 201
 
-@app.route('/viajes/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/viajes/<int:id>', methods=['DELETE'])
 def delete_viaje_dashboard(id):
     viaje = Viajes.query.get(id)
 
@@ -641,7 +640,7 @@ def get_one_belleza(id):
         }
     return jsonify(data)
 
-@app.route('/belleza', methods=['POST'])
+@app.route('/dashboard/belleza', methods=['POST'])
 def create_belleza_dashboard():
     data = request.get_json()
 
@@ -674,7 +673,7 @@ def create_belleza_dashboard():
     }
     return jsonify(data), 201
 
-@app.route('/belleza/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/belleza/<int:id>', methods=['DELETE'])
 def delete_belleza_dashboard(id):
     belleza = Belleza.query.get(id)
 
@@ -758,7 +757,7 @@ def get_one_ofert(id):
         }
     return jsonify(data)
 
-@app.route('/oferta', methods=['POST'])
+@app.route('/dashboard/oferta', methods=['POST'])
 def create_oferta_dashboard():
     data = request.get_json()
 
@@ -791,7 +790,7 @@ def create_oferta_dashboard():
         }
     return jsonify(data), 201
 
-@app.route('/oferta/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/oferta/<int:id>', methods=['DELETE'])
 def delete_oferta_dashboard(id):
     oferta = Ofertas.query.get(id)
 
@@ -886,7 +885,7 @@ def get_user_info(id):
     }
     return jsonify(data)
 
-@app.route('/usuario', methods=['POST'])
+@app.route('/dashboard/usuario', methods=['POST'])
 def create_user_dashboard():
     data = request.get_json()
     user = User.query.filter_by(correo=data['correo']).first()

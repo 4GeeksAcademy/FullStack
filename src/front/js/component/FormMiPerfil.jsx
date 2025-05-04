@@ -6,11 +6,15 @@ const FormMiPerfil = () => {
     ciudad: '',
     direccion: '',
     telefono: '',
-    correo: ''
+    correo: '',
+    password: '',
+    confirmPassword: ''
   });
-  const [modoEdicion, setModoEdicion] = useState(false);  // Control de edición
-  const [showModal, setShowModal] = useState(false);  // Control del modal
-  const [originalData, setOriginalData] = useState({});  // Guardamos los datos originales
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [originalData, setOriginalData] = useState({});
+  const [changePassword, setChangePassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   const token = localStorage.getItem('token');
   const backendUrl = process.env.BACKEND_URL;
@@ -41,12 +45,14 @@ const FormMiPerfil = () => {
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
           setUsuario(data);
-          setOriginalData(data);  // Guardamos los datos originales para comparación
+          setOriginalData(data);
           setFormData({
             ciudad: data.ciudad || '',
             direccion: data.direccion_line1 || '',
             telefono: data.telefono || '',
             correo: data.correo || '',
+            password: '',
+            confirmPassword: ''
           });
         } else {
           const text = await response.text();
@@ -66,13 +72,35 @@ const FormMiPerfil = () => {
       ...prevData,
       [name]: value,
     }));
+    
+    // Validar contraseñas si estamos cambiando la contraseña
+    if (changePassword && (name === 'password' || name === 'confirmPassword')) {
+      if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+        setPasswordError('Las contraseñas no coinciden');
+      } else {
+        setPasswordError('');
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validar contraseñas si estamos cambiando la contraseña
+    if (changePassword) {
+      if (formData.password !== formData.confirmPassword) {
+        setPasswordError('Las contraseñas no coinciden');
+        return;
+      }
+      if (formData.password.length < 6) {
+        setPasswordError('La contraseña debe tener al menos 6 caracteres');
+        return;
+      }
+    }
 
     try {
-      const response = await fetch(`${backendUrl}/usuarios/me`, {
+      // Primero actualizar los datos del perfil
+      const profileResponse = await fetch(`${backendUrl}/usuarios/me`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -85,15 +113,40 @@ const FormMiPerfil = () => {
         }),
       });
 
-      if (response.ok) {
-        alert('Perfil actualizado correctamente.');
-        setModoEdicion(false);
-        setOriginalData(formData);  // Actualizamos los datos originales al estado actual
-      } else {
-        const errorText = await response.text();
+      if (!profileResponse.ok) {
+        const errorText = await profileResponse.text();
         console.error('Error al actualizar el perfil:', errorText);
         alert('Error al actualizar el perfil.');
+        return;
       }
+
+      // Si el usuario quiere cambiar la contraseña
+      if (changePassword) {
+        const passwordResponse = await fetch(`${backendUrl}/editar`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            correo: formData.correo,
+            password: formData.password
+          }),
+        });
+
+        if (!passwordResponse.ok) {
+          const errorText = await passwordResponse.text();
+          console.error('Error al actualizar la contraseña:', errorText);
+          alert('Error al actualizar la contraseña.');
+          return;
+        }
+      }
+
+      alert('Perfil actualizado correctamente.');
+      setModoEdicion(false);
+      setOriginalData(formData);
+      setChangePassword(false);
+      setShowModal(false);
     } catch (error) {
       console.error('Error en la solicitud de actualización:', error);
       alert('Error inesperado.');
@@ -101,10 +154,18 @@ const FormMiPerfil = () => {
   };
 
   const handleCancel = () => {
-    // Resetea los campos a sus valores originales
-    setFormData(originalData);
+    setFormData({
+      ciudad: originalData.ciudad || '',
+      direccion: originalData.direccion_line1 || '',
+      telefono: originalData.telefono || '',
+      correo: originalData.correo || '',
+      password: '',
+      confirmPassword: ''
+    });
     setModoEdicion(false);
-    setShowModal(false);  // Cierra el modal
+    setShowModal(false);
+    setChangePassword(false);
+    setPasswordError('');
   };
 
   return (
@@ -133,6 +194,7 @@ const FormMiPerfil = () => {
                   className="form-control"
                   value={formData.telefono}
                   onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -144,6 +206,7 @@ const FormMiPerfil = () => {
                   className="form-control"
                   value={formData.ciudad}
                   onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -155,12 +218,64 @@ const FormMiPerfil = () => {
                   className="form-control"
                   value={formData.direccion}
                   onChange={handleChange}
+                  required
                 />
               </div>
 
-              <button type="submit" className="btn btn-success w-100">
-                Guardar Cambios
-              </button>
+              <div className="mb-3 form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="changePasswordCheck"
+                  checked={changePassword}
+                  onChange={() => setChangePassword(!changePassword)}
+                />
+                <label className="form-check-label" htmlFor="changePasswordCheck">
+                  Cambiar contraseña
+                </label>
+              </div>
+
+              {changePassword && (
+                <>
+                  <div className="mb-3">
+                    <label className="form-label">Nueva Contraseña</label>
+                    <input
+                      type="password"
+                      name="password"
+                      className="form-control"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required={changePassword}
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Confirmar Contraseña</label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      className="form-control"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      required={changePassword}
+                    />
+                    {passwordError && <div className="text-danger">{passwordError}</div>}
+                  </div>
+                </>
+              )}
+
+              <div className="d-flex justify-content-between">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  onClick={handleCancel}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-success">
+                  Guardar Cambios
+                </button>
+              </div>
             </form>
 
             {/* Modal de confirmación */}
@@ -176,6 +291,7 @@ const FormMiPerfil = () => {
                     </div>
                     <div className="modal-body">
                       <p>¿Está seguro de que desea guardar los cambios realizados?</p>
+                      {changePassword && <p className="text-warning">Se cambiará su contraseña.</p>}
                     </div>
                     <div className="modal-footer">
                       <button type="button" className="btn btn-secondary" onClick={handleCancel}>Cancelar</button>
@@ -198,6 +314,3 @@ const FormMiPerfil = () => {
 };
 
 export default FormMiPerfil;
-
-
-

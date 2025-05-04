@@ -72,6 +72,7 @@ const Layout = () => {
             <Route path="/mis-compras" element={<VistaMisCompras />} /> 
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/return" element={<Return />} />
+            <Route path="/product-detail/:id" element={<ProductDetail />} />
           </Routes>
           <Footer />
         </ScrollToTop>

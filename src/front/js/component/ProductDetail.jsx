@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; 
-import { Button, Container, Row, Col, Card } from "react-bootstrap";
+import { useLocation, useNavigate, useParams } from "react-router-dom"; 
+import { Button, Container, Row, Col, Card, Spinner } from "react-bootstrap";
 import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
@@ -8,19 +8,48 @@ import Footer from "./Footer.jsx";
 const ProductDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { offer, category } = location.state || {};
+  const { id } = useParams();
+  const { offer: locationOffer, category: locationCategory } = location.state || {};
   const { store, actions } = useContext(Context);
   const [completeOffer, setCompleteOffer] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState(locationCategory);
 
   const defaultImage = "https://img.freepik.com/free-photo/beautiful-shot-green-forest-trees-with-wooden-path_181624-20615.jpg";
+
+  // Nueva función para determinar la categoría basada en el ID
+  const determineCategory = (offerId) => {
+    if (typeof offerId === 'string' && offerId.startsWith('temp-')) {
+      const categoryPrefix = offerId.split('-')[1];
+      switch(categoryPrefix) {
+        case 'gast': return 'gastronomia';
+        case 'bell': return 'belleza';
+        case 'viaj': return 'viajes';
+        default: return '';
+      }
+    }
+    
+    if (store.serviciosGastronomia.some(o => o.id === offerId)) return 'gastronomia';
+    if (store.serviciosBelleza.some(o => o.id === offerId)) return 'belleza';
+    if (store.serviciosViajes.some(o => o.id === offerId)) return 'viajes';
+    
+    return '';
+  };
+
+  useEffect(() => {
+    // Si viene de navegación directa (con ID en la URL)
+    if (id) {
+      const category = determineCategory(id);
+      setCurrentCategory(category);
+    }
+  }, [id, store]);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        if (category) {
-          switch(category) {
+        if (currentCategory) {
+          switch(currentCategory) {
             case 'belleza':
               if (store.serviciosBelleza.length === 0) await actions.cargarServiciosBelleza();
               break;
@@ -41,38 +70,46 @@ const ProductDetail = () => {
     };
 
     loadData();
-  }, [category]);
+  }, [currentCategory]);
 
   useEffect(() => {
-    if (!offer || loading) return;
+    if (loading) return;
 
     const findProduct = () => {
-      // Primero buscar en la categoría específica
-      if (category) {
-        let categoryList = [];
-        switch(category) {
-          case 'belleza': categoryList = store.serviciosBelleza; break;
-          case 'gastronomia': categoryList = store.serviciosGastronomia; break;
-          case 'viajes': categoryList = store.serviciosViajes; break;
-          case 'ofertas': categoryList = store.serviciosOfertas; break;
+      // Si tenemos offer del location.state, usamos ese
+      if (locationOffer) return locationOffer;
+
+      // Si tenemos ID de la URL, buscamos en las categorías
+      if (id) {
+        // Para IDs temporales (de FeaturedDeals)
+        if (typeof id === 'string' && id.startsWith('temp-')) {
+          const title = id.split('-').slice(2).join(' ');
+          const allOffers = [
+            ...store.serviciosGastronomia,
+            ...store.serviciosBelleza,
+            ...store.serviciosViajes
+          ];
+          return allOffers.find(o => o.title === title);
         }
 
-        const foundInCategory = categoryList.find(item => 
-          item.id === offer.id || 
-          (offer.title && item.title === offer.title)
-        );
-
-        if (foundInCategory) return foundInCategory;
+        // Para IDs numéricos
+        const numericId = parseInt(id);
+        const allOffers = [
+          ...store.serviciosGastronomia,
+          ...store.serviciosBelleza,
+          ...store.serviciosViajes
+        ];
+        return allOffers.find(o => o.id === numericId);
       }
 
-      // Si no se encontró, usar el offer que ya tenemos
-      return offer;
+      return null;
     };
 
-    setCompleteOffer(findProduct());
-  }, [offer, category, store, loading]);
+    const foundProduct = findProduct();
+    setCompleteOffer(foundProduct);
+  }, [id, locationOffer, store, loading]);
 
-  if (!offer) {
+  if (!completeOffer && !loading) {
     return (
       <Container className="my-5">
         <div className="alert alert-warning">No se encontraron detalles del producto</div>
@@ -83,14 +120,14 @@ const ProductDetail = () => {
   if (loading) {
     return (
       <Container className="my-5 text-center">
-        <div className="spinner-border" role="status">
+        <Spinner animation="border" role="status">
           <span className="visually-hidden">Cargando...</span>
-        </div>
+        </Spinner>
       </Container>
     );
   }
 
-  const displayData = completeOffer || offer;
+  const displayData = completeOffer;
   const displayTitle = displayData.title || displayData.nombre || "Sin título";
   const displayImage = displayData.image || displayData.imagen || defaultImage;
   const displayDescription = displayData.descripcion || displayData.description || "No hay descripción disponible.";

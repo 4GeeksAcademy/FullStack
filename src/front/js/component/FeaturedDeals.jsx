@@ -22,25 +22,31 @@ const FeaturedDeals = ({ onViewService = () => {} }) => {
   // Combinar todas las ofertas
   const deals = [gastronomia, belleza, ...viajes].filter(offer => offer);
 
+  // Función para manejar el click en una card
+  const handleViewOffer = (offer) => {
+    if (!offer || !offer.id) return;
+    
+    // Solución especial para "Ruta del vino en Mendoza"
+    const uniqueId = offer.id === 2 && offer.title === "Ruta del vino en Mendoza" 
+      ? '2-ruta-del-vino-en-mendoza' 
+      : offer.id;
+    
+    navigate(`/product-detail/${uniqueId}`, {
+      state: {
+        offer,
+        category: getCategory(offer.id)
+      }
+    });
+    
+    onViewService(offer);
+  };
+
   // Función para determinar categoría
   const getCategory = (offerId) => {
     if (store.serviciosGastronomia.some(o => o.id === offerId)) return 'gastronomia';
     if (store.serviciosBelleza.some(o => o.id === offerId)) return 'belleza';
     if (store.serviciosViajes.some(o => o.id === offerId)) return 'viajes';
     return '';
-  };
-
-  // Manejar click en card
-  const handleViewOffer = (offer) => {
-    if (!offer || !offer.id) return;
-    
-    navigate("/product-detail", {
-      state: {
-        offer,
-        category: getCategory(offer.id)
-      }
-    });
-    onViewService(offer);
   };
 
   return (

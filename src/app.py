@@ -38,8 +38,6 @@ jwt = JWTManager(app)
 
 bcrypt = Bcrypt(app)
 
-db_initialized = False
-
 app.url_map.strict_slashes = False
 CORS(app, origins=["*"])
 
@@ -210,6 +208,481 @@ def crear_usuario():
     db.session.commit()
 
     return jsonify({"mensaje": "Usuario creado correctamente"}), 201
+
+@app.route('/gastronomiapag', methods=['GET'])
+def paginated_gastronomia():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Gastronomia, sort_field, Gastronomia.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(Gastronomia).count()
+    gastronomias = Gastronomia.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': g.id,
+        'nombre': g.title,
+        'descripcion': g.descripcion,
+        'ciudad': g.city,
+        'precio': g.price,
+        'precio descuento': g.discountPrice,
+        'imagen': g.image,
+    } for g in gastronomias]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/gastronomia/<int:id>', methods=['PUT'])
+def edit_gastronomia(id):
+    gasronomia = Gastronomia.query.get(id)
+    if not gasronomia:
+        return jsonify({'error': 'Gastronomia no encontrado'}), 404 
+
+    data = request.get_json()
+    gasronomia.title = data['nombre']
+    gasronomia.descripcion = data['descripcion']
+    gasronomia.city = data['ciudad']
+    gasronomia.price = data['precio']
+    gasronomia.discountPrice = data['precio descuento']
+    gasronomia.image = data['imagen']
+
+    db.session.commit()
+
+    return jsonify({'id': gasronomia.id,
+        'nombre': gasronomia.title,
+        'descripcion': gasronomia.descripcion,
+        'ciudad': gasronomia.city,
+        'precio': gasronomia.price,
+        'precio descuento': gasronomia.discountPrice,
+        'imagen': gasronomia.image}), 201
+
+@app.route('/gastronomia/<int:id>', methods=['GET'])
+def get_one_gastronomia(id):
+    gastronomia = Gastronomia.query.get(id)
+
+    if not gastronomia:
+        return jsonify({'error': 'Gastronomia no encontrado'}), 404
+    
+    data = {
+        'id': gastronomia.id,
+        'nombre': gastronomia.title,
+        'descripcion': gastronomia.descripcion,
+        'ciudad': gastronomia.city,
+        'precio': gastronomia.price,
+        'precio descuento': gastronomia.discountPrice,
+        'imagen': gastronomia.image
+        }
+    return jsonify(data)
+
+@app.route('/gastronomia', methods=['POST'])
+def create_gastronomia_dashboard():
+    data = request.get_json()
+
+    categoria = Category.query.filter_by(nombre='Gastronomia').first()
+    
+    gastronomia = Gastronomia(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        user_id = data['usuario'],
+        category_id = categoria.id,
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+    db.session.add(gastronomia)
+    db.session.commit()
+
+    data = {
+        'id': gastronomia.id,
+        'nombre': gastronomia.title,
+        'descripcion': gastronomia.descripcion,
+        'ciudad': gastronomia.city,
+        'precio': gastronomia.price,
+        'precio descuento': gastronomia.discountPrice,
+        'imagen': gastronomia.image
+    }
+    return jsonify(data), 201
+
+@app.route('/gastronomia/<int:id>', methods=['DELETE'])
+def delete_gastronomia_dashboard(id):
+    gastronomia = Gastronomia.query.get(id)
+
+    if not gastronomia:
+        return jsonify({'error':'Gastronomia no encontrado'}), 404
+    
+    db.session.delete(gastronomia)
+    db.session.commit()
+
+    return jsonify({'message': 'Gastronomia eliminado exitosamente'}), 200
+
+@app.route('/toppag', methods=['GET'])
+def paginated_top():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Top, sort_field, Top.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(Top).count()
+    tops = Top.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': t.id,
+        'nombre': t.title,
+        'descripcion': t.descripcion,
+        'ciudad': t.city,
+        'precio': t.price,
+        'precio descuento': t.discountPrice,
+        'imagen': t.image,
+    } for t in tops]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/top/<int:id>', methods=['PUT'])
+def edit_top(id):
+    top = Top.query.get(id)
+    if not top:
+        return jsonify({'error': 'Top no encontrado'}), 404
+    
+    data = request.get_json()
+    top.title = data['nombre']
+    top.descripcion = data['descripcion']
+    top.city = data['ciudad']
+    top.price = data['precio']
+    top.discountPrice = data['precio descuento']
+    top.image = data['imagen']
+
+    db.session.commit()
+
+    return jsonify({'id': top.id,
+        'nombre': top.title,
+        'descripcion': top.descripcion,
+        'ciudad': top.city,
+        'precio': top.price,
+        'precio descuento': top.discountPrice,
+        'imagen': top.image}), 201
+
+@app.route('/top/<int:id>', methods=['GET'])
+def get_one_top(id):
+    top = Top.query.get(id)
+    if not top:
+        return jsonify({'error': 'Top no encontrado'}), 404
+    
+    data = {
+        'id': top.id,
+        'nombre': top.title,
+        'descripcion': top.descripcion,
+        'ciudad': top.city,
+        'precio': top.price,
+        'precio descuento': top.discountPrice,
+        'imagen': top.image
+        }
+    
+    return jsonify(data)
+
+@app.route('/top', methods=['POST'])
+def create_top_dashboard():
+    data = request.get_json()
+
+    categoria = Category.query.filter_by(nombre='Top').first()
+
+    top = Top(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        user_id = data['usuario'],
+        category_id = categoria.id,
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+    db.session.add(top)
+    db.session.commit()
+
+    data = {
+        'id': top.id,
+        'nombre': top.title,
+        'descripcion': top.descripcion,
+        'ciudad': top.city,
+        'precio': top.price,
+        'precio descuento': top.discountPrice,
+        'imagen': top.image
+    }
+    return jsonify(data), 201
+
+@app.route('/top/<int:id>', methods=['DELETE'])
+def delete_top_dashboard(id):
+    top = Top.query.get(id)
+
+    if not top:
+        return jsonify({'error':'Top no encontrado'}), 404
+    
+    db.session.delete(top)
+    db.session.commit()
+
+    return jsonify({'message': 'Top eliminado exitosamente'}), 200
+
+@app.route('/viajespag', methods=['GET'])
+def paginated_viajes():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Viajes, sort_field, Viajes.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(Viajes).count()
+    viajes = Viajes.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': v.id,
+        'nombre': v.title,
+        'descripcion': v.descripcion,
+        'ciudad': v.city,
+        'precio': v.price,
+        'precio descuento': v.discountPrice,
+        'imagen': v.image,
+    } for v in viajes]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/viajes/<int:id>', methods=['PUT'])
+def edit_viaje(id):
+    viaje = Viajes.query.get(id);
+    if not viaje:
+        return jsonify({'error': 'Viaje no encontrada'}), 404
+    
+    data = request.get_json()
+    viaje.title = data['nombre']
+    viaje.descripcion = data['descripcion']
+    viaje.city = data['ciudad']
+    viaje.price = data['precio']
+    viaje.discountPrice = data['precio descuento']
+    viaje.image = data['imagen']
+
+    db.session.commit()
+    return jsonify({'id': viaje.id,
+        'nombre': viaje.title,
+        'descripcion': viaje.descripcion,
+        'ciudad': viaje.city,
+        'precio': viaje.price,
+        'precio descuento': viaje.discountPrice,
+        'imagen': viaje.image}), 201
+
+@app.route('/viajes/<int:id>', methods=['GET'])
+def get_one_viaje(id):
+    viaje = Viajes.query.get(id)
+    if not viaje:
+        return jsonify({'error': 'Viaje no encontrada'}), 404
+    
+    data = {
+        'id': viaje.id,
+        'nombre': viaje.title,
+        'descripcion': viaje.descripcion,
+        'ciudad': viaje.city,
+        'precio': viaje.price,
+        'precio descuento': viaje.discountPrice,
+        'imagen': viaje.image
+        }
+    return jsonify(data)
+
+@app.route('/viajes', methods=['POST'])
+def create_viaje_dashboard():
+    data = request.get_json();
+
+    categoria = Category.query.filter_by(nombre='Viajes').first()
+
+    viaje = Viajes(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        user_id = data['usuario'],
+        category_id = categoria.id,
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+
+    db.session.add(viaje)
+    db.session.commit()
+    
+    data = {
+        'id': viaje.id,
+        'nombre': viaje.title,
+        'descripcion': viaje.descripcion,
+        'ciudad': viaje.city,
+        'precio': viaje.price,
+        'precio descuento': viaje.discountPrice,
+        'imagen': viaje.image
+    }
+    return jsonify(data), 201
+
+@app.route('/viajes/<int:id>', methods=['DELETE'])
+def delete_viaje_dashboard(id):
+    viaje = Viajes.query.get(id)
+
+    if not viaje:
+        return jsonify({'error': 'Viaje no encontrada'}), 404
+    
+    db.session.delete(viaje)
+    db.session.commit()
+    return jsonify({'message': 'Viaje eliminada exitosamente'}), 200
+
+@app.route('/bellezapag', methods=['GET'])
+def paginated_belleza():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Belleza, sort_field, Belleza.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(Belleza).count()
+    bellezas = Belleza.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': b.id,
+        'nombre': b.title,
+        'descripcion': b.descripcion,
+        'ciudad': b.city,
+        'precio': b.price,
+        'precio descuento': b.discountPrice,
+        'categoria': b.category.nombre
+    } for b in bellezas]
+    
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/belleza/<int:id>', methods=['PUT'])
+def edit_belleza(id):
+    belleza = Belleza.query.get(id)
+
+    if not belleza:
+        return jsonify({'error': 'Belleza no encontrada'}), 404
+
+    data = request.get_json()
+    belleza.title = data['nombre']
+    belleza.descripcion = data['descripcion']
+    belleza.city = data['ciudad']
+    belleza.price = data['precio']
+    belleza.discountPrice = data['precio descuento']
+    belleza.image = data['imagen']
+
+    db.session.commit()
+
+    return jsonify({'id': belleza.id,
+        'nombre': belleza.title,
+        'descripcion': belleza.descripcion,
+        'ciudad': belleza.city,
+        'precio': belleza.price,
+        'precio descuento': belleza.discountPrice,
+        'imagen': belleza.image}), 201
+
+@app.route('/belleza/<int:id>', methods=['GET'])
+def get_one_belleza(id):
+    belleza = Belleza.query.get(id)
+
+    if not belleza:
+        return jsonify({'error': 'Viaje no encontrada'}), 404
+    
+    data = {
+        'id': belleza.id,
+        'nombre': belleza.title,
+        'descripcion': belleza.descripcion,
+        'ciudad': belleza.city,
+        'precio': belleza.price,
+        'precio descuento': belleza.discountPrice,
+        'imagen': belleza.image
+        }
+    return jsonify(data)
+
+@app.route('/belleza', methods=['POST'])
+def create_belleza_dashboard():
+    data = request.get_json()
+
+    categoria = Category.query.filter_by(nombre='Belleza').first()
+
+    belleza = Belleza(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        user_id = data['usuario'],
+        category_id = categoria.id,
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+    db.session.add(belleza)
+    db.session.commit()
+
+    data = {
+        'id': belleza.id,
+        'nombre': belleza.title,
+        'descripcion': belleza.descripcion,
+        'ciudad': belleza.city,
+        'precio': belleza.price,
+        'precio descuento': belleza.discountPrice,
+        'imagen': belleza.image
+    }
+    return jsonify(data), 201
+
+@app.route('/belleza/<int:id>', methods=['DELETE'])
+def delete_belleza_dashboard(id):
+    belleza = Belleza.query.get(id)
+
+    if not belleza:
+       return jsonify({'error': 'Belleza no encontrada'}), 404 
+    
+    db.session.delete(belleza)
+    db.session.commit()
+
+    return jsonify({'message': 'Belleza eliminada exitosamente'}), 200
 
 @app.route('/ofertaspag', methods=['GET'])
 def paginated_offrts():
@@ -695,20 +1168,7 @@ def obtener_politica_por_id(id):
 
     return jsonify(politica.serialize()), 200
 
-
-
-# Ruta para obtener todas las categorías
-@app.route('/categorias', methods=['GET'])
-def obtener_categorias():
-    categorias = Category.query.all()
-    categorias_serializadas = [{
-        "id": categoria.id,
-        "nombre": categoria.nombre
-    } for categoria in categorias]
-
-    return jsonify({"categorias": categorias_serializadas}), 200
-
-@app.before_request
+""" @app.before_request
 def inicializar_db():
     # Aquí debes usar un ID de usuario válido y los IDs de las categorías correspondientes.
     user_id = 1  # Debes reemplazar con un ID de usuario válido
@@ -726,7 +1186,20 @@ def inicializar_db():
         belleza_category_id,
         gastronomia_category_id,
         ofertas_category_id
-    )
+    ) """
+
+
+
+# Ruta para obtener todas las categorías
+@app.route('/categorias', methods=['GET'])
+def obtener_categorias():
+    categorias = Category.query.all()
+    categorias_serializadas = [{
+        "id": categoria.id,
+        "nombre": categoria.nombre
+    } for categoria in categorias]
+
+    return jsonify({"categorias": categorias_serializadas}), 200
 
 # RUTAS
 @app.route('/ofertas', methods=['POST'])

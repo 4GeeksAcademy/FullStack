@@ -19,6 +19,34 @@ const customRoutes = {
         update: 'oferta',
         delete: 'oferta',
         create: 'oferta'
+    },
+    viajes: {
+        list: 'viajespag',
+        one: 'viajes',
+        update: 'viajes',
+        delete: 'viajes',
+        create: 'viajes'
+    },
+    tops: {
+        list: 'toppag',
+        one: 'top',
+        update: 'top',
+        delete: 'top',
+        create: 'top'
+    },
+    bellezas: {
+        list: 'bellezapag',
+        one: 'belleza',
+        update: 'belleza',
+        delete: 'belleza',
+        create: 'belleza'
+    },
+    gastronomias: {
+        list: 'gastronomiapag',
+        one: 'gastronomia',
+        update: 'gastronomia',
+        delete: 'gastronomia',
+        create: 'gastronomia'
     }
 };
 

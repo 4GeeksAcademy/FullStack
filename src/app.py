@@ -625,7 +625,7 @@ def crear_top():
 def obtener_top():
     try:
         # Ordenar por ID descendente para mostrar los más recientes primero
-        top_items = Top.query.order_by(Top.id.desc()).all()
+        top_items = Top.query.order_by(Top.id.asc()).all()
         top_serializados = [top.serialize() for top in top_items]
 
         return jsonify({
@@ -636,6 +636,35 @@ def obtener_top():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# Función para crear servicios iniciales de Top
+def crear_servicios_top(user_id, top_category_id):
+    # Verificar cuáles ya existen para no duplicar
+    existing_titles = {t.title for t in Top.query.filter_by(category_id=top_category_id).all()}
+    
+    top_services = [
+        Top(
+            title="Crucero de lujo por el Mediterráneo",
+            descripcion="Disfrutá 7 días de lujo en altamar visitando Italia, Grecia y España.",
+            image="https://img.freepik.com/free-photo/cruise-ship-sailing-ocean-sunset_181624-24289.jpg",
+            city="Mar Mediterráneo",
+            price=3500,
+            discountPrice=4200,
+            rating=4.8,
+            reviews=300,
+            buyers=450,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        # ... (otros servicios con imágenes de Freepik como en viajes)
+    ]
+
+    # Filtrar solo los que no existen
+    new_services = [t for t in top_services if t.title not in existing_titles]
+    
+    if new_services:
+        db.session.bulk_save_objects(new_services)
+        db.session.commit()
 
 @app.route('/gastronomia', methods=['POST'])
 @jwt_required()

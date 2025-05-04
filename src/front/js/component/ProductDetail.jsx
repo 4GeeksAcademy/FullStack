@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom"; 
+import { useLocation, useNavigate } from "react-router-dom"; 
 import { Button, Container, Row, Col, Card } from "react-bootstrap";
 import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
@@ -7,49 +7,70 @@ import Footer from "./Footer.jsx";
 
 const ProductDetail = () => {
   const location = useLocation();
-  const { offer } = location.state || {};
+  const navigate = useNavigate();
+  const { offer, category } = location.state || {};
   const { store, actions } = useContext(Context);
   const [completeOffer, setCompleteOffer] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Imagen por defecto (puedes cambiarla por tu no-image.jpg)
   const defaultImage = "https://img.freepik.com/free-photo/beautiful-shot-green-forest-trees-with-wooden-path_181624-20615.jpg";
 
-  // Cargar todos los datos de productos si no están cargados
   useEffect(() => {
-    const loadAllData = async () => {
-      if (store.serviciosBelleza.length === 0) await actions.cargarServiciosBelleza();
-      if (store.serviciosGastronomia.length === 0) await actions.cargarServiciosGastronomia();
-      if (store.serviciosViajes.length === 0) await actions.cargarServiciosViajes();
-      if (store.serviciosOfertas.length === 0) await actions.cargarServiciosOfertas();
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        if (category) {
+          switch(category) {
+            case 'belleza':
+              if (store.serviciosBelleza.length === 0) await actions.cargarServiciosBelleza();
+              break;
+            case 'gastronomia':
+              if (store.serviciosGastronomia.length === 0) await actions.cargarServiciosGastronomia();
+              break;
+            case 'viajes':
+              if (store.serviciosViajes.length === 0) await actions.cargarServiciosViajes();
+              break;
+            case 'ofertas':
+              if (store.serviciosOfertas.length === 0) await actions.cargarServiciosOfertas();
+              break;
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    loadAllData();
-  }, []);
 
-  // Buscar el producto completo en el store
+    loadData();
+  }, [category]);
+
   useEffect(() => {
-    if (!offer) return;
-    
-    const findProductInList = (productList) => {
-      return productList.find(item => {
-        if (offer.id && item.id === offer.id) return true;
-        const offerTitle = offer.title || offer.nombre || "";
-        const itemTitle = item.title || item.nombre || "";
-        return offerTitle && itemTitle && offerTitle === itemTitle;
-      });
+    if (!offer || loading) return;
+
+    const findProduct = () => {
+      // Primero buscar en la categoría específica
+      if (category) {
+        let categoryList = [];
+        switch(category) {
+          case 'belleza': categoryList = store.serviciosBelleza; break;
+          case 'gastronomia': categoryList = store.serviciosGastronomia; break;
+          case 'viajes': categoryList = store.serviciosViajes; break;
+          case 'ofertas': categoryList = store.serviciosOfertas; break;
+        }
+
+        const foundInCategory = categoryList.find(item => 
+          item.id === offer.id || 
+          (offer.title && item.title === offer.title)
+        );
+
+        if (foundInCategory) return foundInCategory;
+      }
+
+      // Si no se encontró, usar el offer que ya tenemos
+      return offer;
     };
 
-    const allCategories = [
-      ...store.serviciosBelleza,
-      ...store.serviciosGastronomia,
-      ...store.serviciosViajes,
-      ...store.serviciosOfertas
-    ];
-    
-    const foundProduct = findProductInList(allCategories);
-    setCompleteOffer(foundProduct || offer);
-    
-  }, [offer, store.serviciosBelleza, store.serviciosGastronomia, store.serviciosViajes, store.serviciosOfertas]);
+    setCompleteOffer(findProduct());
+  }, [offer, category, store, loading]);
 
   if (!offer) {
     return (
@@ -59,12 +80,22 @@ const ProductDetail = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <Container className="my-5 text-center">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </Container>
+    );
+  }
+
   const displayData = completeOffer || offer;
   const displayTitle = displayData.title || displayData.nombre || "Sin título";
   const displayImage = displayData.image || displayData.imagen || defaultImage;
   const displayDescription = displayData.descripcion || displayData.description || "No hay descripción disponible.";
 
-  // Manejo de precios simplificado
+  // Manejo de precios
   let actualPrice = displayData.price || displayData.precio || displayData.originalPrice || 1000;
   let actualDiscountPrice = displayData.discountPrice || Math.round(actualPrice * 0.7);
   
@@ -97,7 +128,6 @@ const ProductDetail = () => {
         <Row>
           <Col md={6} className="d-flex justify-content-center mb-4">
             <Card style={{ width: "100%" }}>
-              {/* Imagen simplificada - sin manejo de errores */}
               <Card.Img
                 variant="top"
                 src={displayImage}
@@ -107,7 +137,10 @@ const ProductDetail = () => {
                   height: "auto", 
                   maxHeight: "500px", 
                   objectFit: "cover",
-                  backgroundColor: "#f8f9fa" // Fondo por si la imagen no carga
+                  backgroundColor: "#f8f9fa"
+                }}
+                onError={(e) => {
+                  e.target.src = defaultImage;
                 }}
               />
             </Card>

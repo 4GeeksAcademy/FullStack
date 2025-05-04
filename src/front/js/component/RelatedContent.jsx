@@ -7,21 +7,18 @@ const RelatedContent = () => {
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
 
-  // Estado para guardar el índice actual de cada categoría
   const [currentIndices, setCurrentIndices] = useState({
     Belleza: 0,
     gastronomia: 0,
     viajes: 0,
   });
 
-  // Categorías disponibles
   const categories = [
     { id: "Belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
     { id: "gastronomia", name: "Gastronomía", deals: store.serviciosGastronomia || [] },
     { id: "viajes", name: "Viajes", deals: store.serviciosViajes || [] },
   ];
 
-  // Cargar datos iniciales
   useEffect(() => {
     const fetchData = async () => {
       if (store.serviciosViajes.length === 0) await actions.cargarServiciosViajes();
@@ -32,44 +29,41 @@ const RelatedContent = () => {
     fetchData();
   }, []);
 
-  // Manejar navegación al detalle del producto
-  const handleNavigate = (deal) => {
+  const handleNavigate = (deal, categoryId) => {
+    const offer = {
+      id: deal.id,
+      title: deal.title || deal.nombre || "Sin título",
+      image: deal.image || deal.imagen || "https://via.placeholder.com/300x200?text=Sin+imagen",
+      rating: deal.rating || 4,
+      reviews: deal.reviews || 20,
+      price: deal.price || deal.precio || 0,
+      discountPrice: deal.discountPrice || null,
+      originalPrice: deal.originalPrice || null,
+      buyers: deal.buyers || 0,
+      descripcion: deal.descripcion || "",
+      city: deal.city || "",
+      category: categoryId // Añadimos explícitamente la categoría
+    };
+
     navigate(`/product-detail`, {
-      state: { offer: deal }
+      state: { 
+        offer: offer,
+        category: categoryId // Pasamos la categoría como dato separado también
+      }
     });
   };
 
-  // Función para manejar el scroll/paginación
   const scroll = (categoryId, direction, e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    setCurrentIndices((prev) => {
-      const current = prev[categoryId] || 0;
-      const category = categories.find(cat => cat.id === categoryId);
-      const totalDeals = category?.deals.length || 0;
-      const visibleCount = 4; // Máximo de cards a mostrar
-      
-      // Calcular nuevo índice basado en la dirección
-      let newIndex;
-      if (direction === "left") {
-        // Retroceder: ir al grupo anterior de 4 o al inicio
-        newIndex = Math.max(current - visibleCount, 0);
-      } else {
-        // Avanzar: ir al siguiente grupo de 4 o quedarse si no hay más
-        newIndex = Math.min(current + visibleCount, totalDeals - 1);
-        
-        // Si al avanzar no hay suficientes elementos, mostrar los que quedan
-        if (newIndex + visibleCount > totalDeals) {
-          newIndex = totalDeals - (totalDeals % visibleCount || visibleCount);
-        }
-      }
-
-      return { ...prev, [categoryId]: newIndex };
-    });
+    setCurrentIndices(prev => ({
+      ...prev,
+      [categoryId]: direction === "left" 
+        ? Math.max(prev[categoryId] - 4, 0)
+        : Math.min(prev[categoryId] + 4, categories.find(c => c.id === categoryId).deals.length - 4)
+    }));
   };
 
-  // Verificar si hay datos para mostrar
   const hasAnyData = categories.some(cat => cat.deals.length > 0);
 
   return (
@@ -80,12 +74,7 @@ const RelatedContent = () => {
         {hasAnyData ? (
           categories.map((category) => {
             const currentIndex = currentIndices[category.id] || 0;
-            const totalDeals = category.deals.length;
-            const remainingDeals = totalDeals - currentIndex;
-            const dealsToShow = category.deals.slice(
-              currentIndex, 
-              Math.min(currentIndex + 4, totalDeals) // Mostrar hasta 4 o los que queden
-            );
+            const dealsToShow = category.deals.slice(currentIndex, currentIndex + 4);
 
             return (
               <div key={category.id} className="mb-5">
@@ -100,7 +89,6 @@ const RelatedContent = () => {
                 </div>
 
                 <div className="position-relative">
-                  {/* Botón izquierdo */}
                   <button
                     className="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-1"
                     onClick={(e) => scroll(category.id, "left", e)}
@@ -109,43 +97,26 @@ const RelatedContent = () => {
                     &#8592;
                   </button>
 
-                  {/* Cards */}
                   <div className="row gx-3">
-                    {dealsToShow.map((deal) => {
-                      const offer = {
-                        id: deal.id,
-                        title: deal.nombre || deal.title || "Sin título",
-                        image: deal.imagen || deal.image || "https://via.placeholder.com/300x200?text=Sin+imagen",
-                        rating: deal.rating || 4,
-                        reviews: deal.reviews || 20,
-                        discountPrice: deal.precio || deal.discountPrice || 0,
-                        originalPrice: deal.originalPrice || Math.round((deal.precio || deal.discountPrice || 0) * 1.2),
-                        buyers: deal.buyers || 5,
-                      };
-
-                      return (
-                        <div key={`${category.id}-${deal.id}`} className="col-12 col-sm-6 col-md-3">
-                          <CategoryCard
-                            offer={offer}
-                            onViewService={() => handleNavigate(offer)}
-                          />
-                        </div>
-                      );
-                    })}
-
-                    {/* Espacios vacíos si hay menos de 4 cards */}
-                    {dealsToShow.length < 4 && 
-                      Array.from({ length: 4 - dealsToShow.length }).map((_, i) => (
-                        <div key={`empty-${i}`} className="col-12 col-sm-6 col-md-3" style={{ visibility: 'hidden' }} />
-                      ))
-                    }
+                    {dealsToShow.map((deal) => (
+                      <div key={`${category.id}-${deal.id}`} className="col-12 col-sm-6 col-md-3">
+                        <CategoryCard
+                          offer={{
+                            ...deal,
+                            title: deal.title || deal.nombre,
+                            image: deal.image || deal.imagen,
+                            price: deal.price || deal.precio
+                          }}
+                          onViewService={() => handleNavigate(deal, category.id)}
+                        />
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Botón derecho */}
                   <button
                     className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y z-1"
                     onClick={(e) => scroll(category.id, "right", e)}
-                    disabled={currentIndex + 4 >= totalDeals}
+                    disabled={currentIndex + 4 >= category.deals.length}
                   >
                     &#8594;
                   </button>

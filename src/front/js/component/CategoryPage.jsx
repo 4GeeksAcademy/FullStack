@@ -22,7 +22,6 @@ const CategoryPage = () => {
     if (location.state && location.state.categoryName) {
       setCategoryName(location.state.categoryName);
     } else {
-      // Nombres consistentes con el formulario
       const categoryNames = {
         'belleza': 'Belleza',
         'gastronomia': 'Gastronomía',
@@ -43,23 +42,23 @@ const CategoryPage = () => {
         switch (categoryId) {
           case "belleza":
             await actions.cargarServiciosBelleza();
-            categoryProducts = store.serviciosBelleza;
+            categoryProducts = [...store.serviciosBelleza];
             break;
           
           case "gastronomia":
             await actions.cargarServiciosGastronomia();
-            categoryProducts = store.serviciosGastronomia;
+            categoryProducts = [...store.serviciosGastronomia];
             break;
           
           case "viajes":
             await actions.cargarServiciosViajes();
-            categoryProducts = store.serviciosViajes;
+            categoryProducts = [...store.serviciosViajes];
             break;
           
           case "ofertas":
           case "top":
             await actions.cargarServiciosOfertas();
-            categoryProducts = store.serviciosOfertas;
+            categoryProducts = [...store.serviciosOfertas];
             break;
           
           default:
@@ -80,8 +79,25 @@ const CategoryPage = () => {
     loadCategoryProducts();
   }, [categoryId, location.state]);
 
-  const handleViewProductDetail = (offer) => {
-    navigate("/product-detail", { state: { offer } });
+  const handleViewProductDetail = (product) => {
+    navigate("/product-detail", { 
+      state: { 
+        offer: {
+          ...product,
+          title: product.title || "Sin título",
+          image: product.image || "https://via.placeholder.com/300x200?text=Sin+imagen",
+          rating: product.rating || 4,
+          reviews: product.reviews || 20,
+          price: product.price || 0,
+          discountPrice: product.discountPrice || null,
+          originalPrice: product.originalPrice || null,
+          buyers: product.buyers || 0,
+          descripcion: product.descripcion || "",
+          city: product.city || ""
+        },
+        category: categoryId // Pasamos la categoría actual
+      }
+    });
   };
 
   const handlePageChange = (direction) => {
@@ -164,30 +180,20 @@ const CategoryPage = () => {
           </div>
           
           <div className="row g-4">
-            {visibleProducts.map((product) => {
-              const offer = {
-                id: product.id,
-                title: product.title || "Sin título",
-                image: product.image || "https://via.placeholder.com/300x200?text=Sin+imagen",
-                rating: product.rating || 4,
-                reviews: product.reviews || 20,
-                price: product.price || 0, // Precio directo
-                discountPrice: product.discountPrice || null, // Opcional
-                originalPrice: product.originalPrice || null, // Opcional
-                buyers: product.buyers || 0,
-                descripcion: product.descripcion || "",
-                city: product.city || ""
-              };
-              
-              return (
-                <div className="col-12 col-md-6 col-lg-3" key={product.id}>
-                  <CategoryCard
-                    offer={offer}
-                    onViewService={() => handleViewProductDetail(offer)}
-                  />
-                </div>
-              );
-            })}
+            {visibleProducts.map((product) => (
+              <div className="col-12 col-md-6 col-lg-3" key={product.id}>
+                <CategoryCard
+                  offer={{
+                    ...product,
+                    title: product.title || "Sin título",
+                    image: product.image || "https://via.placeholder.com/300x200?text=Sin+imagen",
+                    price: product.price || 0,
+                    discountPrice: product.discountPrice || null
+                  }}
+                  onViewService={() => handleViewProductDetail(product)}
+                />
+              </div>
+            ))}
           </div>
           
           {products.length === 0 && (

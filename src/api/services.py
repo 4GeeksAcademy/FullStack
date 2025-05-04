@@ -307,117 +307,126 @@ def crear_servicios_viajes(user_id, viajes_category_id):
         # db.session.commit()
 
 
-# Función para crear los servicios de Top
 def crear_servicios_top(user_id, top_category_id):
-    if not Top.query.filter_by(category_id=top_category_id).first():
-        top_services = [
-            Top(
-                title="Crucero de lujo por el Mediterráneo",
-                descripcion="Disfrutá 7 días de lujo en altamar visitando Italia, Grecia y España.",
-                image="https://source.unsplash.com/random/800x600/?mediterranean,cruise",
-                city="Mar Mediterráneo",
-                price=3500,
-                discountPrice=4200,
-                rating=4.8,
-                reviews=300,
-                buyers=450,
-                user_id=user_id,
-                category_id=top_category_id
-            ),
-            Top(
-                title="Safari fotográfico en Kenia",
-                descripcion="Capturá la vida salvaje en su hábitat natural con guías expertos.",
-                image="https://source.unsplash.com/random/800x600/?kenya,safari",
-                city="Reserva Masái Mara",
-                price=2800,
-                discountPrice=3500,
-                rating=4.7,
-                reviews=275,
-                buyers=320,
-                user_id=user_id,
-                category_id=top_category_id
-            ),
-            Top(
-                title="Tour VIP por Disney World",
-                descripcion="Acceso prioritario, guías personalizados y experiencias exclusivas.",
-                image="https://source.unsplash.com/random/800x600/?disneyworld,orlando",
-                city="Orlando, Florida",
-                price=2000,
-                discountPrice=2500,
-                rating=4.9,
-                reviews=500,
-                buyers=700,
-                user_id=user_id,
-                category_id=top_category_id
-            ),
-            Top(
-                title="Glamping en los Alpes suizos",
-                descripcion="Hospedaje de lujo en medio de la naturaleza alpina.",
-                image="https://source.unsplash.com/random/800x600/?swissalps,glamping",
-                city="Alpes, Suiza",
-                price=2200,
-                discountPrice=2700,
-                rating=4.6,
-                reviews=200,
-                buyers=250,
-                user_id=user_id,
-                category_id=top_category_id
-            ),
-            Top(
-                title="Travesía en globo aerostático por Capadocia",
-                descripcion="Vuelos al amanecer con vistas impresionantes.",
-                image="https://source.unsplash.com/random/800x600/?cappadocia,balloon",
-                city="Capadocia, Turquía",
-                price=450,
-                discountPrice=600,
-                rating=4.7,
-                reviews=150,
-                buyers=220,
-                user_id=user_id,
-                category_id=top_category_id
-            ),
-            Top(
-                title="Expedición al Machu Picchu",
-                descripcion="Trekking de 4 días con guía, todo incluido.",
-                image="https://source.unsplash.com/random/800x600/?machupicchu,peru",
-                city="Cusco, Perú",
-                price=1800,
-                discountPrice=2300,
-                rating=4.8,
-                reviews=350,
-                buyers=500,
-                user_id=user_id,
-                category_id=top_category_id
-            ),
-            Top(
-                title="Tour por los parques nacionales de Canadá",
-                descripcion="Recorrido en bus por Banff, Jasper y más.",
-                image="https://source.unsplash.com/random/800x600/?banff,canada",
-                city="Alberta, Canadá",
-                price=1600,
-                discountPrice=2000,
-                rating=4.5,
-                reviews=180,
-                buyers=230,
-                user_id=user_id,
-                category_id=top_category_id
-            ),
-            Top(
-                title="Semana en resort 5 estrellas en Maldivas",
-                descripcion="Bungalow sobre el agua con experiencias gastronómicas y acuáticas.",
-                image="https://source.unsplash.com/random/800x600/?maldives,resort",
-                city="Islas Maldivas",
-                price=5000,
-                discountPrice=6000,
-                rating=4.9,
-                reviews=400,
-                buyers=600,
-                user_id=user_id,
-                category_id=top_category_id
-            ),
-        ]
-        db.session.bulk_save_objects(top_services)
+    # Verificar títulos existentes para evitar duplicados
+    existing_titles = {t.title for t in Top.query.filter_by(category_id=top_category_id).all()}
+    
+    top_services = [
+        Top(
+            title="Crucero de lujo por el Mediterráneo",
+            descripcion="Disfrutá 7 días de lujo en altamar visitando Italia, Grecia y España.",
+            image="https://source.unsplash.com/random/800x600/?mediterranean,cruise",
+            city="Mar Mediterráneo",
+            price=3500,
+            discountPrice=4200,
+            rating=4.8,
+            reviews=300,
+            buyers=450,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        Top(
+            title="Safari fotográfico en Kenia",
+            descripcion="Capturá la vida salvaje en su hábitat natural con guías expertos.",
+            image="https://source.unsplash.com/random/800x600/?kenya,safari",
+            city="Reserva Masái Mara",
+            price=2800,
+            discountPrice=3500,
+            rating=4.7,
+            reviews=275,
+            buyers=320,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        Top(
+            title="Tour VIP por Disney World",
+            descripcion="Acceso prioritario, guías personalizados y experiencias exclusivas.",
+            image="https://source.unsplash.com/random/800x600/?disneyworld,orlando",
+            city="Orlando, Florida",
+            price=2000,
+            discountPrice=2500,
+            rating=4.9,
+            reviews=500,
+            buyers=700,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        Top(
+            title="Glamping en los Alpes suizos",
+            descripcion="Hospedaje de lujo en medio de la naturaleza alpina.",
+            image="https://source.unsplash.com/random/800x600/?swissalps,glamping",
+            city="Alpes, Suiza",
+            price=2200,
+            discountPrice=2700,
+            rating=4.6,
+            reviews=200,
+            buyers=250,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        Top(
+            title="Travesía en globo aerostático por Capadocia",
+            descripcion="Vuelos al amanecer con vistas impresionantes.",
+            image="https://source.unsplash.com/random/800x600/?cappadocia,balloon",
+            city="Capadocia, Turquía",
+            price=450,
+            discountPrice=600,
+            rating=4.7,
+            reviews=150,
+            buyers=220,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        Top(
+            title="Expedición al Machu Picchu",
+            descripcion="Trekking de 4 días con guía, todo incluido.",
+            image="https://source.unsplash.com/random/800x600/?machupicchu,peru",
+            city="Cusco, Perú",
+            price=1800,
+            discountPrice=2300,
+            rating=4.8,
+            reviews=350,
+            buyers=500,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        Top(
+            title="Tour por los parques nacionales de Canadá",
+            descripcion="Recorrido en bus por Banff, Jasper y más.",
+            image="https://source.unsplash.com/random/800x600/?banff,canada",
+            city="Alberta, Canadá",
+            price=1600,
+            discountPrice=2000,
+            rating=4.5,
+            reviews=180,
+            buyers=230,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        Top(
+            title="Semana en resort 5 estrellas en Maldivas",
+            descripcion="Bungalow sobre el agua con experiencias gastronómicas y acuáticas.",
+            image="https://source.unsplash.com/random/800x600/?maldives,resort",
+            city="Islas Maldivas",
+            price=5000,
+            discountPrice=6000,
+            rating=4.9,
+            reviews=400,
+            buyers=600,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+    ]
+
+    # Filtrar solo los servicios que no existen
+    new_services = [t for t in top_services if t.title not in existing_titles]
+    
+    if new_services:
+        db.session.bulk_save_objects(new_services)
         db.session.commit()
+        print(f"Se agregaron {len(new_services)} nuevos servicios Top")
+    else:
+        print("No se agregaron nuevos servicios Top (ya existen)")
 
 # Función para crear los servicios de Belleza
 def crear_servicios_belleza(user_id, belleza_category_id):

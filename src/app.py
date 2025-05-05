@@ -186,29 +186,38 @@ def crear_usuario():
 
     correo = data.get('correo')
     password = data.get('password')
+    telefono = data.get('telefono', '')
+    direccion = data.get('direccion_line1', '')  # Asegúrate de usar direccion_line1
+    ciudad = data.get('ciudad', '')
     role = data.get('role', 'cliente')
 
     if not correo or not password:
         return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
 
-    # Validar si el correo ya existe
     usuario_existente = User.query.filter_by(correo=correo).first()
     if usuario_existente:
         return jsonify({"error": "El usuario ya existe"}), 409
 
-    # Encriptar contraseña
     pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     nuevo_usuario = User(
         correo=correo,
         password=pw_hash,
+        telefono=telefono,
+        direccion_line1=direccion,  # Usar direccion_line1 aquí
+        ciudad=ciudad,
         role=role,
         is_active=True
     )
+    
     db.session.add(nuevo_usuario)
     db.session.commit()
 
-    return jsonify({"mensaje": "Usuario creado correctamente"}), 201
+    # Devuelve los datos del usuario creado
+    return jsonify({
+        "mensaje": "Usuario creado correctamente",
+        "user": nuevo_usuario.serialize()
+    }), 201
 
 @app.route('/gastronomiapag', methods=['GET'])
 def paginated_gastronomia():
@@ -980,17 +989,23 @@ def actualizar_perfil():
     if not usuario:
         return jsonify({"msg": "Usuario no encontrado"}), 404
 
-    usuario.telefono = data.get('telefono', usuario.telefono)
-    usuario.ciudad = data.get('ciudad', usuario.ciudad)
-    usuario.direccion_line1 = data.get('direccion', usuario.direccion_line1)
+    # Actualiza solo los campos permitidos
+    if 'telefono' in data:
+        usuario.telefono = data['telefono']
+    if 'direccion_line1' in data:
+        usuario.direccion_line1 = data['direccion_line1']
+    if 'ciudad' in data:
+        usuario.ciudad = data['ciudad']
 
     try:
         db.session.commit()
-        return jsonify({"msg": "Perfil actualizado correctamente"}), 200
+        return jsonify({
+            "msg": "Perfil actualizado correctamente",
+            "user": usuario.serialize()
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar el perfil", "error": str(e)}), 500
-
 # Ruta para obtener todos los usuarios
 @app.route('/usuarios', methods=['GET'])
 

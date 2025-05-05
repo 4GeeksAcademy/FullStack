@@ -142,11 +142,30 @@ const getState = ({ getStore, getActions, setStore }) => {
                 console.error("Login error:", data);
                 return false;
             }
+            
             localStorage.setItem('token', data.access_token);
-            localStorage.setItem('user', JSON.stringify({
-                correo: data.mensaje.split(', ')[1].replace('', ''),
-                role: data.role || 'cliente'
-            }));
+            
+            // Obtener datos completos del usuario después del login
+            const userResp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
+                headers: {
+                    'Authorization': `Bearer ${data.access_token}`
+                }
+            });
+            
+            if (userResp.ok) {
+                const userData = await userResp.json();
+                localStorage.setItem('user', JSON.stringify({
+                    ...userData,
+                    role: data.role || 'cliente'
+                }));
+                setStore({ user: userData });
+            } else {
+                localStorage.setItem('user', JSON.stringify({
+                    correo: data.mensaje.split(', ')[1].replace('', ''),
+                    role: data.role || 'cliente'
+                }));
+            }
+            
             return true;
         } catch (error) {
             console.error("Login error:", error);
@@ -154,30 +173,44 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
     },
     registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
-        try {
-            const resp = await fetch(process.env.BACKEND_URL + '/registro', {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    correo,
-                    password,
-                    telefono,
-                    direccion_line1: direccion,
-                    ciudad,
-                    role: "cliente"
-                })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                console.error("Register error:", data);
-                return false;
-            }
-            return true;
-        } catch (error) {
-            console.error("Register error:", error);
-            return false;
-        }
-    },
+      try {
+          const resp = await fetch(process.env.BACKEND_URL + '/registro', {
+              method: 'POST',
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  correo,
+                  password,
+                  telefono,
+                  direccion_line1: direccion, // Enviar como direccion_line1
+                  ciudad,
+                  role: "cliente"
+              })
+          });
+          
+          if (!resp.ok) {
+              const errorData = await resp.json();
+              console.error("Register error:", errorData);
+              return false;
+          }
+  
+          const data = await resp.json();
+          
+          // Guardar datos del usuario en localStorage y store
+          const userData = {
+              ...data.user, // Usar los datos devueltos por el backend
+              role: "cliente"
+          };
+          
+          localStorage.setItem('user', JSON.stringify(userData));
+          setStore({ user: userData });
+          
+          return true;
+      } catch (error) {
+          console.error("Register error:", error);
+          return false;
+      }
+  },
+  
       // Obtener un mensaje del backend (puedes adaptarlo a tu necesidad)
       getMessage: async () => {
         try {
@@ -347,27 +380,40 @@ const getState = ({ getStore, getActions, setStore }) => {
       },
       loginUser: async ({ correo, password }) => {
         try {
-            const resp = await fetch(process.env.BACKEND_URL + '/login', {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ correo, password })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                console.error("Login error:", data);
-                return false;
-            }
-            localStorage.setItem('token', data.access_token);
-            localStorage.setItem('user', JSON.stringify({
-                correo: data.mensaje.split(', ')[1].replace('', ''),
-                role: data.role || 'cliente'
-            }));
-            return true;
+          const resp = await fetch(process.env.BACKEND_URL + '/login', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ correo, password })
+          });
+          const data = await resp.json();
+          
+          if (!resp.ok) return false;
+          
+          localStorage.setItem('token', data.access_token);
+          
+          // Obtener datos completos del usuario
+          const userResp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
+            headers: { 'Authorization': `Bearer ${data.access_token}` }
+          });
+          
+          let userData = {};
+          if (userResp.ok) {
+            userData = await userResp.json();
+          } else {
+            // Datos mínimos si falla
+            userData = { correo, role: data.role || 'cliente' };
+          }
+          
+          // Guardar en localStorage y store
+          localStorage.setItem('user', JSON.stringify(userData));
+          setStore({ user: userData });
+          
+          return true;
         } catch (error) {
-            console.error("Login error:", error);
-            return false;
+          console.error("Login error:", error);
+          return false;
         }
-    },
+      },
     registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
         try {
             const resp = await fetch(process.env.BACKEND_URL + '/registro', {
@@ -426,7 +472,60 @@ const getState = ({ getStore, getActions, setStore }) => {
       .catch(error => {
         console.log('Error al obtener usuarios para los combos', error);
       })
-    }
+    },
+    updateUserProfile: async (userData) => {
+      try {
+          const token = localStorage.getItem('token');
+          const resp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                  telefono: userData.telefono,
+                  direccion_line1: userData.direccion_line1, // Cambiado a direccion_line1
+                  ciudad: userData.ciudad
+              }),
+          });
+  
+          if (resp.ok) {
+              const data = await resp.json();
+              const updatedUser = {
+                  ...JSON.parse(localStorage.getItem('user')),
+                  telefono: data.user.telefono,
+                  direccion_line1: data.user.direccion_line1, // Cambiado a direccion_line1
+                  ciudad: data.user.ciudad
+              };
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              setStore({ user: updatedUser });
+              return true;
+          }
+          return false;
+      } catch (error) {
+          console.error("Error updating profile:", error);
+          return false;
+      }
+  },
+  
+  changePassword: async ({ correo, password }) => {
+      try {
+          const token = localStorage.getItem('token');
+          const resp = await fetch(process.env.BACKEND_URL + '/editar', {
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({ correo, password }),
+          });
+  
+          return resp.ok;
+      } catch (error) {
+          console.error(error);
+          return false;
+      }
+  },
     },
   };
 };

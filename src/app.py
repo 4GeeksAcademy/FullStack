@@ -1208,7 +1208,7 @@ def obtener_politica_por_id(id):
 
     return jsonify(politica.serialize()), 200
 
-""" @app.before_request
+@app.before_request
 def inicializar_db():
     # Aquí debes usar un ID de usuario válido y los IDs de las categorías correspondientes.
     user_id = 1  # Debes reemplazar con un ID de usuario válido
@@ -1226,7 +1226,7 @@ def inicializar_db():
         belleza_category_id,
         gastronomia_category_id,
         ofertas_category_id
-    ) """
+    )
 
 
 
@@ -1951,6 +1951,73 @@ def session_status():
     else:
         return jsonify({"error": "Session not found"}), 404
     
+@api.route('/change-password', methods=['PUT'])
+@jwt_required()
+def change_password():
+    try:
+        data = request.get_json()
+        current_password = data.get("currentPassword")
+        new_password = data.get("newPassword")
+
+        # Obtener correo desde el token JWT
+        correo = get_jwt_identity()
+        user = User.query.filter_by(correo=correo).first()
+
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+
+        # Verificar contraseña actual con Bcrypt
+        if not bcrypt.check_password_hash(user.password, current_password):
+            return jsonify({"msg": "Contraseña actual incorrecta"}), 401
+
+        # Generar nuevo hash con Bcrypt
+        user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        db.session.commit()
+
+        return jsonify({"msg": "Contraseña actualizada exitosamente"}), 200
+
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+    
+    # Ruta para crear un administrador
+@app.route('/api/create-admin', methods=['POST'])
+def crear_admin():
+    # Obtener los datos de la solicitud (JSON)
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No se recibieron datos JSON"}), 400
+
+    correo = data.get('correo')
+    password = data.get('password')
+
+    # Validación de datos obligatorios
+    if not correo or not password:
+        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+
+    # Verificar si el correo ya está registrado
+    usuario_existente = User.query.filter_by(correo=correo).first()
+    if usuario_existente:
+        return jsonify({"error": "El correo ya está registrado"}), 409
+
+    # Encriptar la contraseña
+    pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    # Crear el nuevo usuario con el rol 'Administrador'
+    nuevo_admin = User(
+        correo=correo,
+        password=pw_hash,
+        role='Administrador',  # El rol siempre será 'Administrador'
+        is_active=True  # Asegúrate de que el admin esté activo
+    )
+
+    # Guardar en la base de datos
+    db.session.add(nuevo_admin)
+    db.session.commit()
+
+    # Respuesta exitosa
+    return jsonify({"message": "Administrador creado exitosamente"}), 201
+
     
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')

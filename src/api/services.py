@@ -1,17 +1,25 @@
-# services.py
 from api.models import db, Viajes, Top, Belleza, Gastronomia, User, Ofertas
+from flask_bcrypt import Bcrypt
 
+bcrypt = Bcrypt()  # Asegúrate de haberlo inicializado con tu app Flask
 
 def create_admin_user():
     user = User.query.filter_by(correo='admin@outlook.com').first()
-    if not user:
-        user = User(
-            correo='admin@outlook.com',
-            password='admin',
-            role='Administrador'
-        )
-        db.session.add(user)
-        db.session.commit()
+
+    if user:
+        print("El usuario admin ya existe.")
+        return
+
+    hashed_password = bcrypt.generate_password_hash('admin').decode('utf-8')
+
+    user = User(
+        correo='admin@outlook.com',
+        password=hashed_password,
+        role='Administrador'
+    )
+    db.session.add(user)
+    db.session.commit()
+    print("Usuario admin creado exitosamente.")
 
 
 # Funciones para eliminar duplicados

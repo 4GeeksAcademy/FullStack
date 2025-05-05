@@ -8,6 +8,7 @@ const FormMiPerfil = () => {
         direccion_line1: '',
         telefono: '',
         correo: '',
+        currentPassword: '',
         password: '',
         confirmPassword: ''
     });
@@ -20,13 +21,14 @@ const FormMiPerfil = () => {
     useEffect(() => {
         const loadUserData = () => {
             const userData = JSON.parse(localStorage.getItem('user')) || store.user;
-            
+
             if (userData && !initialLoad) {
                 setFormData({
                     ciudad: userData.ciudad || '',
                     direccion_line1: userData.direccion_line1 || '',
                     telefono: userData.telefono || '',
                     correo: userData.correo || '',
+                    currentPassword: '',
                     password: '',
                     confirmPassword: ''
                 });
@@ -40,10 +42,10 @@ const FormMiPerfil = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        
+
         if (changePassword && (name === 'password' || name === 'confirmPassword')) {
             if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
-                setPasswordError('Las contraseñas no coinciden');
+                setPasswordError('');
             } else {
                 setPasswordError('');
             }
@@ -54,15 +56,23 @@ const FormMiPerfil = () => {
         e.preventDefault();
         setLoading(true);
         setSuccessMessage('');
+        setPasswordError('');
 
         if (changePassword) {
+            if (!formData.currentPassword) {
+                setPasswordError('Debes ingresar tu contraseña actual');
+                setLoading(false);
+                return;
+            }
+
             if (formData.password !== formData.confirmPassword) {
                 setPasswordError('Las contraseñas no coinciden');
                 setLoading(false);
                 return;
             }
+
             if (formData.password.length < 6) {
-                setPasswordError('La contraseña debe tener al menos 6 caracteres');
+                setPasswordError('La nueva contraseña debe tener al menos 6 caracteres');
                 setLoading(false);
                 return;
             }
@@ -80,19 +90,28 @@ const FormMiPerfil = () => {
             let passwordSuccess = true;
             if (changePassword) {
                 passwordSuccess = await actions.changePassword({
-                    correo: formData.correo,
-                    password: formData.password
+                    currentPassword: formData.currentPassword,
+                    newPassword: formData.password
                 });
+                
+                if (!passwordSuccess) {
+                    throw new Error('Error al cambiar la contraseña. Verifica tu contraseña actual.');
+                }
             }
 
             if (profileSuccess && passwordSuccess) {
                 setSuccessMessage('Perfil actualizado correctamente');
                 setChangePassword(false);
-                setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+                setFormData(prev => ({
+                    ...prev,
+                    currentPassword: '',
+                    password: '',
+                    confirmPassword: ''
+                }));
             }
         } catch (error) {
             console.error('Error:', error);
-            setPasswordError('Error al actualizar el perfil');
+            setPasswordError(error.message);
         } finally {
             setLoading(false);
         }
@@ -174,6 +193,17 @@ const FormMiPerfil = () => {
                                 {changePassword && (
                                     <>
                                         <div className="mb-3">
+                                            <label className="form-label">Contraseña actual</label>
+                                            <input
+                                                type="password"
+                                                name="currentPassword"
+                                                className="form-control"
+                                                value={formData.currentPassword}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="mb-3">
                                             <label className="form-label">Nueva contraseña</label>
                                             <input
                                                 type="password"
@@ -195,7 +225,9 @@ const FormMiPerfil = () => {
                                                 onChange={handleChange}
                                                 required
                                             />
-                                            {passwordError && <div className="text-danger small">{passwordError}</div>}
+                                            {passwordError && (
+                                                <div className="text-danger small">{passwordError}</div>
+                                            )}
                                         </div>
                                     </>
                                 )}

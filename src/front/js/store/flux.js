@@ -82,6 +82,31 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       },
+      loadCartFromLocalStorage: () => {
+        try {
+          const storedCart = localStorage.getItem("cartItems");
+          if (storedCart) {
+            const parsedCart = JSON.parse(storedCart);
+            setStore({ cartItems: parsedCart });
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error("Error loading cart from localStorage:", error);
+          return false;
+        }
+      },
+
+      saveCartToLocalStorage: () => {
+        const store = getStore();
+        try {
+          localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+          return true;
+        } catch (error) {
+          console.error("Error saving cart to localStorage:", error);
+          return false;
+        }
+      },
 
       loadCartFromLocalStorage: () => {
         try {
@@ -145,49 +170,6 @@ const getState = ({ getStore, getActions, setStore }) => {
         getActions().loadUserFromStorage();
       },
       
-      
-      loginUser: async ({ correo, password }) => {
-        try {
-            const resp = await fetch(process.env.BACKEND_URL + '/login', {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ correo, password })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                console.error("Login error:", data);
-                return false;
-            }
-            
-            localStorage.setItem('token', data.access_token);
-            
-            // Obtener datos completos del usuario después del login
-            const userResp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
-                headers: {
-                    'Authorization': `Bearer ${data.access_token}`
-                }
-            });
-            
-            if (userResp.ok) {
-                const userData = await userResp.json();
-                localStorage.setItem('user', JSON.stringify({
-                    ...userData,
-                    role: data.role || 'cliente'
-                }));
-                setStore({ user: userData });
-            } else {
-                localStorage.setItem('user', JSON.stringify({
-                    correo: data.mensaje.split(', ')[1].replace('', ''),
-                    role: data.role || 'cliente'
-                }));
-            }
-            
-            return true;
-        } catch (error) {
-            console.error("Login error:", error);
-            return false;
-        }
-    },
     registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
       try {
           const resp = await fetch(process.env.BACKEND_URL + '/registro', {
@@ -394,42 +376,6 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
-      loginUser: async ({ correo, password }) => {
-        try {
-          const resp = await fetch(process.env.BACKEND_URL + '/login', {
-            method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ correo, password })
-          });
-          const data = await resp.json();
-          
-          if (!resp.ok) return false;
-          
-          localStorage.setItem('token', data.access_token);
-          
-          // Obtener datos completos del usuario
-          const userResp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
-            headers: { 'Authorization': `Bearer ${data.access_token}` }
-          });
-          
-          let userData = {};
-          if (userResp.ok) {
-            userData = await userResp.json();
-          } else {
-            // Datos mínimos si falla
-            userData = { correo, role: data.role || 'cliente' };
-          }
-          
-          // Guardar en localStorage y store
-          localStorage.setItem('user', JSON.stringify(userData));
-          setStore({ user: userData });
-          
-          return true;
-        } catch (error) {
-          console.error("Login error:", error);
-          return false;
-        }
-      },
     registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
         try {
             const resp = await fetch(process.env.BACKEND_URL + '/registro', {
@@ -524,24 +470,90 @@ const getState = ({ getStore, getActions, setStore }) => {
       }
   },
   
-  changePassword: async ({ correo, password }) => {
-      try {
-          const token = localStorage.getItem('token');
-          const resp = await fetch(process.env.BACKEND_URL + '/editar', {
-              method: 'PUT',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({ correo, password }),
-          });
-  
-          return resp.ok;
-      } catch (error) {
-          console.error(error);
-          return false;
+  changePassword: async ({ currentPassword, newPassword }) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        console.error("Token no disponible");
+        return false;
+    }
+
+    try {
+        const response = await fetch(process.env.BACKEND_URL + "/api/change-password", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token
+            },
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error("Error al cambiar contraseña:", data.msg);
+            return false;
+        }
+
+        console.log("Contraseña cambiada correctamente:", data.msg);
+        return true;
+    } catch (error) {
+        console.error("Error en fetch:", error);
+        return false;
+    }
+},
+loginUser: async ({ correo, password }) => {
+  try {
+    // Enviar la solicitud de login al backend
+    const resp = await fetch(process.env.BACKEND_URL + '/login', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correo, password })
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      console.error("Login error:", data);
+      return false; // Si la respuesta no es exitosa, retornamos false
+    }
+
+    // Guardamos el token en localStorage
+    localStorage.setItem('token', data.access_token);
+
+    // Obtener datos completos del usuario (incluyendo el role)
+    const userResp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
+      headers: {
+        'Authorization': `Bearer ${data.access_token}`
       }
-  },
+    });
+
+    if (userResp.ok) {
+      const userData = await userResp.json();
+
+      // Guardamos directamente los datos del usuario (incluyendo el role) en localStorage
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Actualiza el estado del store si lo necesitas
+      setStore({ user: userData });
+
+      return true; // El login fue exitoso
+    } else {
+      // Si no conseguimos los datos del usuario, se guarda un objeto básico
+      localStorage.setItem('user', JSON.stringify({
+        correo: correo,
+        role: 'cliente'
+      }));
+      return true;
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    return false; // Si ocurre un error, retornamos false
+  }
+},
+
+
     },
   };
 };

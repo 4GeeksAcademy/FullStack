@@ -74,14 +74,27 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       saveCartToLocalStorage: () => {
         const store = getStore();
-        localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+        try {
+          localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+          return true;
+        } catch (error) {
+          console.error("Error saving cart to localStorage:", error);
+          return false;
+        }
       },
 
-      // Cargar el carrito desde localStorage (por si no se inicializó arriba)
       loadCartFromLocalStorage: () => {
-        const storedCart = localStorage.getItem("cartItems");
-        if (storedCart) {
-          setStore({ cartItems: JSON.parse(storedCart) });
+        try {
+          const storedCart = localStorage.getItem("cartItems");
+          if (storedCart) {
+            const parsedCart = JSON.parse(storedCart);
+            setStore({ cartItems: parsedCart });
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error("Error loading cart from localStorage:", error);
+          return false;
         }
       },
 
@@ -104,31 +117,34 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
 
         setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage(); // Guardar
+        getActions().saveCartToLocalStorage();
+        return true;
       },
 
       removeItemFromCart: (id) => {
         const store = getStore();
         const updatedCart = store.cartItems.filter((item) => item.id !== id);
         setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage(); // Guardar
+        getActions().saveCartToLocalStorage();
+        return true;
       },
 
       updateQuantity: (id, newQuantity) => {
-        if (newQuantity < 1) return;
+        if (newQuantity < 1) return false;
         const store = getStore();
         const updatedCart = store.cartItems.map((item) =>
           item.id === id ? { ...item, quantity: newQuantity } : item
         );
         setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage(); // Guardar
+        getActions().saveCartToLocalStorage();
+        return true;
       },
 
-      // Puedes llamar esto desde el layout o componente principal al iniciar
       initializeApp: () => {
         getActions().loadCartFromLocalStorage();
         getActions().loadUserFromStorage();
       },
+      
       
       loginUser: async ({ correo, password }) => {
         try {

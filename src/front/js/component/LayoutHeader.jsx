@@ -23,7 +23,7 @@ const LayoutHeader = () => {
     const storedUser = localStorage.getItem("user");
     if (token && storedUser) {
       setIsLoggedIn(true);
-      setUser(JSON.parse(storedUser));
+      setUser(JSON.parse(storedUser));  // Guarda el objeto de usuario con el campo role
     } else {
       setIsLoggedIn(false);
       setUser(null);
@@ -135,6 +135,16 @@ const LayoutHeader = () => {
                       Reservas de mi Servicio
                     </Link>
                   </li>
+
+                  {/* Mostrar el panel admin solo si el rol es "Administrador" */}
+                  {user?.role === 'Administrador' && (
+                    <li>
+                      <Link className="dropdown-item" to="/admin/users">
+                        Panel Admin
+                      </Link>
+                    </li>
+                  )}
+
                   <li>
                     <hr className="dropdown-divider" />
                   </li>
@@ -231,6 +241,16 @@ const LayoutHeader = () => {
                         Reservas de mi Servicio
                       </Link>
                     </li>
+
+                    {/* Mostrar el panel admin solo si el rol es "Administrador" */}
+                    {user?.role === 'Administrador' && (
+                      <li>
+                        <Link className="dropdown-item" to="/admin/users">
+                          Panel Admin
+                        </Link>
+                      </li>
+                    )}
+
                     <li>
                       <hr className="dropdown-divider" />
                     </li>
@@ -296,6 +316,3 @@ const LayoutHeader = () => {
 };
 
 export default LayoutHeader;
-
-
-

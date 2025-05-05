@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const FormCrearServicio = () => {
   const [titulo, setTitulo] = useState('');
@@ -7,17 +8,18 @@ const FormCrearServicio = () => {
   const [ciudad, setCiudad] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [userId, setUserId] = useState(null);
-  const [imagen, setImagen] = useState(''); // Nuevo campo para imagen
+  const [imagen, setImagen] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  
+  const navigate = useNavigate();
   const backendUrl = process.env.BACKEND_URL;
 
   const categorias = [
-    { id: 1, nombre: 'Viajes', ruta: `${backendUrl}/viajes` },
-    { id: 3, nombre: 'Top', ruta: `${backendUrl}/top` },
-    { id: 2, nombre: 'Belleza', ruta: `${backendUrl}/belleza` },
-    { id: 4, nombre: 'Gastronomía', ruta: `${backendUrl}/gastronomia` },
+    { id: 1, nombre: 'Viajes', ruta: `${backendUrl}/viajes`, path: 'viajes' },
+    { id: 3, nombre: 'Top', ruta: `${backendUrl}/top`, path: 'top' }, // Cambiado a 'top'
+    { id: 2, nombre: 'Belleza', ruta: `${backendUrl}/belleza`, path: 'belleza' },
+    { id: 4, nombre: 'Gastronomía', ruta: `${backendUrl}/gastronomia`, path: 'gastronomia' },
   ];
 
   useEffect(() => {
@@ -76,22 +78,26 @@ const FormCrearServicio = () => {
       return;
     }
 
+    const precioNumerico = parseFloat(precio);
+    if (isNaN(precioNumerico)) {
+      alert('Por favor ingresa un precio válido.');
+      return;
+    }
+
     const data = {
-      buyers: null, // Se deja null si no se tiene valor
+      buyers: null,
       category_id: categoriaSeleccionada.id,
       city: ciudad,
       descripcion,
-      discountPrice: null, // Se deja null si no se tiene valor
+      discountPrice: null,
       id: null,
-      image: imagen || null, // Enviar imagen si se proporciona
-      price: parseFloat(precio),
-      rating: null, // Se deja null si no se tiene valor
-      reviews: null, // Se deja null si no se tiene valor
+      image: imagen || null,
+      price: precioNumerico,
+      rating: null,
+      reviews: null,
       title: titulo,
-      user_id: userId, // Se toma el ID del usuario que está logueado
+      user_id: userId,
     };
-
-    console.log('Datos a enviar:', data);
 
     try {
       const response = await fetch(categoriaSeleccionada.ruta, {
@@ -105,12 +111,20 @@ const FormCrearServicio = () => {
 
       if (response.ok) {
         alert('Servicio creado correctamente.');
+        // Redirigir a la categoría correcta
+        navigate(`/category/${categoriaSeleccionada.path}`, {
+          state: { 
+            categoryName: categoriaSeleccionada.nombre,
+            forceRefresh: true
+          }
+        });
+        // Limpiar el formulario
         setTitulo('');
         setDescripcion('');
         setPrecio('');
         setCiudad('');
         setCategoryId('');
-        setImagen(''); // Limpiar imagen
+        setImagen('');
       } else {
         const errorText = await response.text();
         console.error('Error del servidor:', errorText);
@@ -121,7 +135,6 @@ const FormCrearServicio = () => {
       alert('Ocurrió un error al enviar los datos.');
     }
   };
-
   if (loading) return <div>Cargando...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -159,6 +172,8 @@ const FormCrearServicio = () => {
               className="form-control"
               value={precio}
               onChange={(e) => setPrecio(e.target.value)}
+              min="0"
+              step="0.01"
               required
             />
           </div>
@@ -174,14 +189,14 @@ const FormCrearServicio = () => {
             />
           </div>
 
-          {/* Nuevo campo para la imagen */}
           <div className="mb-3">
             <label className="form-label">URL de la Imagen</label>
             <input
               type="text"
               className="form-control"
               value={imagen}
-              onChange={(e) => setImagen(e.target.value)} // Guardar la URL de la imagen
+              onChange={(e) => setImagen(e.target.value)}
+              placeholder="Ejemplo: https://ejemplo.com/imagen.jpg"
             />
           </div>
 
@@ -210,4 +225,3 @@ const FormCrearServicio = () => {
 };
 
 export default FormCrearServicio;
-

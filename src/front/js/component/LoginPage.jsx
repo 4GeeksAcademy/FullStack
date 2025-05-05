@@ -103,7 +103,7 @@ const LoginPage = () => {
                         <label className="form-label">Contraseña</label>
                         <div className="input-group">
                             <span className="input-group-text"><i className="bi bi-key"></i></span>
-                            <input type={showPassword ? "text" : "password"} className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="6" />
+                            <input type={showPassword ? "text" : "password"} className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="5" />
                             <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword(!showPassword)}>
                                 <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                             </button>

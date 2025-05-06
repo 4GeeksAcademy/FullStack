@@ -22,7 +22,6 @@ from flask_bcrypt import Bcrypt
 from api.payment import payment_bp
 from flask_cors import CORS 
 from api.politicas import crear_politicas, Politica
-from flask_cors import CORS
 from sqlalchemy import or_, func
 import traceback
 from api.mail_service import MailService
@@ -187,29 +186,38 @@ def crear_usuario():
 
     correo = data.get('correo')
     password = data.get('password')
+    telefono = data.get('telefono', '')
+    direccion = data.get('direccion_line1', '')  # Asegúrate de usar direccion_line1
+    ciudad = data.get('ciudad', '')
     role = data.get('role', 'cliente')
 
     if not correo or not password:
         return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
 
-    # Validar si el correo ya existe
     usuario_existente = User.query.filter_by(correo=correo).first()
     if usuario_existente:
         return jsonify({"error": "El usuario ya existe"}), 409
 
-    # Encriptar contraseña
     pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     nuevo_usuario = User(
         correo=correo,
         password=pw_hash,
+        telefono=telefono,
+        direccion_line1=direccion,  # Usar direccion_line1 aquí
+        ciudad=ciudad,
         role=role,
         is_active=True
     )
+    
     db.session.add(nuevo_usuario)
     db.session.commit()
 
-    return jsonify({"mensaje": "Usuario creado correctamente"}), 201
+    # Devuelve los datos del usuario creado
+    return jsonify({
+        "mensaje": "Usuario creado correctamente",
+        "user": nuevo_usuario.serialize()
+    }), 201
 
 @app.route('/gastronomiapag', methods=['GET'])
 def paginated_gastronomia():
@@ -285,7 +293,7 @@ def get_one_gastronomia(id):
         }
     return jsonify(data)
 
-@app.route('/gastronomia', methods=['POST'])
+@app.route('/dashboard/gastronomia', methods=['POST'])
 def create_gastronomia_dashboard():
     data = request.get_json()
 
@@ -318,7 +326,7 @@ def create_gastronomia_dashboard():
     }
     return jsonify(data), 201
 
-@app.route('/gastronomia/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/gastronomia/<int:id>', methods=['DELETE'])
 def delete_gastronomia_dashboard(id):
     gastronomia = Gastronomia.query.get(id)
 
@@ -404,7 +412,7 @@ def get_one_top(id):
     
     return jsonify(data)
 
-@app.route('/top', methods=['POST'])
+@app.route('/dashboard/top', methods=['POST'])
 def create_top_dashboard():
     data = request.get_json()
 
@@ -437,7 +445,7 @@ def create_top_dashboard():
     }
     return jsonify(data), 201
 
-@app.route('/top/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/top/<int:id>', methods=['DELETE'])
 def delete_top_dashboard(id):
     top = Top.query.get(id)
 
@@ -521,7 +529,7 @@ def get_one_viaje(id):
         }
     return jsonify(data)
 
-@app.route('/viajes', methods=['POST'])
+@app.route('/dashboard/viajes', methods=['POST'])
 def create_viaje_dashboard():
     data = request.get_json();
 
@@ -555,7 +563,7 @@ def create_viaje_dashboard():
     }
     return jsonify(data), 201
 
-@app.route('/viajes/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/viajes/<int:id>', methods=['DELETE'])
 def delete_viaje_dashboard(id):
     viaje = Viajes.query.get(id)
 
@@ -641,7 +649,7 @@ def get_one_belleza(id):
         }
     return jsonify(data)
 
-@app.route('/belleza', methods=['POST'])
+@app.route('/dashboard/belleza', methods=['POST'])
 def create_belleza_dashboard():
     data = request.get_json()
 
@@ -674,7 +682,7 @@ def create_belleza_dashboard():
     }
     return jsonify(data), 201
 
-@app.route('/belleza/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/belleza/<int:id>', methods=['DELETE'])
 def delete_belleza_dashboard(id):
     belleza = Belleza.query.get(id)
 
@@ -758,7 +766,7 @@ def get_one_ofert(id):
         }
     return jsonify(data)
 
-@app.route('/oferta', methods=['POST'])
+@app.route('/dashboard/oferta', methods=['POST'])
 def create_oferta_dashboard():
     data = request.get_json()
 
@@ -791,7 +799,7 @@ def create_oferta_dashboard():
         }
     return jsonify(data), 201
 
-@app.route('/oferta/<int:id>', methods=['DELETE'])
+@app.route('/dashboard/oferta/<int:id>', methods=['DELETE'])
 def delete_oferta_dashboard(id):
     oferta = Ofertas.query.get(id)
 
@@ -886,7 +894,7 @@ def get_user_info(id):
     }
     return jsonify(data)
 
-@app.route('/usuario', methods=['POST'])
+@app.route('/dashboard/usuario', methods=['POST'])
 def create_user_dashboard():
     data = request.get_json()
     user = User.query.filter_by(correo=data['correo']).first()
@@ -981,17 +989,23 @@ def actualizar_perfil():
     if not usuario:
         return jsonify({"msg": "Usuario no encontrado"}), 404
 
-    usuario.telefono = data.get('telefono', usuario.telefono)
-    usuario.ciudad = data.get('ciudad', usuario.ciudad)
-    usuario.direccion_line1 = data.get('direccion', usuario.direccion_line1)
+    # Actualiza solo los campos permitidos
+    if 'telefono' in data:
+        usuario.telefono = data['telefono']
+    if 'direccion_line1' in data:
+        usuario.direccion_line1 = data['direccion_line1']
+    if 'ciudad' in data:
+        usuario.ciudad = data['ciudad']
 
     try:
         db.session.commit()
-        return jsonify({"msg": "Perfil actualizado correctamente"}), 200
+        return jsonify({
+            "msg": "Perfil actualizado correctamente",
+            "user": usuario.serialize()
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar el perfil", "error": str(e)}), 500
-
 # Ruta para obtener todos los usuarios
 @app.route('/usuarios', methods=['GET'])
 
@@ -1284,7 +1298,7 @@ def obtener_politica_por_id(id):
 
     return jsonify(politica.serialize()), 200
 
-""" @app.before_request
+@app.before_request
 def inicializar_db():
     # Aquí debes usar un ID de usuario válido y los IDs de las categorías correspondientes.
     user_id = 1  # Debes reemplazar con un ID de usuario válido
@@ -1302,7 +1316,7 @@ def inicializar_db():
         belleza_category_id,
         gastronomia_category_id,
         ofertas_category_id
-    ) """
+    )
 
 
 
@@ -1367,31 +1381,53 @@ def eliminar_oferta(id):
 def crear_viaje():
     data = request.get_json()
 
-    nuevo_viaje = Viajes(
-        title=data.get('title'),
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),
-        city=data.get('city'),
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación básica de campos requeridos
+    if not data.get('title') or not data.get('descripcion') or not data.get('price'):
+        return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    db.session.add(nuevo_viaje)
-    db.session.commit()
+    try:
+        nuevo_viaje = Viajes(
+            title=data.get('title'),
+            descripcion=data.get('descripcion'),
+            price=data.get('price'),
+            city=data.get('city', ''),  # Valor por defecto si no se proporciona
+            image=data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.0),  # Valor por defecto
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data.get('user_id'),
+            category_id=data.get('category_id', 1)  # Valor por defecto para viajes
+        )
 
-    return jsonify(nuevo_viaje.serialize()), 201
+        db.session.add(nuevo_viaje)
+        db.session.commit()
+
+        # Devolver el viaje creado con su ID
+        return jsonify({
+            "message": "Viaje creado exitosamente",
+            "viaje": nuevo_viaje.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/viajes', methods=['GET'])
 def obtener_viajes():
-    viajes_items = Viajes.query.all()
-    viajes_serializados = [viaje.serialize() for viaje in viajes_items]
+    try:
+       # Ordenar por ID ascendente para mantener el orden original (último al final)
+        viajes_items = Viajes.query.order_by(Viajes.id.asc()).all()
+        viajes_serializados = [viaje.serialize() for viaje in viajes_items]
 
-    return jsonify({"viajes": viajes_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(viajes_serializados),
+            "viajes": viajes_serializados
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/top', methods=['POST'])
@@ -1399,63 +1435,136 @@ def obtener_viajes():
 def crear_top():
     data = request.get_json()
 
-    nuevo_top = Top(
-        title=data.get('title'),  # Nombre cambiado por title
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),  # Precio cambiado por Price
-        city=data.get('city'),  # Ubicación cambiada por city
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación de campos requeridos
+    required_fields = ['title', 'descripcion', 'price', 'user_id']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"error": f"Campo requerido faltante: {field}"}), 400
 
-    db.session.add(nuevo_top)
-    db.session.commit()
+    try:
+        nuevo_top = Top(
+            title=data['title'],
+            descripcion=data['descripcion'],
+            price=data['price'],
+            city=data.get('city', ''),
+            image=data.get('image', 'https://img.freepik.com/free-photo/beautiful-shot-u-s-route-66-arizona-usa-with-clear-blue-sky-background_181624-53248.jpg'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.5),
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data['user_id'],
+            category_id=data.get('category_id', 3)  # ID de categoría para Top
+        )
 
-    return jsonify(nuevo_top.serialize()), 201
+        db.session.add(nuevo_top)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Top creado exitosamente",
+            "top": nuevo_top.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/top', methods=['GET'])
 def obtener_top():
-    top_items = Top.query.all()
-    top_serializados = [top.serialize() for top in top_items]
+    try:
+        # Ordenar por ID descendente para mostrar los más recientes primero
+        top_items = Top.query.order_by(Top.id.asc()).all()
+        top_serializados = [top.serialize() for top in top_items]
 
-    return jsonify({"top": top_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(top_serializados),
+            "top": top_serializados
+        }), 200
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Función para crear servicios iniciales de Top
+def crear_servicios_top(user_id, top_category_id):
+    # Verificar cuáles ya existen para no duplicar
+    existing_titles = {t.title for t in Top.query.filter_by(category_id=top_category_id).all()}
+    
+    top_services = [
+        Top(
+            title="Crucero de lujo por el Mediterráneo",
+            descripcion="Disfrutá 7 días de lujo en altamar visitando Italia, Grecia y España.",
+            image="https://img.freepik.com/free-photo/cruise-ship-sailing-ocean-sunset_181624-24289.jpg",
+            city="Mar Mediterráneo",
+            price=3500,
+            discountPrice=4200,
+            rating=4.8,
+            reviews=300,
+            buyers=450,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        # ... (otros servicios con imágenes de Freepik como en viajes)
+    ]
+
+    # Filtrar solo los que no existen
+    new_services = [t for t in top_services if t.title not in existing_titles]
+    
+    if new_services:
+        db.session.bulk_save_objects(new_services)
+        db.session.commit()
 
 @app.route('/gastronomia', methods=['POST'])
 @jwt_required()
 def crear_gastronomia():
     data = request.get_json()
 
-    nuevo_gastronomia = Gastronomia(
-        title=data.get('title'),
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),
-        city=data.get('city'),
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación básica de campos requeridos
+    if not data.get('title') or not data.get('descripcion') or not data.get('price'):
+        return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    db.session.add(nuevo_gastronomia)
-    db.session.commit()
+    try:
+        nuevo_gastronomia = Gastronomia(
+            title=data.get('title'),
+            descripcion=data.get('descripcion'),
+            price=data.get('price'),
+            city=data.get('city', ''),  # Valor por defecto si no se proporciona
+            image=data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.0),  # Valor por defecto
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data.get('user_id'),
+            category_id=data.get('category_id', 4)  # Valor por defecto para gastronomía
+        )
 
-    return jsonify(nuevo_gastronomia.serialize()), 201
+        db.session.add(nuevo_gastronomia)
+        db.session.commit()
+
+        # Devolver el gastronomía creado con su ID
+        return jsonify({
+            "message": "Servicio de gastronomía creado exitosamente",
+            "gastronomia": nuevo_gastronomia.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/gastronomia', methods=['GET'])
 def obtener_gastronomia():
-    gastronomia_items = Gastronomia.query.all()
-    gastronomia_serializados = [gastronomia.serialize() for gastronomia in gastronomia_items]
+    try:
+        # Ordenar por ID ascendente para mantener el orden original (último al final)
+        gastronomia_items = Gastronomia.query.order_by(Gastronomia.id.asc()).all()
+        gastronomia_serializados = [gastronomia.serialize() for gastronomia in gastronomia_items]
 
-    return jsonify({"gastronomia": gastronomia_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(gastronomia_serializados),
+            "gastronomia": gastronomia_serializados
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/belleza', methods=['POST'])
@@ -1932,6 +2041,73 @@ def session_status():
     else:
         return jsonify({"error": "Session not found"}), 404
     
+@api.route('/change-password', methods=['PUT'])
+@jwt_required()
+def change_password():
+    try:
+        data = request.get_json()
+        current_password = data.get("currentPassword")
+        new_password = data.get("newPassword")
+
+        # Obtener correo desde el token JWT
+        correo = get_jwt_identity()
+        user = User.query.filter_by(correo=correo).first()
+
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+
+        # Verificar contraseña actual con Bcrypt
+        if not bcrypt.check_password_hash(user.password, current_password):
+            return jsonify({"msg": "Contraseña actual incorrecta"}), 401
+
+        # Generar nuevo hash con Bcrypt
+        user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        db.session.commit()
+
+        return jsonify({"msg": "Contraseña actualizada exitosamente"}), 200
+
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+    
+    # Ruta para crear un administrador
+@app.route('/api/create-admin', methods=['POST'])
+def crear_admin():
+    # Obtener los datos de la solicitud (JSON)
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No se recibieron datos JSON"}), 400
+
+    correo = data.get('correo')
+    password = data.get('password')
+
+    # Validación de datos obligatorios
+    if not correo or not password:
+        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+
+    # Verificar si el correo ya está registrado
+    usuario_existente = User.query.filter_by(correo=correo).first()
+    if usuario_existente:
+        return jsonify({"error": "El correo ya está registrado"}), 409
+
+    # Encriptar la contraseña
+    pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    # Crear el nuevo usuario con el rol 'Administrador'
+    nuevo_admin = User(
+        correo=correo,
+        password=pw_hash,
+        role='Administrador',  # El rol siempre será 'Administrador'
+        is_active=True  # Asegúrate de que el admin esté activo
+    )
+
+    # Guardar en la base de datos
+    db.session.add(nuevo_admin)
+    db.session.commit()
+
+    # Respuesta exitosa
+    return jsonify({"message": "Administrador creado exitosamente"}), 201
+
     
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')

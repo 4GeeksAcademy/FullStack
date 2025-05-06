@@ -74,14 +74,52 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       saveCartToLocalStorage: () => {
         const store = getStore();
-        localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+        try {
+          localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+          return true;
+        } catch (error) {
+          console.error("Error saving cart to localStorage:", error);
+          return false;
+        }
+      },
+      loadCartFromLocalStorage: () => {
+        try {
+          const storedCart = localStorage.getItem("cartItems");
+          if (storedCart) {
+            const parsedCart = JSON.parse(storedCart);
+            setStore({ cartItems: parsedCart });
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error("Error loading cart from localStorage:", error);
+          return false;
+        }
       },
 
-      // Cargar el carrito desde localStorage (por si no se inicializó arriba)
+      saveCartToLocalStorage: () => {
+        const store = getStore();
+        try {
+          localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+          return true;
+        } catch (error) {
+          console.error("Error saving cart to localStorage:", error);
+          return false;
+        }
+      },
+
       loadCartFromLocalStorage: () => {
-        const storedCart = localStorage.getItem("cartItems");
-        if (storedCart) {
-          setStore({ cartItems: JSON.parse(storedCart) });
+        try {
+          const storedCart = localStorage.getItem("cartItems");
+          if (storedCart) {
+            const parsedCart = JSON.parse(storedCart);
+            setStore({ cartItems: parsedCart });
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error("Error loading cart from localStorage:", error);
+          return false;
         }
       },
 
@@ -104,80 +142,73 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
 
         setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage(); // Guardar
+        getActions().saveCartToLocalStorage();
+        return true;
       },
 
       removeItemFromCart: (id) => {
         const store = getStore();
         const updatedCart = store.cartItems.filter((item) => item.id !== id);
         setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage(); // Guardar
+        getActions().saveCartToLocalStorage();
+        return true;
       },
 
       updateQuantity: (id, newQuantity) => {
-        if (newQuantity < 1) return;
+        if (newQuantity < 1) return false;
         const store = getStore();
         const updatedCart = store.cartItems.map((item) =>
           item.id === id ? { ...item, quantity: newQuantity } : item
         );
         setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage(); // Guardar
+        getActions().saveCartToLocalStorage();
+        return true;
       },
 
-      // Puedes llamar esto desde el layout o componente principal al iniciar
       initializeApp: () => {
         getActions().loadCartFromLocalStorage();
         getActions().loadUserFromStorage();
       },
       
-      loginUser: async ({ correo, password }) => {
-        try {
-            const resp = await fetch(process.env.BACKEND_URL + '/login', {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ correo, password })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                console.error("Login error:", data);
-                return false;
-            }
-            localStorage.setItem('token', data.access_token);
-            localStorage.setItem('user', JSON.stringify({
-                correo: data.mensaje.split(', ')[1].replace('', ''),
-                role: data.role || 'cliente'
-            }));
-            return true;
-        } catch (error) {
-            console.error("Login error:", error);
-            return false;
-        }
-    },
     registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
-        try {
-            const resp = await fetch(process.env.BACKEND_URL + '/registro', {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    correo,
-                    password,
-                    telefono,
-                    direccion_line1: direccion,
-                    ciudad,
-                    role: "cliente"
-                })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                console.error("Register error:", data);
-                return false;
-            }
-            return true;
-        } catch (error) {
-            console.error("Register error:", error);
-            return false;
-        }
-    },
+      try {
+          const resp = await fetch(process.env.BACKEND_URL + '/registro', {
+              method: 'POST',
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  correo,
+                  password,
+                  telefono,
+                  direccion_line1: direccion, // Enviar como direccion_line1
+                  ciudad,
+                  role: "cliente"
+              })
+          });
+          
+          if (!resp.ok) {
+              const errorData = await resp.json();
+              console.error("Register error:", errorData);
+              return false;
+          }
+  
+          const data = await resp.json();
+          
+          // Guardar datos del usuario en localStorage y store
+          const userData = {
+              ...data.user, // Usar los datos devueltos por el backend
+              role: "cliente"
+          };
+          
+          localStorage.setItem('user', JSON.stringify(userData));
+          setStore({ user: userData });
+          
+          return true;
+      } catch (error) {
+          console.error("Register error:", error);
+          return false;
+      }
+  },
+  
       // Obtener un mensaje del backend (puedes adaptarlo a tu necesidad)
       getMessage: async () => {
         try {
@@ -318,19 +349,19 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
       },
 
-      // cargarServiciosTop: async () => {
-      //   try {
-      //     const resp = await fetch(process.env.BACKEND_URL + "/top");
-      //     const data = await resp.json();
-      //     const top = data.top || [];
-      //     setStore({ serviciosTop: top });
-      //     console.log("SERVICOSSS TOOOOOPPPP", top)
-      //     return top;
-      //   } catch (e) {
-      //     console.error("Error al cargar top:", e);
-      //     return [];
-      //   }
-      // },
+      cargarServiciosTop: async () => {
+        try {
+          const resp = await fetch(process.env.BACKEND_URL + "/top");
+          const data = await resp.json();
+          const top = data.top || [];
+          setStore({ serviciosTop: top });
+          console.log("SERVICOSSS TOOOOOPPPP", top)
+          return top;
+        } catch (e) {
+          console.error("Error al cargar top:", e);
+          return [];
+        }
+      },
 
 
       cargarServiciosOfertas: async () => {
@@ -345,29 +376,6 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
-      loginUser: async ({ correo, password }) => {
-        try {
-            const resp = await fetch(process.env.BACKEND_URL + '/login', {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ correo, password })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                console.error("Login error:", data);
-                return false;
-            }
-            localStorage.setItem('token', data.access_token);
-            localStorage.setItem('user', JSON.stringify({
-                correo: data.mensaje.split(', ')[1].replace('', ''),
-                role: data.role || 'cliente'
-            }));
-            return true;
-        } catch (error) {
-            console.error("Login error:", error);
-            return false;
-        }
-    },
     registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
         try {
             const resp = await fetch(process.env.BACKEND_URL + '/registro', {
@@ -426,7 +434,126 @@ const getState = ({ getStore, getActions, setStore }) => {
       .catch(error => {
         console.log('Error al obtener usuarios para los combos', error);
       })
+    },
+    updateUserProfile: async (userData) => {
+      try {
+          const token = localStorage.getItem('token');
+          const resp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                  telefono: userData.telefono,
+                  direccion_line1: userData.direccion_line1, // Cambiado a direccion_line1
+                  ciudad: userData.ciudad
+              }),
+          });
+  
+          if (resp.ok) {
+              const data = await resp.json();
+              const updatedUser = {
+                  ...JSON.parse(localStorage.getItem('user')),
+                  telefono: data.user.telefono,
+                  direccion_line1: data.user.direccion_line1, // Cambiado a direccion_line1
+                  ciudad: data.user.ciudad
+              };
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              setStore({ user: updatedUser });
+              return true;
+          }
+          return false;
+      } catch (error) {
+          console.error("Error updating profile:", error);
+          return false;
+      }
+  },
+  
+  changePassword: async ({ currentPassword, newPassword }) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        console.error("Token no disponible");
+        return false;
     }
+
+    try {
+        const response = await fetch(process.env.BACKEND_URL + "/api/change-password", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token
+            },
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error("Error al cambiar contraseña:", data.msg);
+            return false;
+        }
+
+        console.log("Contraseña cambiada correctamente:", data.msg);
+        return true;
+    } catch (error) {
+        console.error("Error en fetch:", error);
+        return false;
+    }
+},
+loginUser: async ({ correo, password }) => {
+  try {
+    // Enviar la solicitud de login al backend
+    const resp = await fetch(process.env.BACKEND_URL + '/login', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correo, password })
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      console.error("Login error:", data);
+      return false; // Si la respuesta no es exitosa, retornamos false
+    }
+
+    // Guardamos el token en localStorage
+    localStorage.setItem('token', data.access_token);
+
+    // Obtener datos completos del usuario (incluyendo el role)
+    const userResp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
+      headers: {
+        'Authorization': `Bearer ${data.access_token}`
+      }
+    });
+
+    if (userResp.ok) {
+      const userData = await userResp.json();
+
+      // Guardamos directamente los datos del usuario (incluyendo el role) en localStorage
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Actualiza el estado del store si lo necesitas
+      setStore({ user: userData });
+
+      return true; // El login fue exitoso
+    } else {
+      // Si no conseguimos los datos del usuario, se guarda un objeto básico
+      localStorage.setItem('user', JSON.stringify({
+        correo: correo,
+        role: 'cliente'
+      }));
+      return true;
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    return false; // Si ocurre un error, retornamos false
+  }
+},
+
+
     },
   };
 };

@@ -13,6 +13,12 @@ const RelatedContent = () => {
     viajes: 0,
   });
 
+  const categories = [
+    { id: "Belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
+    { id: "gastronomia", name: "Gastronomía", deals: store.serviciosGastronomia || [] },
+    { id: "viajes", name: "Viajes", deals: store.serviciosViajes || [] },
+  ];
+
   useEffect(() => {
     const fetchData = async () => {
       if (store.serviciosViajes.length === 0) await actions.cargarServiciosViajes();
@@ -23,34 +29,39 @@ const RelatedContent = () => {
     fetchData();
   }, []);
 
-  const categories = [
-    { id: "Belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
-    { id: "gastronomia", name: "Gastronomía", deals: store.serviciosGastronomia || [] },
-    { id: "viajes", name: "Viajes", deals: store.serviciosViajes || [] },
-  ];
+  const handleNavigate = (deal, categoryId) => {
+    const offer = {
+      id: deal.id,
+      title: deal.title || deal.nombre || "Sin título",
+      image: deal.image || deal.imagen || "https://via.placeholder.com/300x200?text=Sin+imagen",
+      rating: deal.rating || 4,
+      reviews: deal.reviews || 20,
+      price: deal.price || deal.precio || 0,
+      discountPrice: deal.discountPrice || null,
+      originalPrice: deal.originalPrice || null,
+      buyers: deal.buyers || 0,
+      descripcion: deal.descripcion || "",
+      city: deal.city || "",
+      category: categoryId // Añadimos explícitamente la categoría
+    };
 
-  const handleNavigate = (deal) => {
-    // Usamos navigate para pasar los datos de la oferta al componente ProductDetail
     navigate(`/product-detail`, {
-      state: { offer: deal }
+      state: { 
+        offer: offer,
+        category: categoryId // Pasamos la categoría como dato separado también
+      }
     });
   };
 
   const scroll = (categoryId, direction, e) => {
     e.preventDefault();
     e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
-
-    setCurrentIndices((prev) => {
-      const current = prev[categoryId] || 0;
-      const totalDeals = categories.find(cat => cat.id === categoryId)?.deals.length || 0;
-      const newIndex =
-        direction === "left" ? Math.max(current - 4, 0) :
-        direction === "right" ? Math.min(current + 4, totalDeals - 4) :
-        current;
-
-      return { ...prev, [categoryId]: newIndex };
-    });
+    setCurrentIndices(prev => ({
+      ...prev,
+      [categoryId]: direction === "left" 
+        ? Math.max(prev[categoryId] - 4, 0)
+        : Math.min(prev[categoryId] + 4, categories.find(c => c.id === categoryId).deals.length - 4)
+    }));
   };
 
   const hasAnyData = categories.some(cat => cat.deals.length > 0);
@@ -63,6 +74,7 @@ const RelatedContent = () => {
         {hasAnyData ? (
           categories.map((category) => {
             const currentIndex = currentIndices[category.id] || 0;
+            const dealsToShow = category.deals.slice(currentIndex, currentIndex + 4);
 
             return (
               <div key={category.id} className="mb-5">
@@ -86,26 +98,19 @@ const RelatedContent = () => {
                   </button>
 
                   <div className="row gx-3">
-                    {category.deals.slice(currentIndex, currentIndex + 4).map((deal, index) => {
-                      const offer = {
-                        title: deal.nombre || deal.title || "Sin título",
-                        image: deal.imagen || deal.image || "https://via.placeholder.com/300x200?text=Sin+imagen",
-                        rating: deal.rating || 4,
-                        reviews: deal.reviews || 20,
-                        discountPrice: deal.precio || deal.discountPrice || 0,
-                        originalPrice: deal.originalPrice || Math.round((deal.precio || deal.discountPrice || 0) * 1.2),
-                        buyers: deal.buyers || 5,
-                      };
-
-                      return (
-                        <div key={`${category.id}-${index}`} className="col-12 col-sm-6 col-md-3">
-                          <CategoryCard
-                            offer={offer}
-                            onViewService={() => handleNavigate(offer)} // Pasamos la oferta al hacer click
-                          />
-                        </div>
-                      );
-                    })}
+                    {dealsToShow.map((deal) => (
+                      <div key={`${category.id}-${deal.id}`} className="col-12 col-sm-6 col-md-3">
+                        <CategoryCard
+                          offer={{
+                            ...deal,
+                            title: deal.title || deal.nombre,
+                            image: deal.image || deal.imagen,
+                            price: deal.price || deal.precio
+                          }}
+                          onViewService={() => handleNavigate(deal, category.id)}
+                        />
+                      </div>
+                    ))}
                   </div>
 
                   <button

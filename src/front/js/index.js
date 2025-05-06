@@ -1,12 +1,13 @@
-//import react into the bundle
+// Import React and ReactDOM
 import React from "react";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client"; // 👈 importante para React 18
 
-//include your index.scss file into the bundle
+// Import your styles
 import "../styles/index.css";
 
-//import your own components
+// Import your main layout
 import Layout from "./layout";
 
-//render your react application
-ReactDOM.render(<Layout />, document.querySelector("#app"));
+// Render the app using React 18's createRoot
+const root = ReactDOM.createRoot(document.getElementById("app"));
+root.render(<Layout />);

@@ -134,7 +134,7 @@ const ProductDetail = () => {
       discountPrice: actualDiscountPrice,
       originalPrice: actualPrice
     });
-    alert("Producto agregado al carrito");
+   // alert("Producto agregado al carrito");
   };
 
   // Render de estrellas

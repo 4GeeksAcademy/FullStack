@@ -33,6 +33,7 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import VistaMisCompras from "./pages/VistaMisCompras.jsx"
 import Checkout from "./pages/Checkout.jsx";
 import Return from "./pages/Return.jsx";
+import VistaReservas from "./component/VistaReservas.jsx";
 
 
 //create your first component
@@ -72,7 +73,10 @@ const Layout = () => {
             <Route path="/mis-compras" element={<VistaMisCompras />} /> 
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/return" element={<Return />} />
+
+            <Route path="/mis-reservas" element={<VistaReservas />} />
             <Route path="/product-detail/:id" element={<ProductDetail />} />
+
           </Routes>
           <Footer />
         </ScrollToTop>

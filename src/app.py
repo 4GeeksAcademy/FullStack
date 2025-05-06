@@ -25,6 +25,7 @@ from api.politicas import crear_politicas, Politica
 from flask_cors import CORS
 from sqlalchemy import or_, func
 import traceback
+from api.mail_service import MailService
 
 
 load_dotenv()
@@ -37,7 +38,6 @@ app.config["JWT_SECRET_KEY"] = "6Smc-TWCMZkUXJ5DN6ZUmOq5OHHzjZID8NGt7c1VxpxK0TJ7
 jwt = JWTManager(app)
 
 bcrypt = Bcrypt(app)
-
 app.url_map.strict_slashes = False
 CORS(app, origins=["*"])
 
@@ -1063,6 +1063,96 @@ def agregar_a_newsletter():
     nuevo = Newsletter(correo=correo)
     db.session.add(nuevo)
     db.session.commit()
+
+    subject = "¡Gracias por suscribirte a Groupponclon!"
+    text_content = f"""Hola,\n\nTu suscripción a nuestro newsletter ha sido exitosa.
+    \n\nA partir de ahora recibirás nuestras mejores ofertas y promociones exclusivas.\n\n¡Gracias por unirte a nuestra comunidad!\n\nEl equipo de Groupponclon"""
+
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gracias por suscribirte</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f4;
+                color: #333;
+            }
+            .email-container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .header {
+                background-color: #4CAF50;
+                color: white;
+                padding: 30px 20px;
+                text-align: center;
+            }
+            .content {
+                padding: 30px;
+            }
+            .footer {
+                background-color: #f4f4f4;
+                padding: 20px;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+            }
+            .button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 12px 25px;
+                text-decoration: none;
+                border-radius: 4px;
+                display: inline-block;
+                margin: 20px 0;
+                font-weight: bold;
+            }
+            .logo {
+                max-width: 150px;
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="email-container">
+            <div class="header">
+                <h1>¡Gracias por suscribirte!</h1>
+            </div>
+            
+            <div class="content">
+                <p>Hola,</p>
+                <p>Tu suscripción a nuestro newsletter ha sido exitosa. A partir de ahora recibirás:</p>
+                
+                <ul>
+                    <li>Las mejores ofertas exclusivas</li>
+                    <li>Novedades de productos</li>
+                    <li>Descuentos especiales para suscriptores</li>
+                </ul>
+                
+                <p>¡Esperamos que disfrutes de nuestros contenidos!</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    mail_service = MailService()  # Asegúrate de tener la instancia
+    mail_service.send_mail(
+        to_email=correo,
+        subject=subject,
+        text_content=text_content,
+        html_content=html_content
+    )
 
     return jsonify({"mensaje": "Suscripción exitosa"}), 201
 

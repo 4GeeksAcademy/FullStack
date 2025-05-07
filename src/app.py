@@ -1088,20 +1088,34 @@ def editar_usuario():
 
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
 
+@app.route('/newsletteradd', methods=['POST'])
+def create_newsletter():
+    data = request.get_json()
+    services = data['services']
+    if not services:
+        return jsonify({'Error al crear newsletter'}), 400
+    print(services)
+    return jsonify({'message': 'newsletter creado con exito'}), 201
+
 @app.route('/newsletter', methods=['POST'])
 def agregar_a_newsletter():
     data = request.get_json()
-    correo = data.get('correo')
+    email = data.get('correo')
 
-    if not correo:
+    if not email:
         return jsonify({"error": "Correo es obligatorio"}), 400
 
-    existente = Newsletter.query.filter_by(correo=correo).first()
-    if existente:
+    user = User.query.filter_by(correo=email).first()
+
+    if not user:
+        return jsonify({"error": "El correo no está registrado"}), 404
+
+
+    if user and user.newsletter_subscription is True:
         return jsonify({"mensaje": "Este correo ya está suscrito"}), 200
 
-    nuevo = Newsletter(correo=correo)
-    db.session.add(nuevo)
+    user.newsletter_subscription = True
+    db.session.add(user)
     db.session.commit()
 
     subject = "¡Gracias por suscribirte a Groupponclon!"
@@ -1188,7 +1202,7 @@ def agregar_a_newsletter():
 
     mail_service = MailService()  # Asegúrate de tener la instancia
     mail_service.send_mail(
-        to_email=correo,
+        to_email=email,
         subject=subject,
         text_content=text_content,
         html_content=html_content

@@ -33,6 +33,7 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import VistaMisCompras from "./pages/VistaMisCompras.jsx"
 import Checkout from "./pages/Checkout.jsx";
 import Return from "./pages/Return.jsx";
+import CreateNewsletter from "./pages/CreateNewsletter.jsx";
 
 
 //create your first component
@@ -73,6 +74,7 @@ const Layout = () => {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/return" element={<Return />} />
             <Route path="/product-detail/:id" element={<ProductDetail />} />
+            <Route path="/newsletter" element={<CreateNewsletter />} />
           </Routes>
           <Footer />
         </ScrollToTop>

@@ -402,6 +402,27 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
     },
     
+    createNewsLetter: async(services) => {
+      try {
+        const resp = await fetch(process.env.BACKEND_URL + '/newsletteradd', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            'services': services
+          })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          console.error("Error al crear newsletter", data);
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error("Error al crear newsletter", error);
+        return false;
+      }
+    }
+    ,
     getCategorias: async() => {
       let categorias = []
       await fetch(`${process.env.BACKEND_URL}categorias`)

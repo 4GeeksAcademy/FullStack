@@ -1,0 +1,56 @@
+/* Estilos para las tarjetas de servicio */
+.service-card {
+    position: relative;
+    transition: all 0.3s ease;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  
+  .service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .service-card.selected {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+  }
+  
+  .selected-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  .selected-check input {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+  }
+  
+  .selected-check input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+  
+  .service-card.selected::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #0d6efd;
+  }

@@ -24,6 +24,7 @@ from flask_cors import CORS
 from api.politicas import crear_politicas, Politica
 from sqlalchemy import or_, func
 import traceback
+from api.mail_service import MailService
 from datetime import timedelta
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
@@ -38,7 +39,6 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 
 bcrypt = Bcrypt(app)
-
 app.url_map.strict_slashes = False
 CORS(app, origins=["*"])
 
@@ -1088,21 +1088,125 @@ def editar_usuario():
 
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
 
+@app.route('/newsletteradd', methods=['POST'])
+def create_newsletter():
+    data = request.get_json()
+    services = data['services']
+    if not services:
+        return jsonify({'Error al crear newsletter'}), 400
+    print(services)
+    return jsonify({'message': 'newsletter creado con exito'}), 201
+
 @app.route('/newsletter', methods=['POST'])
 def agregar_a_newsletter():
     data = request.get_json()
-    correo = data.get('correo')
+    email = data.get('correo')
 
-    if not correo:
+    if not email:
         return jsonify({"error": "Correo es obligatorio"}), 400
 
-    existente = Newsletter.query.filter_by(correo=correo).first()
-    if existente:
+    user = User.query.filter_by(correo=email).first()
+
+    if not user:
+        return jsonify({"error": "El correo no está registrado"}), 404
+
+
+    if user and user.newsletter_subscription is True:
         return jsonify({"mensaje": "Este correo ya está suscrito"}), 200
 
-    nuevo = Newsletter(correo=correo)
-    db.session.add(nuevo)
+    user.newsletter_subscription = True
+    db.session.add(user)
     db.session.commit()
+
+    subject = "¡Gracias por suscribirte a Groupponclon!"
+    text_content = f"""Hola,\n\nTu suscripción a nuestro newsletter ha sido exitosa.
+    \n\nA partir de ahora recibirás nuestras mejores ofertas y promociones exclusivas.\n\n¡Gracias por unirte a nuestra comunidad!\n\nEl equipo de Groupponclon"""
+
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gracias por suscribirte</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f4;
+                color: #333;
+            }
+            .email-container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .header {
+                background-color: #4CAF50;
+                color: white;
+                padding: 30px 20px;
+                text-align: center;
+            }
+            .content {
+                padding: 30px;
+            }
+            .footer {
+                background-color: #f4f4f4;
+                padding: 20px;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+            }
+            .button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 12px 25px;
+                text-decoration: none;
+                border-radius: 4px;
+                display: inline-block;
+                margin: 20px 0;
+                font-weight: bold;
+            }
+            .logo {
+                max-width: 150px;
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="email-container">
+            <div class="header">
+                <h1>¡Gracias por suscribirte!</h1>
+            </div>
+            
+            <div class="content">
+                <p>Hola,</p>
+                <p>Tu suscripción a nuestro newsletter ha sido exitosa. A partir de ahora recibirás:</p>
+                
+                <ul>
+                    <li>Las mejores ofertas exclusivas</li>
+                    <li>Novedades de productos</li>
+                    <li>Descuentos especiales para suscriptores</li>
+                </ul>
+                
+                <p>¡Esperamos que disfrutes de nuestros contenidos!</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    mail_service = MailService()  # Asegúrate de tener la instancia
+    mail_service.send_mail(
+        to_email=email,
+        subject=subject,
+        text_content=text_content,
+        html_content=html_content
+    )
 
     return jsonify({"mensaje": "Suscripción exitosa"}), 201
 

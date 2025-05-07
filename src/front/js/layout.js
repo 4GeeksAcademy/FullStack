@@ -32,6 +32,7 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import VistaMisCompras from "./pages/VistaMisCompras.jsx"
 import Checkout from "./pages/Checkout.jsx";
 import Return from "./pages/Return.jsx";
+import CreateNewsletter from "./pages/CreateNewsletter.jsx";
 import VistaReservas from "./component/VistaReservas.jsx";
 import SearchResults from "./component/SearchResults.jsx"
 
@@ -74,6 +75,7 @@ const Layout = () => {
             <Route path="/search/:keyword" element={<SearchResults />} />
             <Route path="/mis-reservas" element={<VistaReservas />} />
             <Route path="/product-detail/:id" element={<ProductDetail />} />
+            <Route path="/newsletter" element={<CreateNewsletter />} />
           </Routes>
           <Footer />
         </ScrollToTop>

@@ -1,27 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const Return = () => {
   const [status, setStatus] = useState(null);
   const [customerEmail, setCustomerEmail] = useState("");
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
+    const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get("session_id");
 
-    // Verificar si el session_id está presente
     if (!sessionId) {
-      setError("session_id no encontrado en la URL.");
+      setError("No se encontró el session_id en la URL.");
       return;
     }
 
-    // Hacer la solicitud para obtener el estado de la sesión
     fetch(`${process.env.BACKEND_URL}/session-status?session_id=${sessionId}`)
       .then((res) => {
         if (!res.ok) {
-          throw new Error("No se pudo obtener el estado de la sesión");
+          throw new Error("No se pudo obtener el estado de la sesión.");
         }
         return res.json();
       })
@@ -31,14 +29,15 @@ const Return = () => {
       })
       .catch((error) => {
         console.error("Error al obtener el estado de la sesión:", error);
-        setError(error.message); // Mostrar el error en el estado
+        setError("Hubo un problema al verificar el estado del pago.");
       });
   }, []);
 
   if (error) {
     return (
-      <section id="error">
-        <p>Error: {error}</p>
+      <section id="error" style={{ padding: "2rem", color: "red" }}>
+        <h2>Error</h2>
+        <p>{error}</p>
       </section>
     );
   }
@@ -47,18 +46,47 @@ const Return = () => {
     return <Navigate to="/checkout" />;
   }
 
-  if (status === "complete") {
+  if (status === "complete" || status === "paid") {
     return (
-      <section id="success">
-        <p>
-          ¡Gracias por tu compra! Se enviará una confirmación a {customerEmail}.
-        </p>
+      <section
+        id="success"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          textAlign: "center"
+        }}
+      >
+        <h2>¡Gracias por tu compra!</h2>
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            marginTop: "1rem",
+            padding: "10px 20px",
+            backgroundColor: "#0070f3",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Volver al inicio
+        </button>
       </section>
     );
   }
 
-  return null;
+  return (
+    <section style={{ padding: "2rem" }}>
+      <p>Cargando estado del pago...</p>
+    </section>
+  );
 };
 
 export default Return;
+
+
+
 

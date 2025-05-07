@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ModalExito from './ModalExito.jsx';
 
 const FormCrearServicio = () => {
   const [titulo, setTitulo] = useState('');
@@ -12,6 +13,8 @@ const FormCrearServicio = () => {
   const [imagen, setImagen] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mostrarModalExito, setMostrarModalExito] = useState(false);
+  const [redirectInfo, setRedirectInfo] = useState({ path: null, categoryName: null });
 
   const MAX_TITULO = 255;
   const MAX_DESCRIPCION = 500;
@@ -111,13 +114,11 @@ const FormCrearServicio = () => {
       return;
     }
 
-    // Si no hay descuento, aplicamos un descuento del 5%
-    let porcentajeDescuento = 5; // Descuento por defecto
+    let porcentajeDescuento = 5;
     if (descuento && !isNaN(parseFloat(descuento))) {
       porcentajeDescuento = parseFloat(descuento);
     }
 
-    // Fórmula corregida para aplicar el descuento
     const discountPrice = Math.round(precioNumerico * (1 - porcentajeDescuento / 100) * 100) / 100;
 
     const data = {
@@ -146,13 +147,17 @@ const FormCrearServicio = () => {
       });
 
       if (response.ok) {
-        alert('Servicio creado correctamente.');
-        navigate(`/category/${categoriaSeleccionada.path}`, {
-          state: {
-            categoryName: categoriaSeleccionada.nombre,
-            forceRefresh: true
+        setRedirectInfo({
+          path: `/category/${categoriaSeleccionada.path}`,
+          categoryName: categoriaSeleccionada.nombre,
+          serviceData: { // Agrega estos nuevos campos
+            titulo: titulo,
+            precio: precio,
+            categoria: categoriaSeleccionada.nombre,
+            ciudad: ciudad
           }
         });
+        setMostrarModalExito(true);
         setTitulo('');
         setDescripcion('');
         setPrecio('');
@@ -175,117 +180,145 @@ const FormCrearServicio = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="container d-flex justify-content-center mt-5">
-      <div className="col-md-6">
-        <h2 className="text-center mb-4">Crea tu servicio y vende con nosotros</h2>
-        <form onSubmit={handleSubmit} className="border p-4 rounded shadow bg-light mb-5">
-          <div className="mb-3">
-            <label className="form-label">Título del Servicio</label>
-            <input
-              type="text"
-              className="form-control"
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              maxLength={MAX_TITULO}
-              required
-            />
-            <small className="text-muted">{titulo.length}/{MAX_TITULO} caracteres</small>
-          </div>
+    <>
+      <div className="container d-flex justify-content-center mt-5">
+        <div className="col-md-6">
+          <h2 className="text-center mb-4">Crea tu servicio y vende con nosotros</h2>
+          <form onSubmit={handleSubmit} className="border p-4 rounded shadow bg-light mb-5">
+            <div className="mb-3">
+              <label className="form-label">Título del Servicio</label>
+              <input
+                type="text"
+                className="form-control"
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                maxLength={MAX_TITULO}
+                required
+              />
+              <small className="text-muted">{titulo.length}/{MAX_TITULO} caracteres</small>
+            </div>
 
-          <div className="mb-3">
-            <label className="form-label">Descripción</label>
-            <textarea
-              className="form-control"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              maxLength={MAX_DESCRIPCION}
-              rows={3}
-              required
-            />
-            <small className="text-muted">{descripcion.length}/{MAX_DESCRIPCION} caracteres</small>
-          </div>
+            <div className="mb-3">
+              <label className="form-label">Descripción</label>
+              <textarea
+                className="form-control"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                maxLength={MAX_DESCRIPCION}
+                rows={3}
+                required
+              />
+              <small className="text-muted">{descripcion.length}/{MAX_DESCRIPCION} caracteres</small>
+            </div>
 
-          <div className="mb-3">
-            <label className="form-label">Precio (USD)</label>
-            <input
-              type="number"
-              className="form-control"
-              value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
-              min="0"
-              step="0.01"
-              required
-            />
-            {precio && !isNaN(precio) && (
-              <div className="text-muted mt-1"> ${formatearPrecio(precio)}</div>
-            )}
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Porcentaje de descuento (opcional)</label>
-            <div className="input-group">
+            <div className="mb-3">
+              <label className="form-label">Precio (USD)</label>
               <input
                 type="number"
                 className="form-control"
-                value={descuento}
-                onChange={(e) => setDescuento(e.target.value)}
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
                 min="0"
-                max="100"
-                step="1"
-                placeholder="Ej: 20"
+                step="0.01"
+                required
               />
-              <span className="input-group-text">%</span>
+              {precio && !isNaN(precio) && (
+                <div className="text-muted mt-1"> ${formatearPrecio(precio)}</div>
+              )}
             </div>
-            <small className="text-muted">
-              Si no completás este campo, aplicaremos un descuento automático del 5%.
-            </small>
-          </div>
 
-          <div className="mb-3">
-            <label className="form-label">Ciudad</label>
-            <input
-              type="text"
-              className="form-control"
-              value={ciudad}
-              onChange={(e) => setCiudad(e.target.value)}
-              maxLength={MAX_CIUDAD}
-              required
-            />
-            <small className="text-muted">{ciudad.length}/{MAX_CIUDAD} caracteres</small>
-          </div>
+            <div className="mb-3">
+              <label className="form-label">Porcentaje de descuento (opcional)</label>
+              <div className="input-group">
+                <input
+                  type="number"
+                  className="form-control"
+                  value={descuento}
+                  onChange={(e) => setDescuento(e.target.value)}
+                  min="0"
+                  max="100"
+                  step="1"
+                  placeholder="Ej: 20"
+                />
+                <span className="input-group-text">%</span>
+              </div>
+              <small className="text-muted">
+                Si no completás este campo, aplicaremos un descuento automático del 5%.
+              </small>
+            </div>
 
-          <div className="mb-3">
-            <label className="form-label">Categoría</label>
-            <select
-              className="form-select"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              required
-            >
-              <option value="">Selecciona una categoría</option>
-              {categorias.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-              ))}
-            </select>
-          </div>
+            <div className="mb-3">
+              <label className="form-label">Ciudad</label>
+              <input
+                type="text"
+                className="form-control"
+                value={ciudad}
+                onChange={(e) => setCiudad(e.target.value)}
+                maxLength={MAX_CIUDAD}
+                required
+              />
+              <small className="text-muted">{ciudad.length}/{MAX_CIUDAD} caracteres</small>
+            </div>
 
-          <div className="mb-3">
-            <label className="form-label">URL de Imagen</label>
-            <input
-              type="text"
-              className="form-control"
-              value={imagen}
-              onChange={(e) => setImagen(e.target.value)}
-              placeholder='Ingresa la URL de tu imagen aquí'
-            />
-          </div>
+            <div className="mb-3">
+              <label className="form-label">Categoría</label>
+              <select
+                className="form-select"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                required
+              >
+                <option value="">Selecciona una categoría</option>
+                {categorias.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                ))}
+              </select>
+            </div>
 
-          <button type="submit" className="btn btn-primary w-100">
-            Crear Servicio
-          </button>
-        </form>
+            <div className="mb-3">
+              <label className="form-label">URL de Imagen</label>
+              <input
+                type="text"
+                className="form-control"
+                value={imagen}
+                onChange={(e) => setImagen(e.target.value)}
+                placeholder='Ingresa la URL de tu imagen aquí'
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary w-100">
+              Crear Servicio
+            </button>
+          </form>
+
+
+        </div>
+
       </div>
-    </div>
+      <ModalExito
+        show={mostrarModalExito}
+        onClose={() => setMostrarModalExito(false)}
+        redireccionar={() => {
+          navigate(redirectInfo.path, {
+            state: {
+              categoryName: redirectInfo.categoryName,
+              forceRefresh: true
+            }
+          });
+        }}
+        mensaje={
+          <>
+            <p>¡Servicio creado con éxito!</p>
+            <div className="mt-3">
+              <p><strong>Título:</strong> {redirectInfo.serviceData?.titulo}</p>
+              <p><strong>Precio:</strong> ${formatearPrecio(redirectInfo.serviceData?.precio)}</p>
+              <p><strong>Categoría:</strong> {redirectInfo.serviceData?.categoria}</p>
+              <p><strong>Ciudad:</strong> {redirectInfo.serviceData?.ciudad}</p>
+            </div>
+          </>
+        }
+      />
+    </>
   );
 };
 

@@ -17,9 +17,20 @@ const Checkout = () => {
   const fetchClientSecret = useCallback(() => {
     setError(null);
 
+    // Obtener el token de localStorage
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      return;
+    }
+
     fetch(`${process.env.BACKEND_URL}/create-checkout-session`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`, // Agregar el token de autorización
+      },
       body: JSON.stringify({
         items: cartItems,
         total: subtotal

@@ -12,7 +12,7 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas, Payment
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas, Payment, PaymentItem
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db
@@ -1511,64 +1511,34 @@ def obtener_belleza():
 
 
 # Ruta para manejar el webhook de Stripe
+endpoint_secret ='whsec_toq2QoiSG9PJIRMmYPZubqAc8oRNuYIW'
+
 
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
+    print("Webhook recibido")  # Esto te ayudará a saber si la ruta está siendo llamada
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
 
     event = None
 
-    # Verificar la firma del webhook
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError as e:
-        print('Invalid payload')
-        return jsonify({'error': 'Invalid payload'}), 400
+        print("Error al verificar la firma del webhook:", e)
+        return 'Invalid payload', 400
     except stripe.error.SignatureVerificationError as e:
-        print('Invalid signature')
-        return jsonify({'error': 'Invalid signature'}), 400
+        print("Error al verificar la firma del webhook:", e)
+        return 'Invalid signature', 400
 
-    # Manejo de eventos de Stripe
     if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']  # Contiene la información de la sesión de pago
-
-        # Extraer la información relevante de la sesión
-        session_id = session['id']
-        status = session['payment_status']  # 'paid' si el pago fue exitoso
-        amount_total = session['amount_total']  # El total en centavos
-        payment_method = session.get('payment_method_types', ['unknown'])[0]  # Método de pago
-        customer_email = session.get('customer_email', 'unknown')  # Email del cliente
-
-        # Crear una nueva entrada de pago en la base de datos
-        new_payment = Payment(
-            session_id=session_id,
-            status=status,
-            amount_total=amount_total,
-            payment_method=payment_method,
-            customer_email=customer_email
-        )
-
-        try:
-            # Guardar la transacción en la base de datos
-            db.session.add(new_payment)
-            db.session.commit()
-            print(f"Payment for session {session_id} saved to database.")
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error saving payment to database: {e}")
-            return jsonify({'error': 'Error saving payment'}), 500
-
-    elif event['type'] == 'checkout.session.async_payment_failed':
         session = event['data']['object']
-        print(f"Payment for session {session['id']} failed.")
-        # Aquí puedes manejar el caso de pago fallido si lo necesitas
+        print('Pago completado:', session)
+    elif event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        print('Pago exitoso:', payment_intent)
 
-    else:
-        print(f"Unhandled event type {event['type']}")
-
-    # Responder a Stripe que hemos procesado el webhook correctamente
-    return '', 200
+    return jsonify({'status': 'success'}), 200
 
 
 # Ruta para obtener todas las reservas de un usuario
@@ -1604,7 +1574,7 @@ def obtener_reservas():
 
 
 # Ruta para obtener todas las compras de un usuario desde la base de datos
-@app.route('/compras/<int:user_id>', methods=['GET'])
+""""@app.route('/compras/<int:user_id>', methods=['GET'])
 def obtener_compras(user_id):
     compras = Payment.query.filter_by(user_id=user_id).all()
     compras_data = []
@@ -1617,13 +1587,35 @@ def obtener_compras(user_id):
             'servicio_id': compra.servicio_id
         })
 
+    return jsonify({'compras': compras_data}), 200"""
+
+@app.route('/compras/<int:user_id>', methods=['GET'])
+def obtener_compras(user_id):
+    # Consultamos todas las compras del usuario
+    compras = Payment.query.filter_by(user_id=user_id).all()
+
+    if not compras:
+        return jsonify({"mensaje": "No se encontraron compras para este usuario"}), 404
+
+    compras_data = []
+
+    for compra in compras:
+        # Serializamos cada compra y sus items
+        compra_dict = compra.serialize()
+
+        compras_data.append({
+            'id': compra.id,
+            'monto': compra.amount,
+            'fecha': compra.payment_date.isoformat(),
+            'estado': compra.estado,  # Incluimos el estado
+            'items': compra_dict.get('items', []),  # Incluimos los productos de la compra
+        })
+
     return jsonify({'compras': compras_data}), 200
 
 
-
 # Ruta para obtener todas las compras
-@app.route('/compras', methods=['GET'])
-@jwt_required()
+""""@app.route('/compras', methods=['GET'])
 def obtener_todas_las_compras():
     # 🔍 Consultamos todas las compras en la base de datos
     compras = Payment.query.all()
@@ -1632,6 +1624,40 @@ def obtener_todas_las_compras():
         return jsonify({"mensaje": "No se encontraron compras"}), 404
 
     compras_serializadas = [compra.serialize() for compra in compras]
+
+    return jsonify({
+        "total": len(compras_serializadas),
+        "compras": compras_serializadas
+    }), 200"""
+
+@app.route('/compras', methods=['GET'])
+def obtener_todas_las_compras():
+    # Consultamos todas las compras en la base de datos
+    compras = Payment.query.all()
+
+    if not compras:
+        return jsonify({"mensaje": "No se encontraron compras"}), 404
+
+    compras_serializadas = []
+    
+    for compra in compras:
+        compra_dict = compra.serialize()  # Serializamos la compra
+        # Verificamos si la compra tiene items
+        if compra_dict.get("items"):
+            # Si tiene items, los agregamos a la respuesta
+            compras_serializadas.append(compra_dict)
+        else:
+            # Si no tiene items, la compra se omite o se agrega vacía
+            compras_serializadas.append({
+                "id": compra.id,
+                "currency": compra.currency,
+                "amount": compra.amount,
+                "payment_date": compra.payment_date.isoformat(),
+                "paypal_payment_id": compra.paypal_payment_id,
+                "estado": compra.estado,
+                "user_id": compra.user_id,
+                "items": []  # No hay productos en esta compra
+            })
 
     return jsonify({
         "total": len(compras_serializadas),
@@ -1885,9 +1911,72 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-YOUR_DOMAIN = "https://glowing-garbanzo-x5v7q4ggw64phv9x6-3000.app.github.dev"  # Cambia esta URL si es otro entorno
+YOUR_DOMAIN = "https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev"  # Cambia esta URL si es otro entorno
 
-@app.route('/create-checkout-session', methods=['POST'])
+""""@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Missing or invalid JSON'}), 400
+
+        data = request.get_json()
+        cart_items = data.get("items", [])
+        total_price = data.get("total", 0)
+
+
+        if not cart_items:
+            return jsonify({'error': 'No items in cart'}), 400
+
+        line_items = []
+        for item in cart_items:
+            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
+                return jsonify({'error': 'Invalid item data'}), 400
+
+            line_items.append({
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': item['title'],
+                    },
+                    'unit_amount': int(item['discountPrice'] * 100),
+                },
+                'quantity': item['quantity'],
+            })
+
+
+        session = stripe.checkout.Session.create(
+            line_items=line_items,
+            mode='payment',
+            ui_mode='embedded',
+            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
+        )
+
+          # Guardar el pago en la base de datos con estado inicial 'pendiente'
+        new_payment = Payment(
+            currency='usd',
+            amount=int(total_price * 100),  # Guardar el monto en centavos
+            payment_date=datetime.utcnow(),
+            paypal_payment_id=session.id,  # Usar el ID de sesión de Stripe
+            user_id=user_id,
+            estado='pendiente',  # Estado inicial como pendiente
+        )
+
+        db.session.add(new_payment)
+        db.session.commit()
+
+        return jsonify({
+            'sessionId': session.id,
+            'clientSecret': session.client_secret
+        })
+
+    except Exception as e:
+        print("Error creating session:", e)
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500"""
+
+
+""""@app.route('/create-checkout-session', methods=['POST'])
+@jwt_required()
 def create_checkout_session():
     try:
         if not request.is_json:
@@ -1899,6 +1988,12 @@ def create_checkout_session():
 
         if not cart_items:
             return jsonify({'error': 'No items in cart'}), 400
+
+        # Obtener el usuario desde el token
+        correo_usuario = get_jwt_identity()
+        usuario = User.query.filter_by(correo=correo_usuario).first()
+        if not usuario:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
 
         line_items = []
         for item in cart_items:
@@ -1920,22 +2015,110 @@ def create_checkout_session():
             line_items=line_items,
             mode='payment',
             ui_mode='embedded',
-            return_url=f"{YOUR_DOMAIN}/return"
+            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
         )
 
-        print("Session created successfully:", session.id)
-        return jsonify({'sessionId': session.id, 'clientSecret': session.client_secret})
+        new_payment = Payment(
+            currency='usd',
+            amount=int(total_price * 100),
+            payment_date=datetime.utcnow(),
+            paypal_payment_id=session.id,
+            user_id=usuario.id,
+            estado='pendiente',
+        )
+
+        db.session.add(new_payment)
+        db.session.commit()
+
+        return jsonify({
+            'sessionId': session.id,
+            'clientSecret': session.client_secret
+        })
+
+    except Exception as e:
+        print("Error creating session:", e)
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500"""
+
+@app.route('/create-checkout-session', methods=['POST'])
+@jwt_required()
+def create_checkout_session():
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Missing or invalid JSON'}), 400
+
+        data = request.get_json()
+        cart_items = data.get("items", [])
+        total_price = data.get("total", 0)
+
+        if not cart_items:
+            return jsonify({'error': 'No items in cart'}), 400
+
+        # Obtener el usuario desde el token
+        correo_usuario = get_jwt_identity()
+        usuario = User.query.filter_by(correo=correo_usuario).first()
+        if not usuario:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+
+        line_items = []
+        for item in cart_items:
+            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
+                return jsonify({'error': 'Invalid item data'}), 400
+
+            line_items.append({
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': item['title'],
+                    },
+                    'unit_amount': int(item['discountPrice'] * 100),
+                },
+                'quantity': item['quantity'],
+            })
+
+        session = stripe.checkout.Session.create(
+            line_items=line_items,
+            mode='payment',
+            ui_mode='embedded',
+            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
+        )
+
+        # Crear el Payment
+        new_payment = Payment(
+            currency='usd',
+            amount=int(total_price * 100),
+            payment_date=datetime.utcnow(),
+            paypal_payment_id=session.id,
+            user_id=usuario.id,
+            estado='pendiente',
+        )
+        db.session.add(new_payment)
+        db.session.flush()  # Para obtener el ID antes de hacer commit
+
+        # Crear los items
+        for item in cart_items:
+            payment_item = PaymentItem(
+                title=item['title'],
+                unit_price=int(item['discountPrice'] * 100),
+                quantity=item['quantity'],
+                payment_id=new_payment.id
+            )
+            db.session.add(payment_item)
+
+        db.session.commit()
+
+        return jsonify({
+            'sessionId': session.id,
+            'clientSecret': session.client_secret
+        })
 
     except Exception as e:
         print("Error creating session:", e)
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-    
-    
 
 
-
-@app.route('/session-status', methods=['GET'])
+""""@app.route('/session-status', methods=['GET'])
 def session_status():
     session_id = request.args.get('session_id')
 
@@ -1949,7 +2132,37 @@ def session_status():
             "customer_email": session.get("customer_email", "unknown")
         })
     else:
-        return jsonify({"error": "Session not found"}), 404
+        return jsonify({"error": "Session not found"}), 404"""
+
+@app.route('/session-status', methods=['GET'])
+def session_status():
+    session_id = request.args.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'session_id faltante'}), 400
+
+    try:
+        # Consultar a Stripe por el estado de la sesión
+        session = stripe.checkout.Session.retrieve(session_id)
+
+        # Buscar el pago en tu base de datos
+        payment = Payment.query.filter_by(paypal_payment_id=session_id).first()
+        if not payment:
+            return jsonify({'error': 'Pago no encontrado'}), 404
+
+        # Actualizar estado si fue pagado
+        if session.payment_status == 'paid' and payment.estado != 'pagado':
+            payment.estado = 'pagado'
+            db.session.commit()
+
+        return jsonify({
+            'status': session.payment_status,
+            'customer_email': session.customer_email
+        }), 200
+
+    except Exception as e:
+        print('Error en session-status:', e)
+        return jsonify({'error': str(e)}), 500
+
     
 @api.route('/change-password', methods=['PUT'])
 @jwt_required()

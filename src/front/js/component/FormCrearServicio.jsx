@@ -111,11 +111,14 @@ const FormCrearServicio = () => {
       return;
     }
 
-    let discountPrice = null;
+    // Si no hay descuento, aplicamos un descuento del 5%
+    let porcentajeDescuento = 5; // Descuento por defecto
     if (descuento && !isNaN(parseFloat(descuento))) {
-      const porcentajeDescuento = parseFloat(descuento) / 100;
-      discountPrice = Math.round(precioNumerico * (1 - porcentajeDescuento) * 100) / 100;
+      porcentajeDescuento = parseFloat(descuento);
     }
+
+    // Fórmula corregida para aplicar el descuento
+    const discountPrice = Math.round(precioNumerico * (1 - porcentajeDescuento / 100) * 100) / 100;
 
     const data = {
       buyers: null,
@@ -233,6 +236,9 @@ const FormCrearServicio = () => {
               />
               <span className="input-group-text">%</span>
             </div>
+            <small className="text-muted">
+              Si no completás este campo, aplicaremos un descuento automático del 5%.
+            </small>
           </div>
 
           <div className="mb-3">
@@ -264,17 +270,19 @@ const FormCrearServicio = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label">URL de Imagen (opcional)</label>
+            <label className="form-label">URL de Imagen</label>
             <input
               type="text"
               className="form-control"
               value={imagen}
               onChange={(e) => setImagen(e.target.value)}
-              placeholder="https://example.com/imagen.jpg"
+              placeholder='Ingresa la URL de tu imagen aquí'
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-100">Crear Servicio</button>
+          <button type="submit" className="btn btn-primary w-100">
+            Crear Servicio
+          </button>
         </form>
       </div>
     </div>

@@ -70,29 +70,41 @@ const MisCompras = () => {
       {compras.length === 0 ? (
         <p>No has realizado ninguna compra.</p>
       ) : (
-        <ul className="list-group">
-          {compras.map((compra) => (
-            <li key={compra.id} className="list-group-item">
-              <div>
-                <strong>{compra.nombre_articulo}</strong><br />
-                {compra.foto_articulo && (
-                  <img
-                    src={compra.foto_articulo}
-                    alt={compra.nombre_articulo}
-                    style={{ maxWidth: '150px', maxHeight: '150px' }}
-                  />
-                )}
-                <br />
-                <span>Precio: ${compra.monto}</span><br />
-                <span>Cantidad: {compra.cantidad_articulos}</span><br />
-                <span>Fecha: {new Date(compra.fecha).toLocaleDateString()}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <table className="table table-striped">
+          <thead>
+            <tr>
+              <th>Compra</th>
+              <th>Precio</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Unidades</th>
+            </tr>
+          </thead>
+          <tbody>
+            {compras.map((compra) => (
+              <tr key={compra.id}>
+                <td>
+                  {compra.items.map((item, index) => (
+                    <div key={index}>
+                      <strong>{item.title}</strong>
+                    </div>
+                  ))}
+                </td>
+                <td>${compra.monto / 100}</td> {/* Asegúrate de mostrar el monto en formato decimal */}
+                <td>{new Date(compra.fecha).toLocaleDateString()}</td>
+                <td>{compra.estado}</td>
+                <td>
+                  {compra.items.reduce((total, item) => total + item.quantity, 0)} {/* Sumar cantidad de todos los items */}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
 };
 
 export default MisCompras;
+
+

@@ -23,7 +23,7 @@ const LayoutHeader = () => {
     const storedUser = localStorage.getItem("user");
     if (token && storedUser) {
       setIsLoggedIn(true);
-      setUser(JSON.parse(storedUser));  // Guarda el objeto de usuario con el campo role
+      setUser(JSON.parse(storedUser));
     } else {
       setIsLoggedIn(false);
       setUser(null);
@@ -71,8 +71,11 @@ const LayoutHeader = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchTerm.trim() !== "") {
-      navigate(`/search/${encodeURIComponent(searchTerm.trim())}`);
+    const trimmedTerm = searchTerm.trim();
+    
+    if (trimmedTerm !== "") {
+      setSearchTerm(""); // Limpiar el input después de buscar
+      navigate(`/search/${encodeURIComponent(trimmedTerm)}`);
     }
   };
 
@@ -135,8 +138,6 @@ const LayoutHeader = () => {
                       Reservas de mi Servicio
                     </Link>
                   </li>
-
-                  {/* Mostrar el panel admin solo si el rol es "Administrador" */}
                   {user?.role === 'Administrador' && (
                     <li>
                       <Link className="dropdown-item" to="/admin/users">
@@ -144,7 +145,6 @@ const LayoutHeader = () => {
                       </Link>
                     </li>
                   )}
-
                   <li>
                     <hr className="dropdown-divider" />
                   </li>
@@ -174,21 +174,32 @@ const LayoutHeader = () => {
             </button>
           </div>
 
-          {/* Buscador */}
+          {/* Buscador - Parte Mejorada */}
           <div className="d-flex flex-column flex-md-row flex-grow-1 align-items-md-center mt-3 mt-md-0">
             <form
               className="d-flex flex-grow-1 align-items-center me-md-4"
               onSubmit={handleSearchSubmit}
             >
-              <input
-                type="text"
-                className="form-control me-2 rounded-pill"
-                placeholder="Busca restaurantes, spas, actividades..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <div className="input-group">
+                <input
+                  type="text"
+                  className="form-control rounded-pill-start"
+                  placeholder="Busca restaurantes, spas, actividades..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Buscar servicios"
+                />
+                <button 
+                  className="btn btn-danger rounded-pill-end" 
+                  type="submit"
+                  disabled={!searchTerm.trim()}
+                >
+                  <i className="bi bi-search"></i>
+                </button>
+              </div>
+              
               <div
-                className="d-flex align-items-center bg-light px-3 py-2 rounded-pill"
+                className="d-flex align-items-center bg-light px-3 py-2 rounded-pill ms-2"
                 style={{ cursor: "pointer" }}
                 onClick={handleGetLocation}
               >
@@ -241,8 +252,6 @@ const LayoutHeader = () => {
                         Reservas de mi Servicio
                       </Link>
                     </li>
-
-                    {/* Mostrar el panel admin solo si el rol es "Administrador" */}
                     {user?.role === 'Administrador' && (
                       <li>
                         <Link className="dropdown-item" to="/admin/users">
@@ -250,7 +259,6 @@ const LayoutHeader = () => {
                         </Link>
                       </li>
                     )}
-
                     <li>
                       <hr className="dropdown-divider" />
                     </li>

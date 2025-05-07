@@ -77,13 +77,16 @@ class Payment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     currency = db.Column(db.String(3), nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
+    amount = db.Column(db.Integer, nullable=False)  # total
     payment_date = db.Column(db.DateTime, default=datetime.utcnow)
     paypal_payment_id = db.Column(db.String(255), unique=True, nullable=False)
+    estado = db.Column(db.String(50), default='pendiente')
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    servicio_id = db.Column(db.Integer, nullable=True)  # Nuevo campo opcional por ahora
+    servicio_id = db.Column(db.Integer, nullable=True)
 
+    # Relación con los items
+    items = db.relationship('PaymentItem', backref='payment', cascade="all, delete-orphan")
     reservation = db.relationship('Reservation', back_populates='payment', uselist=False)
 
     def serialize(self):
@@ -92,11 +95,30 @@ class Payment(db.Model):
             "currency": self.currency,
             "amount": self.amount,
             "payment_date": self.payment_date.isoformat(),
+            "paypal_payment_id": self.paypal_payment_id,
             "user_id": self.user_id,
-            "servicio_id": self.servicio_id  # Lo agregamos también en el JSON
+            "servicio_id": self.servicio_id,
+            "estado": self.estado,
+            "items": [item.serialize() for item in self.items]
         }
 
 
+class PaymentItem(db.Model):
+    __tablename__ = 'payment_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    unit_price = db.Column(db.Integer, nullable=False)  # en centavos
+    quantity = db.Column(db.Integer, nullable=False)
+
+    payment_id = db.Column(db.Integer, db.ForeignKey('payments.id'), nullable=False)
+
+    def serialize(self):
+        return {
+            "title": self.title,
+            "unit_price": self.unit_price,
+            "quantity": self.quantity
+        }
 class Reservation(db.Model):
     __tablename__ = 'reservations'
 

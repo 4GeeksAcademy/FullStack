@@ -16,9 +16,9 @@ const FormCrearServicio = () => {
   const [mostrarModalExito, setMostrarModalExito] = useState(false);
   const [redirectInfo, setRedirectInfo] = useState({ path: null, categoryName: null });
 
-  const MAX_TITULO = 255;
+  const MAX_TITULO = 100;
   const MAX_DESCRIPCION = 500;
-  const MAX_CIUDAD = 100;
+  const MAX_CIUDAD = 50;
 
   const navigate = useNavigate();
   const backendUrl = process.env.BACKEND_URL;
@@ -248,7 +248,7 @@ const FormCrearServicio = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Ciudad</label>
+              <label className="form-label">Locación</label>
               <input
                 type="text"
                 className="form-control"
@@ -313,7 +313,7 @@ const FormCrearServicio = () => {
               <p><strong>Título:</strong> {redirectInfo.serviceData?.titulo}</p>
               <p><strong>Precio:</strong> ${formatearPrecio(redirectInfo.serviceData?.precio)}</p>
               <p><strong>Categoría:</strong> {redirectInfo.serviceData?.categoria}</p>
-              <p><strong>Ciudad:</strong> {redirectInfo.serviceData?.ciudad}</p>
+              <p><strong>Locación:</strong> {redirectInfo.serviceData?.ciudad}</p>
             </div>
           </>
         }

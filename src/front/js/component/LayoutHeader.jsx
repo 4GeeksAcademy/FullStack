@@ -1,8 +1,10 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Context } from "../store/appContext.js";
 import { Link, useNavigate } from "react-router-dom";
+import { Modal, Button } from "react-bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const LayoutHeader = () => {
   const { store, actions } = useContext(Context);
@@ -10,9 +12,10 @@ const LayoutHeader = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
 
-  // Calcular cantidad total de artículos (sumando quantity)
   const cartItems = store.cartItems.reduce(
     (acc, item) => acc + (item.quantity || 1),
     0
@@ -48,33 +51,42 @@ const LayoutHeader = () => {
             setLocation(city);
           } catch (error) {
             console.error("Error obteniendo la ubicación:", error);
-            alert("No se pudo obtener la ubicación");
           }
         },
         (error) => {
           console.error("Error de geolocalización:", error);
-          alert("Error al obtener su ubicación");
         }
       );
-    } else {
-      alert("La geolocalización no es soportada por este navegador.");
     }
   };
 
+  const openLogoutModal = () => setShowLogoutModal(true);
+  const closeLogoutModal = () => {
+    setShowLogoutModal(false);
+    setLoggingOut(false);
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsLoggedIn(false);
-    setUser(null);
-    navigate("/");
+    setLoggingOut(true);
+    setTimeout(() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("carrito");
+
+      setIsLoggedIn(false);
+      setUser(null);
+      store.cartItems = [];
+
+      closeLogoutModal();
+      navigate("/");
+    }, 1500);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const trimmedTerm = searchTerm.trim();
-    
     if (trimmedTerm !== "") {
-      setSearchTerm(""); // Limpiar el input después de buscar
+      setSearchTerm("");
       navigate(`/search/${encodeURIComponent(trimmedTerm)}`);
     }
   };
@@ -83,7 +95,6 @@ const LayoutHeader = () => {
     <>
       <header className="sticky-top bg-white shadow-sm">
         <div className="container d-flex align-items-center py-3 flex-wrap">
-          {/* Logo */}
           <div
             className="d-flex align-items-center me-auto me-md-4"
             role="button"
@@ -93,7 +104,6 @@ const LayoutHeader = () => {
             <h1 className="fs-4 fw-bold mb-0">GrouponClone</h1>
           </div>
 
-          {/* Iconos móviles */}
           <div className="d-flex d-md-none align-items-center gap-3 order-md-last">
             <Link to="/cart" className="position-relative" role="button">
               <i className="bi bi-cart fs-4 text-dark"></i>
@@ -118,47 +128,19 @@ const LayoutHeader = () => {
                   className="dropdown-menu dropdown-menu-end"
                   aria-labelledby="userDropdownMobile"
                 >
-                  <li>
-                    <Link className="dropdown-item" to="/perfil">
-                      Mi Perfil
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/crear-servicio">
-                      Crear Servicio
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/mis-compras">
-                      Mis Compras
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/mis-reservas">
-                      Reservas de mi Servicio
-                    </Link>
-                  </li>
+                  <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
+                  <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
+                  <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
+                  <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
                   {user?.role === 'Administrador' && (
-                    <li>
-                      <Link className="dropdown-item" to="/admin/users">
-                        Panel Admin
-                      </Link>
-                    </li>
+                    <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
                   )}
-                  <li>
-                    <hr className="dropdown-divider" />
-                  </li>
-                  <li>
-                    <button className="dropdown-item" onClick={handleLogout}>
-                      Cerrar Sesión
-                    </button>
-                  </li>
+                  <li><hr className="dropdown-divider" /></li>
+                  <li><button className="dropdown-item" onClick={openLogoutModal}>Cerrar Sesión</button></li>
                 </ul>
               </div>
             ) : (
-              <Link to="/login" role="button">
-                <i className="bi bi-person-circle fs-4 text-dark"></i>
-              </Link>
+              <Link to="/login"><i className="bi bi-person-circle fs-4 text-dark"></i></Link>
             )}
 
             <button
@@ -174,7 +156,6 @@ const LayoutHeader = () => {
             </button>
           </div>
 
-          {/* Buscador - Parte Mejorada */}
           <div className="d-flex flex-column flex-md-row flex-grow-1 align-items-md-center mt-3 mt-md-0">
             <form
               className="d-flex flex-grow-1 align-items-center me-md-4"
@@ -187,17 +168,16 @@ const LayoutHeader = () => {
                   placeholder="Busca restaurantes, spas, actividades..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  aria-label="Buscar servicios"
                 />
-                <button 
-                  className="btn btn-danger rounded-pill-end" 
+                <button
+                  className="btn btn-danger rounded-pill-end"
                   type="submit"
                   disabled={!searchTerm.trim()}
                 >
                   <i className="bi bi-search"></i>
                 </button>
               </div>
-              
+
               <div
                 className="d-flex align-items-center bg-light px-3 py-2 rounded-pill ms-2"
                 style={{ cursor: "pointer" }}
@@ -232,47 +212,19 @@ const LayoutHeader = () => {
                     className="dropdown-menu dropdown-menu-end"
                     aria-labelledby="userDropdownDesktop"
                   >
-                    <li>
-                      <Link className="dropdown-item" to="/perfil">
-                        Mi Perfil
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="dropdown-item" to="/crear-servicio">
-                        Crear Servicio
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="dropdown-item" to="/mis-compras">
-                        Mis Compras
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="dropdown-item" to="/mis-reservas">
-                        Reservas de mi Servicio
-                      </Link>
-                    </li>
+                    <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
+                    <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
+                    <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
+                    <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
                     {user?.role === 'Administrador' && (
-                      <li>
-                        <Link className="dropdown-item" to="/admin/users">
-                          Panel Admin
-                        </Link>
-                      </li>
+                      <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
                     )}
-                    <li>
-                      <hr className="dropdown-divider" />
-                    </li>
-                    <li>
-                      <button className="dropdown-item" onClick={handleLogout}>
-                        Cerrar Sesión
-                      </button>
-                    </li>
+                    <li><hr className="dropdown-divider" /></li>
+                    <li><button className="dropdown-item" onClick={openLogoutModal}>Cerrar Sesión</button></li>
                   </ul>
                 </div>
               ) : (
-                <Link to="/login" role="button">
-                  <i className="bi bi-person-circle fs-4 text-dark"></i>
-                </Link>
+                <Link to="/login"><i className="bi bi-person-circle fs-4 text-dark"></i></Link>
               )}
             </div>
           </div>
@@ -280,45 +232,31 @@ const LayoutHeader = () => {
 
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav p-3 border-top">
-            <li className="nav-item py-2">
-              <Link
-                className="nav-link"
-                to="/top"
-                onClick={() => actions.setCategory("top")}
-              >
-                Ofertas del día
-              </Link>
-            </li>
-            <li className="nav-item py-2">
-              <Link
-                className="nav-link"
-                to="/gastronomia"
-                onClick={() => actions.setCategory("food")}
-              >
-                Restaurantes
-              </Link>
-            </li>
-            <li className="nav-item py-2">
-              <Link
-                className="nav-link"
-                to="/belleza"
-                onClick={() => actions.setCategory("beauty")}
-              >
-                Belleza y spa
-              </Link>
-            </li>
-            <li className="nav-item py-2">
-              <Link
-                className="nav-link"
-                to="/viajes"
-                onClick={() => actions.setCategory("travel")}
-              >
-                Viajes
-              </Link>
-            </li>
+            <li className="nav-item py-2"><Link className="nav-link" to="/top" onClick={() => actions.setCategory("top")}>Ofertas del día</Link></li>
+            <li className="nav-item py-2"><Link className="nav-link" to="/gastronomia" onClick={() => actions.setCategory("food")}>Restaurantes</Link></li>
+            <li className="nav-item py-2"><Link className="nav-link" to="/belleza" onClick={() => actions.setCategory("beauty")}>Belleza y spa</Link></li>
+            <li className="nav-item py-2"><Link className="nav-link" to="/viajes" onClick={() => actions.setCategory("travel")}>Viajes</Link></li>
           </ul>
         </div>
       </header>
+
+      {/* Modal de cierre de sesión */}
+      <Modal show={showLogoutModal} onHide={closeLogoutModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{loggingOut ? "Cerrando Sesión..." : "¿Deseas cerrar sesión?"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {loggingOut
+            ? "¡Gracias por tu visita! Cerrando sesión..."
+            : "Tu sesión actual se cerrará y volverás al inicio."}
+        </Modal.Body>
+        {!loggingOut && (
+          <Modal.Footer>
+            <Button variant="secondary" onClick={closeLogoutModal}>Cancelar</Button>
+            <Button variant="danger" onClick={handleLogout}>Cerrar Sesión</Button>
+          </Modal.Footer>
+        )}
+      </Modal>
     </>
   );
 };

@@ -187,27 +187,28 @@ const getState = ({ getStore, getActions, setStore }) => {
             throw new Error("Nombre, apellido, correo y contraseña son obligatorios");
         }
         
-        // Crear objeto para enviar al backend
+        // Crear objeto para enviar al backend - AQUÍ ESTÁ EL CAMBIO PRINCIPAL
         const userData = {
-            nombre,
-            apellido,
-            correo,
-            password,
-            telefono: telefono || "",
-            direccion_line1: direccion || "",
-            ciudad: ciudad || "",
+            nombre: nombre.trim(),
+            apellido: apellido.trim(),
+            correo: correo.trim(),
+            password: password,
+            telefono: telefono ? telefono.trim() : "",
+            direccion_line1: direccion ? direccion.trim() : "",
+            ciudad: ciudad ? ciudad.trim() : "",
             role: "cliente"
         };
         
         console.log("Datos que se enviarán al backend:", {
             ...userData,
-            password: "******" // Ocultar la contraseña en los logs
+            password: "******"
         });
         
         const resp = await fetch(process.env.BACKEND_URL + '/registro', {
             method: 'POST',
             headers: { 
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
             body: JSON.stringify(userData)
         });
@@ -220,28 +221,20 @@ const getState = ({ getStore, getActions, setStore }) => {
             data = JSON.parse(responseText);
         } catch (e) {
             console.error("Error al parsear la respuesta como JSON:", e);
-            return false;
+            throw new Error("Error inesperado en la respuesta del servidor");
         }
         
         if (!resp.ok) {
             console.error("Error de registro:", data);
-            throw new Error(data.error || "Error desconocido en el registro");
+            throw new Error(data.error || "Error en el registro");
         }
         
         console.log("Registro exitoso, datos del usuario:", data.user);
+        return data.user;
         
-        const storedUserData = {
-            ...data.user,
-            role: "cliente"
-        };
-        
-        localStorage.setItem('user', JSON.stringify(storedUserData));
-        setStore({ user: storedUserData });
-        
-        return true;
     } catch (error) {
         console.error("Error en el registro:", error);
-        throw error; // Re-lanzar el error para manejarlo en el componente
+        throw error;
     }
 },
       // Obtener un mensaje del backend (puedes adaptarlo a tu necesidad)
@@ -608,8 +601,6 @@ loginUser: async ({ correo, password }) => {
     return false; // Si ocurre un error, retornamos false
   }
 },
-
-
     },
   };
 };

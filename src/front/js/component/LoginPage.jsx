@@ -35,73 +35,56 @@ const LoginPage = () => {
         setError('');
 
         if (!isLogin) {
-            if (!validarSoloLetras(nombre) || !validarSoloLetras(apellido)) {
-                setError('El nombre y el apellido solo pueden contener letras.');
-                setIsLoading(false);
-                return;
-            }
-
-            // Verificar que todos los campos obligatorios estén completos
-            if (!nombre || !apellido || !correo || !password) {
-                setError('Nombre, apellido, correo y contraseña son obligatorios.');
-                setIsLoading(false);
-                return;
-            }
-        }
-
-        try {
-            if (isLogin) {
-                // Código de login (sin cambios)...
-                const success = await actions.loginUser({ correo, password });
-                if (success) {
-                    navigate('/');
-                } else {
-                    setError('Credenciales inválidas o error al iniciar sesión.');
-                }
-            } else {
-                // Para depuración, imprimir los valores antes de enviarlos
-                console.log("Enviando datos de registro:", {
-                    nombre,
-                    apellido,
-                    correo,
-                    password: "***",
-                    telefono,
-                    direccion,
-                    ciudad
-                });
-
-                // Llamar a registerUser con todos los campos
-                const success = await actions.registerUser({
-                    nombre,       // ¡Asegurarse de que estos campos estén incluidos!
-                    apellido,     // ¡Asegurarse de que estos campos estén incluidos!
-                    correo,
-                    password,
-                    telefono,
-                    direccion,
-                    ciudad
-                });
-
-                if (success) {
-                    localStorage.setItem('correo_registrado', correo);
-                    setError('¡Registro exitoso! Ahora puedes iniciar sesión.');
-                    setIsLogin(true);
-                    setCorreo('');
-                    setPassword('');
-                    setTelefono('');
-                    setDireccion('');
-                    setCiudad('');
-                    setNombre('');
-                    setApellido('');
-                } else {
-                    setError('Error al registrarse.');
-                }
-            }
-        } catch (err) {
-            setError(err.message);
-        } finally {
+        if (!validarSoloLetras(nombre) || !validarSoloLetras(apellido)) {
+            setError('El nombre y el apellido solo pueden contener letras.');
             setIsLoading(false);
+            return;
         }
-    };
+
+        if (!nombre || !apellido || !correo || !password) {
+            setError('Nombre, apellido, correo y contraseña son obligatorios.');
+            setIsLoading(false);
+            return;
+        }
+    }
+
+    try {
+        if (isLogin) {
+            // Código de login...
+        } else {
+            console.log("Enviando datos de registro:", {
+                nombre,
+                apellido,
+                correo,
+                password: "***",
+                telefono,
+                direccion,
+                ciudad
+            });
+
+            // Asegurarse de enviar todos los campos correctamente
+            const userData = {
+                nombre: nombre.trim(),
+                apellido: apellido.trim(),
+                correo: correo.trim(),
+                password: password,
+                telefono: telefono.trim(),
+                direccion: direccion.trim(),
+                ciudad: ciudad.trim()
+            };
+
+            await actions.registerUser(userData);
+            
+            setError('¡Registro exitoso! Ahora puedes iniciar sesión.');
+            setIsLogin(true);
+            // Limpiar campos...
+        }
+    } catch (err) {
+        setError(err.message || 'Error al registrarse. Por favor, inténtalo de nuevo.');
+    } finally {
+        setIsLoading(false);
+    }
+};
     return (
         <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-light">
             <div className="card shadow-lg p-4" style={{ maxWidth: '500px', width: '100%' }}>

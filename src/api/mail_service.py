@@ -21,7 +21,7 @@ class MailService:
 
     def send_mail(self, to_email: str, subject: str, text_content: str, html_content: str = None) -> bool:
         
-        if not all([to_email, subject, text_content]):
+        if not all([to_email, subject]):
             raise ValueError("Faltan parámetros requeridos para enviar el email")
             
         msg = MIMEMultipart('alternative')

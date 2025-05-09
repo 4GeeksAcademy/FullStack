@@ -139,11 +139,18 @@ const LayoutHeader = () => {
                     </Link>
                   </li>
                   {user?.role === 'Administrador' && (
-                    <li>
-                      <Link className="dropdown-item" to="/admin/users">
-                        Panel Admin
-                      </Link>
-                    </li>
+                    <>
+                      <li>
+                        <Link className="dropdown-item" to="/admin/users">
+                          Panel Admin
+                        </Link>
+                      </li>
+                      <li>
+                        <Link className="dropdown-item" to="/newsletter">
+                          Newsletter
+                        </Link>
+                      </li>
+                    </>
                   )}
                   <li>
                     <hr className="dropdown-divider" />
@@ -253,12 +260,19 @@ const LayoutHeader = () => {
                       </Link>
                     </li>
                     {user?.role === 'Administrador' && (
+                    <>
                       <li>
                         <Link className="dropdown-item" to="/admin/users">
                           Panel Admin
                         </Link>
                       </li>
-                    )}
+                      <li>
+                        <Link className="dropdown-item" to="/newsletter">
+                          Newsletter
+                        </Link>
+                      </li>
+                    </>
+                  )}
                     <li>
                       <hr className="dropdown-divider" />
                     </li>

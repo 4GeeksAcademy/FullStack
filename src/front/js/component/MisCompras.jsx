@@ -17,7 +17,6 @@ const MisCompras = () => {
       }
 
       try {
-        // Obtener el ID del usuario
         const userResp = await fetch(`${backendUrl}/usuarios/me`, {
           method: 'GET',
           headers: {
@@ -32,7 +31,6 @@ const MisCompras = () => {
         const usuario = await userResp.json();
         const userId = usuario.id;
 
-        // Obtener las compras del usuario
         const comprasResp = await fetch(`${backendUrl}/compras/${userId}`, {
           method: 'GET',
           headers: {
@@ -70,34 +68,46 @@ const MisCompras = () => {
       {compras.length === 0 ? (
         <p>No has realizado ninguna compra.</p>
       ) : (
-        <table className="table table-striped">
-          <thead>
+        <table className="table table-bordered table-hover align-middle">
+          <thead className="table-dark">
             <tr>
-              <th>Compra</th>
+              <th>Imagen</th>
+              <th>Producto</th>
               <th>Precio</th>
+              <th>Unidades</th>
               <th>Fecha</th>
               <th>Estado</th>
-              <th>Unidades</th>
             </tr>
           </thead>
           <tbody>
-            {compras.map((compra) => (
-              <tr key={compra.id}>
-                <td>
-                  {compra.items.map((item, index) => (
-                    <div key={index}>
-                      <strong>{item.title}</strong>
-                    </div>
-                  ))}
-                </td>
-                <td>${compra.monto / 100}</td> {/* Asegúrate de mostrar el monto en formato decimal */}
-                <td>{new Date(compra.fecha).toLocaleDateString()}</td>
-                <td>{compra.estado}</td>
-                <td>
-                  {compra.items.reduce((total, item) => total + item.quantity, 0)} {/* Sumar cantidad de todos los items */}
-                </td>
-              </tr>
-            ))}
+            {compras.flatMap((compra) =>
+              Array.isArray(compra.items)
+                ? compra.items.map((item, index) => (
+                    <tr key={`${compra.id}-${index}`}>
+                      <td>
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.title}
+                            style={{ width: '80px', height: '80px', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <span className="text-muted">Sin imagen</span>
+                        )}
+                      </td>
+                      <td>{item.title}</td>
+                      <td>${(item.unit_price / 100).toFixed(2)}</td>
+                      <td>{item.quantity}</td>
+                      <td>{new Date(compra.payment_date).toLocaleDateString()}</td>
+                      <td>
+                        <span className={`badge bg-${compra.estado === 'pagado' ? 'success' : 'warning'}`}>
+                          {compra.estado}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                : []
+            )}
           </tbody>
         </table>
       )}
@@ -106,5 +116,6 @@ const MisCompras = () => {
 };
 
 export default MisCompras;
+
 
 

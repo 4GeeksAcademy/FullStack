@@ -26,6 +26,8 @@ from sqlalchemy import or_, func
 import traceback
 from api.mail_service import MailService
 from datetime import timedelta
+
+
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 load_dotenv()
@@ -1678,45 +1680,12 @@ def obtener_reservas():
 
 
 # Ruta para obtener todas las compras de un usuario desde la base de datos
-""""@app.route('/compras/<int:user_id>', methods=['GET'])
-def obtener_compras(user_id):
-    compras = Payment.query.filter_by(user_id=user_id).all()
-    compras_data = []
-
-    for compra in compras:
-        compras_data.append({
-            'id': compra.id,
-            'monto': compra.amount,
-            'fecha': compra.payment_date,
-            'servicio_id': compra.servicio_id
-        })
-
-    return jsonify({'compras': compras_data}), 200"""
-
 @app.route('/compras/<int:user_id>', methods=['GET'])
+@jwt_required()
 def obtener_compras(user_id):
-    # Consultamos todas las compras del usuario
     compras = Payment.query.filter_by(user_id=user_id).all()
-
-    if not compras:
-        return jsonify({"mensaje": "No se encontraron compras para este usuario"}), 404
-
-    compras_data = []
-
-    for compra in compras:
-        # Serializamos cada compra y sus items
-        compra_dict = compra.serialize()
-
-        compras_data.append({
-            'id': compra.id,
-            'monto': compra.amount,
-            'fecha': compra.payment_date.isoformat(),
-            'estado': compra.estado,  # Incluimos el estado
-            'items': compra_dict.get('items', []),  # Incluimos los productos de la compra
-        })
-
+    compras_data = [compra.serialize() for compra in compras]
     return jsonify({'compras': compras_data}), 200
-
 
 # Ruta para obtener todas las compras
 """"@app.route('/compras', methods=['GET'])
@@ -1786,22 +1755,96 @@ def registrar_compra():
 
     return jsonify({"mensaje": "Compra registrada correctamente", "compra": nueva_compra.serialize()}), 201
 
-@app.route('/reservas/proveedor/<int:proveedor_id>', methods=['GET'])
+
+
+""""@app.route('/pagos/proveedor', methods=['GET'])
 @jwt_required()
-def reservas_por_proveedor(proveedor_id):
-    # Consultar las reservas filtrando por `user_id`
-    reservas = Reservation.query.filter_by(user_id=proveedor_id).all()
+def pagos_proveedor():
+    # 1. Obtener el correo del proveedor autenticado desde el token
+    correo_usuario = get_jwt_identity()
+    if not correo_usuario:
+        return jsonify({'mensaje': 'Token inválido o no proporcionado'}), 401
 
-    if not reservas:
-        return jsonify({"mensaje": "No hay reservas para los servicios de este proveedor"}), 404
+    # 2. Buscar al usuario por correo
+    usuario = User.query.filter_by(correo=correo_usuario).first()
+    if not usuario:
+        return jsonify({'mensaje': 'Usuario no encontrado'}), 404
 
-    # Serializar las reservas
-    reservas_serializadas = [reserva.serialize() for reserva in reservas]
+    id_proveedor = usuario.id
 
-    return jsonify({
-        "reservas": reservas_serializadas,
-        "total": len(reservas_serializadas)
-    })
+    # 3. Buscar los pagos asociados a ese proveedor
+    pagos = PaymentItem.query.join(Payment)\
+               .filter(PaymentItem.servicio_id == id_proveedor,
+                       Payment.estado == 'pagado')\
+               .all()
+    if not pagos:
+        return jsonify({'mensaje': 'No se encontraron pagos para este proveedor'}), 404
+
+    # 4. Serializar los resultados
+    resultado = []
+    for item in pagos:
+        resultado.append({
+            'id': item.id,
+            'servicio_id': item.servicio_id,
+            'monto': item.monto,
+            'fecha': item.fecha.isoformat(),
+            # agrega más campos si quieres
+        })
+
+    return jsonify(resultado), 200"""
+
+@app.route('/pagos', methods=['GET'])
+@jwt_required()
+def pagos_proveedor():
+    try:
+        correo_usuario = get_jwt_identity()
+        if not correo_usuario:
+            return jsonify({'mensaje': 'Token inválido o no proporcionado'}), 401
+
+        usuario = User.query.filter_by(correo=correo_usuario).first()
+        if not usuario:
+            return jsonify({'mensaje': 'Usuario no encontrado'}), 404
+
+        id_proveedor = usuario.id
+
+        # Obtener los títulos de todos los servicios creados por este proveedor
+        titulos_servicios = set()
+        for modelo in [Top, Viajes, Ofertas, Belleza, Gastronomia]:
+            servicios = modelo.query.filter_by(user_id=id_proveedor).all()
+            titulos_servicios.update([s.title.strip().lower() for s in servicios if s.title])
+
+        if not titulos_servicios:
+            return jsonify({'mensaje': 'Este proveedor no tiene servicios creados'}), 404
+
+        # Filtrar pagos por coincidencia de título
+        payments = Payment.query.filter_by(estado='pagado').all()
+
+        pagos_del_proveedor = []
+        for pago in payments:
+            for item in pago.items:
+                if item.title and item.title.strip().lower() in titulos_servicios:
+                    cliente = User.query.get(pago.user_id)
+                    pagos_del_proveedor.append({
+                        'id': pago.id,
+                        'amount': item.unit_price * item.quantity,
+                        'currency': pago.currency,
+                        'estado': pago.estado,
+                        'payment_date': pago.payment_date.isoformat() if pago.payment_date else None,
+                        'paypal_payment_id': pago.paypal_payment_id,
+                        'user_email': cliente.correo if cliente else 'Desconocido',
+                        'title': item.title,
+                        'quantity': item.quantity,
+                        'image_url': item.image_url
+                    })
+
+        if not pagos_del_proveedor:
+            return jsonify({'mensaje': 'No se encontraron pagos para este proveedor'}), 404
+
+        return jsonify({'pagos': pagos_del_proveedor}), 200
+
+    except Exception as e:
+        return jsonify({'mensaje': 'Error al procesar la solicitud', 'error': str(e)}), 500
+
 
 @app.route('/compras/test', methods=['POST'])
 def crear_compra_test():
@@ -2184,7 +2227,7 @@ def create_checkout_session():
             line_items=line_items,
             mode='payment',
             ui_mode='embedded',
-            return_url=f"https://friendly-space-rotary-phone-x6p5pv6v66gfppxg-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
+            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
         )
 
         # Crear el Payment
@@ -2205,7 +2248,9 @@ def create_checkout_session():
                 title=item['title'],
                 unit_price=int(item['discountPrice'] * 100),
                 quantity=item['quantity'],
-                payment_id=new_payment.id
+                payment_id=new_payment.id,
+                image_url=item['image'],
+                servicio_id=item.get('user_id')
             )
             db.session.add(payment_item)
 
@@ -2220,6 +2265,7 @@ def create_checkout_session():
         print("Error creating session:", e)
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
 
 
 """"@app.route('/session-status', methods=['GET'])

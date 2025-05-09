@@ -142,7 +142,7 @@ const FormMiPerfil = () => {
                             {successMessage && (
                                 <div className="alert alert-success d-flex justify-content-between align-items-center">
                                     <span>{successMessage}</span>
-                                    <a href="/" className="btn btn-light btn-sm ms-3 fw-bold">Ir ahora</a>
+                                    <a href="/" className="btn btn-outline-secondary btn-sm ms-3 fw-bold">Ir ahora</a>
                                 </div>
                             )}
 

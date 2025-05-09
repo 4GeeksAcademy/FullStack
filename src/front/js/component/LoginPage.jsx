@@ -34,57 +34,72 @@ const LoginPage = () => {
         setIsLoading(true);
         setError('');
 
-        if (!isLogin) {
-        if (!validarSoloLetras(nombre) || !validarSoloLetras(apellido)) {
-            setError('El nombre y el apellido solo pueden contener letras.');
+        try {
+            if (!isLogin) {
+                // Validaciones para el registro
+                if (!validarSoloLetras(nombre) || !validarSoloLetras(apellido)) {
+                    setError('El nombre y el apellido solo pueden contener letras.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                if (!nombre || !apellido || !correo || !password) {
+                    setError('Nombre, apellido, correo y contraseña son obligatorios.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Datos para registro
+                const userData = {
+                    nombre: nombre.trim(),
+                    apellido: apellido.trim(),
+                    correo: correo.trim(),
+                    password: password,
+                    telefono: telefono.trim(),
+                    direccion: direccion.trim(),
+                    ciudad: ciudad.trim()
+                };
+
+                console.log("Enviando datos de registro:", {...userData, password: "********"});
+                
+                const registerSuccess = await actions.registerUser(userData);
+                
+                if (registerSuccess) {
+                    setError('¡Registro exitoso! Iniciando sesión automáticamente...');
+                    
+                    // Intentar iniciar sesión automáticamente después del registro
+                    const loginSuccess = await actions.loginUser({ 
+                        correo: correo.trim(), 
+                        password: password 
+                    });
+                    
+                    if (loginSuccess) {
+                        navigate('/');
+                    } else {
+                        setError('Registro exitoso. Por favor, inicia sesión con tus credenciales.');
+                        setIsLogin(true);
+                    }
+                } else {
+                    setError('Error al registrarse. Es posible que el correo ya esté en uso.');
+                }
+            } else {
+                // Login directo
+                console.log("Intentando iniciar sesión con:", correo);
+                const success = await actions.loginUser({ correo, password });
+                if (success) {
+                    navigate('/');
+                } else {
+                    setError('Credenciales incorrectas. Intenta de nuevo.');
+                }
+            }
+        } catch (err) {
+            console.error("Error en operación:", err);
+            setError(err.message || 'Error en la operación. Por favor, inténtalo de nuevo.');
+        } finally {
             setIsLoading(false);
-            return;
         }
+    };
 
-        if (!nombre || !apellido || !correo || !password) {
-            setError('Nombre, apellido, correo y contraseña son obligatorios.');
-            setIsLoading(false);
-            return;
-        }
-    }
-
-    try {
-        if (isLogin) {
-            // Código de login...
-        } else {
-            console.log("Enviando datos de registro:", {
-                nombre,
-                apellido,
-                correo,
-                password: "***",
-                telefono,
-                direccion,
-                ciudad
-            });
-
-            // Asegurarse de enviar todos los campos correctamente
-            const userData = {
-                nombre: nombre.trim(),
-                apellido: apellido.trim(),
-                correo: correo.trim(),
-                password: password,
-                telefono: telefono.trim(),
-                direccion: direccion.trim(),
-                ciudad: ciudad.trim()
-            };
-
-            await actions.registerUser(userData);
-            
-            setError('¡Registro exitoso! Ahora puedes iniciar sesión.');
-            setIsLogin(true);
-            // Limpiar campos...
-        }
-    } catch (err) {
-        setError(err.message || 'Error al registrarse. Por favor, inténtalo de nuevo.');
-    } finally {
-        setIsLoading(false);
-    }
-};
     return (
         <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-light">
             <div className="card shadow-lg p-4" style={{ maxWidth: '500px', width: '100%' }}>
@@ -96,7 +111,7 @@ const LoginPage = () => {
                     </p>
                 </div>
                 {error && (
-                    <div className={`alert ${error.includes('éxito') ? 'alert-success' : 'alert-danger'}`}>
+                    <div className={`alert ${error.includes('éxito') || error.includes('exitoso') ? 'alert-success' : 'alert-danger'}`}>
                         {error}
                     </div>
                 )}

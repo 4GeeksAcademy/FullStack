@@ -179,19 +179,20 @@ def search_all_services():
         all_results.append(result)
 
     return jsonify(all_results), 200
+
 @app.route('/registro', methods=['POST'])
 def crear_usuario():
     try:
-        # Imprimir información de depuración
-        print("==== DATOS DE LA SOLICITUD ====")
+        # Imprimir información de depuración detallada
+        print("\n==== DATOS DE LA SOLICITUD DE REGISTRO ====")
         print(f"Método: {request.method}")
         print(f"Content-Type: {request.headers.get('Content-Type')}")
-        print(f"Datos crudos: {request.data}")
         
-        # Intentar obtener datos como JSON
+        # Intentar obtener datos como JSON y mostrar versión segura (sin password)
         try:
             data = request.get_json(force=True)
-            print(f"Datos parseados como JSON: {data}")
+            datos_seguros = {k: v if k != 'password' else '*****' for k, v in data.items()}
+            print(f"Datos parseados como JSON: {datos_seguros}")
         except Exception as e:
             print(f"Error al parsear JSON: {e}")
             return jsonify({"error": f"Error al procesar datos: {str(e)}"}), 400
@@ -199,46 +200,36 @@ def crear_usuario():
         # Extraer y validar campos obligatorios
         print("Procesando campos...")
         
+        # Campos principales - validación exhaustiva
+        campos_obligatorios = ['nombre', 'apellido', 'correo', 'password']
+        for campo in campos_obligatorios:
+            valor = data.get(campo)
+            tipo = type(valor).__name__
+            valor_mostrado = '*****' if campo == 'password' and valor else valor
+            print(f"{campo}: '{valor_mostrado}' (tipo: {tipo})")
+            
+            if valor is None or valor == '':
+                print(f"ERROR: El campo '{campo}' está vacío o no fue enviado")
+                return jsonify({"error": f"El campo {campo} es obligatorio"}), 400
+        
         nombre = data.get('nombre')
-        print(f"nombre: '{nombre}' (tipo: {type(nombre).__name__})")
-        
         apellido = data.get('apellido')
-        print(f"apellido: '{apellido}' (tipo: {type(apellido).__name__})")
-        
         correo = data.get('correo')
-        print(f"correo: '{correo}' (tipo: {type(correo).__name__})")
-        
         password = data.get('password')
-        print(f"password: '{'*****' if password else None}' (tipo: {type(password).__name__})")
-        
-        # Comprobaciones explícitas para cada campo
-        if nombre is None or nombre == '':
-            print("ERROR: El nombre está vacío o es None")
-            return jsonify({"error": "El nombre es obligatorio"}), 400
             
-        if apellido is None or apellido == '':
-            print("ERROR: El apellido está vacío o es None")
-            return jsonify({"error": "El apellido es obligatorio"}), 400
-            
-        if correo is None or correo == '':
-            print("ERROR: El correo está vacío o es None")
-            return jsonify({"error": "El correo es obligatorio"}), 400
-            
-        if password is None or password == '':
-            print("ERROR: La contraseña está vacía o es None")
-            return jsonify({"error": "La contraseña es obligatoria"}), 400
-
         # Verificar si el usuario ya existe
         usuario_existente = User.query.filter_by(correo=correo).first()
         if usuario_existente:
             print(f"Usuario ya existe: {correo}")
             return jsonify({"error": "El usuario ya existe"}), 409
 
-        # Extraer campos opcionales
+        # Extraer campos opcionales con valores por defecto
         telefono = data.get('telefono', '')
         direccion = data.get('direccion_line1', data.get('direccion', ''))
         ciudad = data.get('ciudad', '')
         role = data.get('role', 'cliente')
+
+        print(f"Campos opcionales: telefono='{telefono}', direccion='{direccion}', ciudad='{ciudad}', role='{role}'")
 
         # Hash de contraseña
         pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -259,7 +250,7 @@ def crear_usuario():
         # Guardar en la base de datos
         db.session.add(nuevo_usuario)
         db.session.commit()
-        print(f"Usuario creado con éxito: {correo}")
+        print(f"Usuario creado con éxito: ID={nuevo_usuario.id}, correo={correo}")
         
         # Respuesta exitosa
         return jsonify({
@@ -274,7 +265,7 @@ def crear_usuario():
         }), 201
         
     except Exception as e:
-        print(f"ERROR CRÍTICO: {str(e)}")
+        print(f"ERROR CRÍTICO EN REGISTRO: {str(e)}")
         import traceback
         traceback.print_exc()
         db.session.rollback()
@@ -1108,19 +1099,56 @@ def actualizar_usuario(id):
 # Ruta para iniciar sesión
 @app.route('/login', methods=['POST'])
 def iniciar_sesion():
-    data = request.get_json()
-    correo = data.get('correo')
-    contraseña = data.get('password')
-
-    if not correo or not contraseña:
-        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
-
-    usuario = User.query.filter_by(correo=correo).first()
-    if not usuario or not bcrypt.check_password_hash(usuario.password, contraseña):
-        return jsonify({"error": "Correo o contraseña incorrectos"}), 401
-
-    access_token = create_access_token(identity=usuario.correo)
-    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token, "user_id": usuario.id}), 200
+    try:
+        print("\n==== INTENTO DE LOGIN ====")
+        
+        # Validar formato de los datos
+        if not request.is_json:
+            print("ERROR: No es JSON")
+            return jsonify({"error": "Se esperaba formato JSON"}), 400
+            
+        data = request.get_json()
+        print(f"Datos recibidos: {data}")
+        
+        # Validar campos requeridos
+        correo = data.get('correo')
+        contraseña = data.get('password')
+        
+        if not correo or not contraseña:
+            print("ERROR: Faltan correo o contraseña")
+            return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+        
+        # Buscar usuario
+        print(f"Buscando usuario con correo: {correo}")
+        usuario = User.query.filter_by(correo=correo).first()
+        
+        if not usuario:
+            print(f"ERROR: Usuario no encontrado con correo {correo}")
+            return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+        
+        print(f"Usuario encontrado: ID={usuario.id}, Nombre={usuario.nombre}")
+        
+        # Verificar contraseña
+        if not bcrypt.check_password_hash(usuario.password, contraseña):
+            print("ERROR: Contraseña incorrecta")
+            return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+        
+        # Generar token
+        print("Inicio de sesión exitoso - Generando token")
+        access_token = create_access_token(identity=usuario.correo)
+        
+        print(f"Token generado para usuario {usuario.correo}")
+        return jsonify({
+            "mensaje": f"Bienvenido, {usuario.nombre} {usuario.apellido}",
+            "access_token": access_token,
+            "user_id": usuario.id
+        }), 200
+    
+    except Exception as e:
+        print(f"ERROR EN LOGIN: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Error del servidor: {str(e)}"}), 500
 
 @app.route('/api/verify-token', methods=['GET'])
 @jwt_required()

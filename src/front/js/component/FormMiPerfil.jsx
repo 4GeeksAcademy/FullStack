@@ -7,6 +7,8 @@ const FormMiPerfil = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
+        nombre: '',
+        apellido: '',
         ciudad: '',
         direccion_line1: '',
         telefono: '',
@@ -28,6 +30,8 @@ const FormMiPerfil = () => {
 
             if (userData && !initialLoad) {
                 setFormData({
+                    nombre: userData.nombre || '',
+                    apellido: userData.apellido || '',
                     ciudad: userData.ciudad || '',
                     direccion_line1: userData.direccion_line1 || '',
                     telefono: userData.telefono || '',
@@ -58,7 +62,7 @@ const FormMiPerfil = () => {
 
         if (changePassword && (name === 'password' || name === 'confirmPassword')) {
             if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
-                setPasswordError('');
+                setPasswordError('Las contraseñas no coinciden');
             } else {
                 setPasswordError('');
             }
@@ -147,6 +151,26 @@ const FormMiPerfil = () => {
                             )}
 
                             <form onSubmit={handleSubmit}>
+                                {/* Nombre y Apellido - Solo visualización */}
+                                <div className="mb-3">
+                                    <label className="form-label">Nombre</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={formData.nombre || ''}
+                                        disabled
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Apellido</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={formData.apellido || ''}
+                                        disabled
+                                    />
+                                </div>
+
                                 <div className="mb-3">
                                     <label className="form-label">Correo electrónico</label>
                                     <input
@@ -166,7 +190,7 @@ const FormMiPerfil = () => {
                                         value={formData.telefono || ''}
                                         onChange={handleChange}
                                         required
-                                        pattern="[0-9]+"  // Esto restringe a 10 dígitos numéricos (puedes ajustarlo a la cantidad que necesites)
+                                        pattern="[0-9]+"
                                         placeholder="Ingresa tu número de teléfono"
                                     />
                                 </div>

@@ -179,47 +179,106 @@ def search_all_services():
         all_results.append(result)
 
     return jsonify(all_results), 200
-
 @app.route('/registro', methods=['POST'])
 def crear_usuario():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No se recibieron datos JSON"}), 400
+    try:
+        # Imprimir información de depuración
+        print("==== DATOS DE LA SOLICITUD ====")
+        print(f"Método: {request.method}")
+        print(f"Content-Type: {request.headers.get('Content-Type')}")
+        print(f"Datos crudos: {request.data}")
+        
+        # Intentar obtener datos como JSON
+        try:
+            data = request.get_json(force=True)
+            print(f"Datos parseados como JSON: {data}")
+        except Exception as e:
+            print(f"Error al parsear JSON: {e}")
+            return jsonify({"error": f"Error al procesar datos: {str(e)}"}), 400
+        
+        # Extraer y validar campos obligatorios
+        print("Procesando campos...")
+        
+        nombre = data.get('nombre')
+        print(f"nombre: '{nombre}' (tipo: {type(nombre).__name__})")
+        
+        apellido = data.get('apellido')
+        print(f"apellido: '{apellido}' (tipo: {type(apellido).__name__})")
+        
+        correo = data.get('correo')
+        print(f"correo: '{correo}' (tipo: {type(correo).__name__})")
+        
+        password = data.get('password')
+        print(f"password: '{'*****' if password else None}' (tipo: {type(password).__name__})")
+        
+        # Comprobaciones explícitas para cada campo
+        if nombre is None or nombre == '':
+            print("ERROR: El nombre está vacío o es None")
+            return jsonify({"error": "El nombre es obligatorio"}), 400
+            
+        if apellido is None or apellido == '':
+            print("ERROR: El apellido está vacío o es None")
+            return jsonify({"error": "El apellido es obligatorio"}), 400
+            
+        if correo is None or correo == '':
+            print("ERROR: El correo está vacío o es None")
+            return jsonify({"error": "El correo es obligatorio"}), 400
+            
+        if password is None or password == '':
+            print("ERROR: La contraseña está vacía o es None")
+            return jsonify({"error": "La contraseña es obligatoria"}), 400
 
-    correo = data.get('correo')
-    password = data.get('password')
-    telefono = data.get('telefono', '')
-    direccion = data.get('direccion_line1', '')  # Asegúrate de usar direccion_line1
-    ciudad = data.get('ciudad', '')
-    role = data.get('role', 'cliente')
+        # Verificar si el usuario ya existe
+        usuario_existente = User.query.filter_by(correo=correo).first()
+        if usuario_existente:
+            print(f"Usuario ya existe: {correo}")
+            return jsonify({"error": "El usuario ya existe"}), 409
 
-    if not correo or not password:
-        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+        # Extraer campos opcionales
+        telefono = data.get('telefono', '')
+        direccion = data.get('direccion_line1', data.get('direccion', ''))
+        ciudad = data.get('ciudad', '')
+        role = data.get('role', 'cliente')
 
-    usuario_existente = User.query.filter_by(correo=correo).first()
-    if usuario_existente:
-        return jsonify({"error": "El usuario ya existe"}), 409
-
-    pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-
-    nuevo_usuario = User(
-        correo=correo,
-        password=pw_hash,
-        telefono=telefono,
-        direccion_line1=direccion,  # Usar direccion_line1 aquí
-        ciudad=ciudad,
-        role=role,
-        is_active=True
-    )
-    
-    db.session.add(nuevo_usuario)
-    db.session.commit()
-
-    # Devuelve los datos del usuario creado
-    return jsonify({
-        "mensaje": "Usuario creado correctamente",
-        "user": nuevo_usuario.serialize()
-    }), 201
+        # Hash de contraseña
+        pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+        
+        print("Creando nuevo usuario...")
+        nuevo_usuario = User(
+            nombre=nombre,
+            apellido=apellido,
+            correo=correo,
+            password=pw_hash,
+            telefono=telefono,
+            direccion_line1=direccion,
+            ciudad=ciudad,
+            role=role,
+            is_active=True
+        )
+        
+        # Guardar en la base de datos
+        db.session.add(nuevo_usuario)
+        db.session.commit()
+        print(f"Usuario creado con éxito: {correo}")
+        
+        # Respuesta exitosa
+        return jsonify({
+            "mensaje": "Usuario creado correctamente",
+            "user": {
+                "id": nuevo_usuario.id,
+                "nombre": nuevo_usuario.nombre,
+                "apellido": nuevo_usuario.apellido,
+                "correo": nuevo_usuario.correo,
+                "role": nuevo_usuario.role
+            }
+        }), 201
+        
+    except Exception as e:
+        print(f"ERROR CRÍTICO: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({"error": f"Error del servidor: {str(e)}"}), 500
 
 @app.route('/gastronomiapag', methods=['GET'])
 def paginated_gastronomia():

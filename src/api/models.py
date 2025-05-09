@@ -7,6 +7,8 @@ class User(db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(120), nullable=False)
+    apellido = db.Column(db.String(120), nullable=False)
     correo = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
     telefono = db.Column(db.String(20))
@@ -34,10 +36,11 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.correo}>'
 
-    # Método para serializar el objeto User a un diccionario
     def serialize(self):
         return {
             "id": self.id,
+            "nombre": self.nombre,
+            "apellido": self.apellido,
             "correo": self.correo,
             "telefono": self.telefono,
             "direccion_line1": self.direccion_line1,
@@ -48,7 +51,6 @@ class User(db.Model):
             "role": self.role,
             "is_active": self.is_active
         }
-
 
 class Newsletter(db.Model):
     __tablename__ = 'newsletter'

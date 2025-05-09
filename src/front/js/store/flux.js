@@ -170,45 +170,80 @@ const getState = ({ getStore, getActions, setStore }) => {
         getActions().loadUserFromStorage();
       },
       
-    registerUser: async ({ correo, password, telefono, direccion, ciudad }) => {
-      try {
-          const resp = await fetch(process.env.BACKEND_URL + '/registro', {
-              method: 'POST',
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                  correo,
-                  password,
-                  telefono,
-                  direccion_line1: direccion, // Enviar como direccion_line1
-                  ciudad,
-                  role: "cliente"
-              })
-          });
-          
-          if (!resp.ok) {
-              const errorData = await resp.json();
-              console.error("Register error:", errorData);
-              return false;
-          }
-  
-          const data = await resp.json();
-          
-          // Guardar datos del usuario en localStorage y store
-          const userData = {
-              ...data.user, // Usar los datos devueltos por el backend
-              role: "cliente"
-          };
-          
-          localStorage.setItem('user', JSON.stringify(userData));
-          setStore({ user: userData });
-          
-          return true;
-      } catch (error) {
-          console.error("Register error:", error);
-          return false;
-      }
-  },
-  
+   registerUser: async ({ correo, password, telefono, direccion, ciudad, nombre, apellido }) => {
+    try {
+        console.log("Datos recibidos en registerUser:");
+        console.log("- nombre:", nombre);
+        console.log("- apellido:", apellido);
+        console.log("- correo:", correo);
+        console.log("- password:", password ? "***" : undefined);
+        console.log("- telefono:", telefono);
+        console.log("- direccion:", direccion);
+        console.log("- ciudad:", ciudad);
+        
+        // Verificar que los datos obligatorios estén presentes
+        if (!nombre || !apellido || !correo || !password) {
+            console.error("Faltan datos obligatorios");
+            throw new Error("Nombre, apellido, correo y contraseña son obligatorios");
+        }
+        
+        // Crear objeto para enviar al backend
+        const userData = {
+            nombre,
+            apellido,
+            correo,
+            password,
+            telefono: telefono || "",
+            direccion_line1: direccion || "",
+            ciudad: ciudad || "",
+            role: "cliente"
+        };
+        
+        console.log("Datos que se enviarán al backend:", {
+            ...userData,
+            password: "******" // Ocultar la contraseña en los logs
+        });
+        
+        const resp = await fetch(process.env.BACKEND_URL + '/registro', {
+            method: 'POST',
+            headers: { 
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        const responseText = await resp.text();
+        console.log("Respuesta del servidor (texto):", responseText);
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error("Error al parsear la respuesta como JSON:", e);
+            return false;
+        }
+        
+        if (!resp.ok) {
+            console.error("Error de registro:", data);
+            throw new Error(data.error || "Error desconocido en el registro");
+        }
+        
+        console.log("Registro exitoso, datos del usuario:", data.user);
+        
+        const storedUserData = {
+            ...data.user,
+            role: "cliente"
+        };
+        
+        localStorage.setItem('user', JSON.stringify(storedUserData));
+        setStore({ user: storedUserData });
+        
+        return true;
+    } catch (error) {
+        console.error("Error en el registro:", error);
+        throw error; // Re-lanzar el error para manejarlo en el componente
+    }
+},
       // Obtener un mensaje del backend (puedes adaptarlo a tu necesidad)
       getMessage: async () => {
         try {

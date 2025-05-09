@@ -69,10 +69,26 @@ const CartPage = () => {
     };
 
     const handleProceedToPayment = () => {
+        // Agregar imagen junto con los demás datos del carrito
+        const cartWithImages = cartItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            quantity: item.quantity,
+            price: item.discountPrice,
+            image: item.image, // Añadimos la imagen del producto
+            user_id: item.user_id // Aseguramos que el user_id esté presente
+        }));
+
+        // Mostrar los datos antes de proceder al pago (solo para pruebas)
+        console.log("Carrito con imágenes:", cartWithImages);
+    
+        // Verificar el estado de login
         if (checkLoginStatus()) {
-            navigate('/checkout');
+            // Enviar estos datos al backend para procesar el pago
+            // Aquí iría la lógica para enviar los datos al backend con la imagen
+            navigate('/checkout'); // Redirigir a la página de checkout
         } else {
-            navigate('/login');
+            navigate('/login'); // Redirigir a login si no está logueado
         }
     };
 
@@ -91,6 +107,7 @@ const CartPage = () => {
                 <>
                     <div className="list-group mb-4">
                         {cartItems.map(item => (
+                            console.log(item), // Verificar el contenido del item
                             <div key={item.id} className="list-group-item d-flex align-items-center">
                                 <img
                                     src={item.image}

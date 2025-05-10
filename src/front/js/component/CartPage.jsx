@@ -19,20 +19,22 @@ const CartPage = () => {
         actions.loadCartFromLocalStorage();
     }, []);
 
-    const handleUpdateQuantity = (id, change) => {
-        const item = cartItems.find(item => item.id === id);
+    const handleUpdateQuantity = (id, title, category, change) => {
+        const item = cartItems.find(item => 
+            item.id === id && 
+            item.title === title && 
+            item.category === category
+        );
+        
         if (!item) return;
 
         const newQuantity = item.quantity + change;
-
-        // Validación adicional en el componente
         if (newQuantity < 1 || newQuantity > 99) return;
 
         setToastMessage("Actualizando cantidad...");
         setToastVisible(true);
 
-        // Llamar a la acción y manejar el resultado
-        const success = actions.updateQuantity(id, newQuantity);
+        const success = actions.updateQuantity(id, title, category, newQuantity);
 
         if (success) {
             setToastMessage("Cantidad actualizada");
@@ -42,20 +44,32 @@ const CartPage = () => {
             setTimeout(() => setToastVisible(false), 2000);
         }
     };
-    const handleRemoveItem = (id) => {
-        const selectedItem = cartItems.find(item => item.id === id);
+
+    const handleRemoveItem = (id, title, category) => {
+        const selectedItem = cartItems.find(item => 
+            String(item.id) === String(id) && 
+            item.title === title && 
+            item.category === category
+        );
+        
         if (selectedItem) {
             setItemToRemove(selectedItem);
             setShowModal(true);
         }
     };
 
-    const confirmRemoveItem = () => {
+    const confirmRemoveItem = async () => {
         if (!itemToRemove) return;
 
-        const success = actions.removeItemFromCart(itemToRemove.id);
+        setShowModal(false);
+        
+        const success = await actions.removeItemFromCart(
+            itemToRemove.id, 
+            itemToRemove.title,
+            itemToRemove.category
+        );
+        
         if (success) {
-            setShowModal(false);
             setToastMessage(`Producto eliminado: ${itemToRemove.title}`);
             setToastVisible(true);
             setToastProgress(100);
@@ -73,6 +87,13 @@ const CartPage = () => {
             setToastMessage("Error al eliminar el producto");
             setToastVisible(true);
         }
+        
+        setItemToRemove(null);
+    };
+
+    const closeModal = () => {
+        setShowModal(false);
+        setItemToRemove(null);
     };
 
     const subtotal = cartItems.reduce((sum, item) => sum + item.discountPrice * item.quantity, 0);
@@ -86,10 +107,9 @@ const CartPage = () => {
             quantity: item.quantity,
             price: item.discountPrice,
             image: item.image,
-            user_id: item.user_id
+            user_id: item.user_id,
+            category: item.category
         }));
-
-        console.log("Carrito con imágenes:", cartWithImages);
 
         if (checkLoginStatus()) {
             navigate('/checkout');
@@ -112,8 +132,8 @@ const CartPage = () => {
             ) : (
                 <>
                     <div className="list-group mb-4">
-                        {cartItems.map(item => (
-                            <div key={item.id} className="list-group-item d-flex align-items-center">
+                        {cartItems.map((item, index) => (
+                            <div key={`${item.id}-${item.title}-${index}`} className="list-group-item d-flex align-items-center">
                                 <img
                                     src={item.image}
                                     alt={item.title}
@@ -127,7 +147,7 @@ const CartPage = () => {
                                         <div className="btn-group">
                                             <button
                                                 className="btn btn-outline-secondary"
-                                                onClick={() => handleUpdateQuantity(item.id, -1)}
+                                                onClick={() => handleUpdateQuantity(item.id, item.title, item.category, -1)}
                                                 disabled={item.quantity <= 1}
                                             >
                                                 −
@@ -137,7 +157,7 @@ const CartPage = () => {
                                             </span>
                                             <button
                                                 className="btn btn-outline-secondary"
-                                                onClick={() => handleUpdateQuantity(item.id, 1)}
+                                                onClick={() => handleUpdateQuantity(item.id, item.title, item.category, 1)}
                                             >
                                                 +
                                             </button>
@@ -147,7 +167,7 @@ const CartPage = () => {
                                 </div>
                                 <button
                                     className="btn btn-link text-danger ms-3"
-                                    onClick={() => handleRemoveItem(item.id)}
+                                    onClick={() => handleRemoveItem(item.id, item.title, item.category)}
                                     aria-label="Eliminar"
                                 >
                                     <i className="bi bi-trash"></i>
@@ -183,7 +203,7 @@ const CartPage = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Confirmar eliminación</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
+                                <button type="button" className="btn-close" onClick={closeModal}></button>
                             </div>
                             <div className="modal-body">
                                 <p>
@@ -195,7 +215,7 @@ const CartPage = () => {
                                 </p>
                             </div>
                             <div className="modal-footer">
-                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                                <button className="btn btn-secondary" onClick={closeModal}>Cancelar</button>
                                 <button className="btn btn-danger" onClick={confirmRemoveItem}>Eliminar</button>
                             </div>
                         </div>

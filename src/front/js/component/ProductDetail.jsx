@@ -109,11 +109,17 @@ const ProductDetail = () => {
   const addToCart = () => {
     actions.addToCart({
       ...displayData,
+      id: String(displayData.id), // Asegurar ID como string
+      title: displayTitle, // Usar el título formateado
       discountPrice: actualDiscountPrice,
-      originalPrice: actualPrice
+      originalPrice: actualPrice,
+      // Incluir todos los campos necesarios
+      image: displayImage,
+      city: displayData.city || "",
+      category: displayData.category || currentCategory
     });
     showToast("Producto agregado al carrito");
-  };
+};
 
   const handleBuyNow = () => {
     navigate("/checkout", {

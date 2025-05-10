@@ -71,7 +71,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       exampleFunction: () => {
         getActions().changeColor(0, "green");
       },
-      
+
 initializeApp: () => {
     getActions().loadCartFromLocalStorage();
     getActions().loadUserFromStorage();
@@ -106,23 +106,45 @@ loadCartFromLocalStorage: () => {
 
 addToCart: (item) => {
   const store = getStore();
-  const existingItem = store.cartItems.find((cartItem) => cartItem.id === item.id);
-
-  let updatedCart;
-
-  if (existingItem) {
-    updatedCart = store.cartItems.map((cartItem) =>
-      cartItem.id === item.id
-        ? { ...cartItem, quantity: cartItem.quantity + 1 }
-        : cartItem
-    );
-  } else {
-    updatedCart = [...store.cartItems, { ...item, quantity: 1 }];
+  
+  // Validación de campos obligatorios
+  if (!item.id || !item.title || !item.category) {
+    console.error("El producto no tiene ID, título o categoría válidos");
+    return false;
   }
 
+  // Verificar si el producto ya existe en el carrito
+  const existingIndex = store.cartItems.findIndex(cartItem => 
+    String(cartItem.id) === String(item.id) && 
+    cartItem.title === item.title &&
+    cartItem.category === item.category
+  );
+
+  let updatedCart;
+  
+  if (existingIndex >= 0) {
+    // Actualizar cantidad si ya existe
+    updatedCart = [...store.cartItems];
+    updatedCart[existingIndex] = {
+      ...updatedCart[existingIndex],
+      quantity: updatedCart[existingIndex].quantity + 1
+    };
+  } else {
+    // Agregar nuevo producto con categoría
+    updatedCart = [...store.cartItems, { 
+      ...item, 
+      quantity: 1,
+      category: item.category // Asegurar que la categoría está incluida
+    }];
+  }
+
+  // Actualizar estado y almacenamiento
   setStore({ cartItems: updatedCart });
-  getActions().saveCartToLocalStorage();
+  localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+  
+  return true;
 },
+
       
 
       
@@ -229,38 +251,50 @@ addToCart: (item) => {
      
 
       // Eliminar item del carrito
-    removeItemFromCart: (id) => {
+  removeItemFromCart: (id, title, category) => {
   const store = getStore();
-  const updatedCart = store.cartItems.filter((item) => item.id !== id);
   
+  // Versión mejorada del filtro con categoría
+  const updatedCart = store.cartItems.filter(item => {
+    return !(
+      String(item.id) === String(id) && 
+      item.title === title &&
+      item.category === category
+    );
+  });
+
+  // Actualizar el store y localStorage
   setStore({ cartItems: updatedCart });
-  
-  // Actualizar localStorage inmediatamente
   localStorage.setItem("cartItems", JSON.stringify(updatedCart));
   
-  return true; // Para confirmar que se eliminó
+  return true;
 },
-
       // Actualizar cantidad de un item en el carrito
-    // En el objeto actions, reemplaza la función updateQuantity con esta versión mejorada:
-updateQuantity: (id, newQuantity) => {
+    
+updateQuantity: (id, title, category, newQuantity) => {
   const store = getStore();
   
   // Validación mejorada
-  if (newQuantity < 1) {
-    console.error("La cantidad no puede ser menor a 1");
+  if (newQuantity < 1 || newQuantity > 99) {
+    console.error("La cantidad debe estar entre 1 y 99");
     return false;
   }
 
-  const itemIndex = store.cartItems.findIndex(item => item.id === id);
+  // Encontrar el índice del item con todos los identificadores
+  const itemIndex = store.cartItems.findIndex(item => 
+    item.id === id && 
+    item.title === title &&
+    item.category === category
+  );
+  
   if (itemIndex === -1) {
     console.error("Ítem no encontrado en el carrito");
     return false;
   }
 
   // Crear nuevo array con la cantidad actualizada
-  const updatedCart = store.cartItems.map(item => 
-    item.id === id ? { ...item, quantity: newQuantity } : item
+  const updatedCart = store.cartItems.map((item, index) => 
+    index === itemIndex ? { ...item, quantity: newQuantity } : item
   );
 
   try {
@@ -590,7 +624,19 @@ loginUser: async ({ correo, password }) => {
 },
 
 setCartItems: (items) => {
-  setStore({ cartItems: items });
+  // Validar que items sea un array
+  if (!Array.isArray(items)) {
+    console.error("Los items del carrito deben ser un array");
+    return;
+  }
+  
+  // Filtrar items inválidos
+  const validItems = items.filter(item => 
+    item && item.id !== undefined && item.title !== undefined
+  );
+  
+  setStore(prev => ({ ...prev, cartItems: validItems }));
+  localStorage.setItem("cartItems", JSON.stringify(validItems));
 },
 
     },

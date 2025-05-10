@@ -573,88 +573,63 @@ const getState = ({ getStore, getActions, setStore }) => {
     }
 },
 // Función de login corregida
-      loginUser: async ({ correo, password }) => {
-        console.log("Iniciando login con correo:", correo);
-        
-        try {
-          const resp = await fetch(process.env.BACKEND_URL + '/login', {
-            method: 'POST',
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ correo, password })
-          });
-          
-          const data = await resp.json();
-          
-          if (!resp.ok || !data.access_token) {
-            console.error("Login fallido. Detalle:", data);
-            return false;
-          }
-          
-          console.log("Login exitoso, token recibido");
-          
-          // Guardar el token
-          localStorage.setItem('token', data.access_token);
-          
-          // Buscar datos del usuario
-          const userResp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
-            headers: {
-              'Authorization': `Bearer ${data.access_token}`
-            }
-          });
-          
-          if (!userResp.ok) {
-            console.warn("No se pudieron obtener los datos del usuario. Se asignará rol por defecto.");
-            localStorage.setItem('user', JSON.stringify({
-              correo: correo,
-              role: 'cliente'
-            }));
-          } else {
-            const userData = await userResp.json();
-            console.log("Datos de usuario obtenidos:", userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-            setStore({ user: userData });
-          }
-          
-          return true;
-        } catch (error) {
-          console.error("Error en loginUser:", error);
-          return false;
-        }
+loginUser: async ({ correo, password }) => {
+  console.log("Iniciando login con correo:", correo);
+  try {
+    // 1) Login
+    const resp = await fetch(
+      `${process.env.BACKEND_URL}/login`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo, password })
       }
+    );
+    const data = await resp.json();
 
-    });
-
-    if (userResp.ok) {
-      const userData = await userResp.json();
-
-      // Guardamos directamente los datos del usuario (incluyendo el role) en localStorage
-      localStorage.setItem('user', JSON.stringify(userData));
-
-      // Actualiza el estado del store si lo necesitas
-      setStore({ user: userData });
-
-      return true; // El login fue exitoso
-    } else {
-      // Si no conseguimos los datos del usuario, se guarda un objeto básico
-      localStorage.setItem('user', JSON.stringify({
-        correo: correo,
-        role: 'cliente'
-      }));
-      return true;
+    if (!resp.ok || !data.access_token) {
+      console.error("Login fallido. Detalle:", data);
+      return false;
     }
+    console.log("Login exitoso, token recibido");
+
+    // Guardar token
+    localStorage.setItem('token', data.access_token);
+
+    // 2) Obtener datos del usuario
+    const userResp = await fetch(
+      `${process.env.BACKEND_URL}/usuarios/me`,
+      {
+        headers: { Authorization: `Bearer ${data.access_token}` }
+      }
+    );
+
+    let userObj;
+    if (userResp.ok) {
+      userObj = await userResp.json();
+      console.log("Datos de usuario obtenidos:", userObj);
+    } else {
+      console.warn("No se pudieron obtener los datos del usuario. Se usará rol por defecto.");
+      userObj = { correo, role: 'cliente' };
+    }
+
+    // 3) Guardar usuario sin pisar el resto del store
+    localStorage.setItem('user', JSON.stringify(userObj));
+    setStore(prev => ({
+      ...prev,
+      user: userObj
+    }));
+
+    return true;
   } catch (error) {
-    console.error("Login error:", error);
-    return false; // Si ocurre un error, retornamos false
+    console.error("Error en loginUser:", error);
+    return false;
   }
 },
+
 setCartItems: (items) => {
   setStore({ cartItems: items });
 },
-
-
-
 
     },
   };

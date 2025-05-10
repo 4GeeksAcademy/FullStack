@@ -13,7 +13,7 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     setStatus({ loading: true, error: null, success: false });
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/forgot-password`, {
+      const res = await fetch(`${process.env.BACKEND_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

@@ -2150,7 +2150,7 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-YOUR_DOMAIN = "https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev"  # Cambia esta URL si es otro entorno
+YOUR_DOMAIN = "https://orange-space-engine-q7pjgx55q54qcx7qx-3000.app.github.dev"  # Cambia esta URL si es otro entorno
 
 """"@app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
@@ -2319,7 +2319,7 @@ def create_checkout_session():
             line_items=line_items,
             mode='payment',
             ui_mode='embedded',
-            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
+            return_url=f"https://orange-space-engine-q7pjgx55q54qcx7qx-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
         )
 
         # Crear el Payment
@@ -2495,7 +2495,7 @@ def forgot_password():
         db.session.commit()
 
         # Construye el enlace de reset
-        frontend_url = os.getenv('FRONTEND_URL', 'https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev')
+        frontend_url = os.getenv('FRONTEND_URL', 'https://orange-space-engine-q7pjgx55q54qcx7qx-3000.app.github.dev')
         reset_link = f"{frontend_url}/reset-password?token={token}"
 
         # Prepara y envía el email

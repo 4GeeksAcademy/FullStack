@@ -35,6 +35,8 @@ import Return from "./pages/Return.jsx";
 import CreateNewsletter from "./pages/CreateNewsletter.jsx";
 import VistaReservas from "./component/VistaReservas.jsx";
 import SearchResults from "./component/SearchResults.jsx"
+import ForgotPasswordModal from "./component/ForgotPasswordModal.jsx"
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 
 const Layout = () => {
   const basename = process.env.BASENAME || "";
@@ -76,6 +78,8 @@ const Layout = () => {
             <Route path="/mis-reservas" element={<VistaReservas />} />
             <Route path="/product-detail/:id" element={<ProductDetail />} />
             <Route path="/newsletter" element={<CreateNewsletter />} />
+            <Route path="/recuperar-contrasena" element={<ForgotPasswordModal />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
           </Routes>
           <Footer />
         </ScrollToTop>

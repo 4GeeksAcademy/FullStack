@@ -573,6 +573,9 @@ loginUser: async ({ correo, password }) => {
     return false; // Si ocurre un error, retornamos false
   }
 },
+setCartItems: (items) => {
+  setStore({ cartItems: items });
+},
 
 
     },

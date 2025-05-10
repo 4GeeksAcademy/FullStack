@@ -1,10 +1,8 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Context } from "../store/appContext.js";
 import { Link, useNavigate } from "react-router-dom";
-import { Modal, Button } from "react-bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import "bootstrap/dist/css/bootstrap.min.css";
 
 const LayoutHeader = () => {
   const { store, actions } = useContext(Context);
@@ -13,7 +11,7 @@ const LayoutHeader = () => {
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [showLoggingOut, setShowLoggingOut] = useState(false);
   const navigate = useNavigate();
 
   const cartItems = store.cartItems.reduce(
@@ -24,12 +22,18 @@ const LayoutHeader = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
+    const storedCart = localStorage.getItem("cartItems");
+
     if (token && storedUser) {
       setIsLoggedIn(true);
       setUser(JSON.parse(storedUser));
+      if (storedCart) {
+        actions.setCartItems(JSON.parse(storedCart));
+      }
     } else {
       setIsLoggedIn(false);
       setUser(null);
+      actions.setCartItems([]);
     }
   }, []);
 
@@ -51,43 +55,42 @@ const LayoutHeader = () => {
             setLocation(city);
           } catch (error) {
             console.error("Error obteniendo la ubicación:", error);
+            alert("No se pudo obtener la ubicación");
           }
         },
         (error) => {
           console.error("Error de geolocalización:", error);
+          alert("Error al obtener su ubicación");
         }
       );
+    } else {
+      alert("La geolocalización no es soportada por este navegador.");
     }
   };
 
-  const openLogoutModal = () => setShowLogoutModal(true);
-  const closeLogoutModal = () => {
-    setShowLogoutModal(false);
-    setLoggingOut(false);
+  const handleLogout = () => {
+    localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    actions.setCartItems([]);
+    setIsLoggedIn(false);
+    setUser(null);
+    setShowLoggingOut(false);
+    navigate("/");
   };
 
-  const handleLogout = () => {
-    setLoggingOut(true);
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    setShowLoggingOut(true);
     setTimeout(() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("carrito");
-
-      setIsLoggedIn(false);
-      setUser(null);
-      store.cartItems = [];
-
-      closeLogoutModal();
-      navigate("/");
+      handleLogout();
     }, 1500);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    const trimmedTerm = searchTerm.trim();
-    if (trimmedTerm !== "") {
-      setSearchTerm("");
-      navigate(`/search/${encodeURIComponent(trimmedTerm)}`);
+    if (searchTerm.trim() !== "") {
+      navigate(`/search/${encodeURIComponent(searchTerm.trim())}`);
     }
   };
 
@@ -124,10 +127,7 @@ const LayoutHeader = () => {
                 >
                   <i className="bi bi-person-circle fs-4 text-dark"></i>
                 </button>
-                <ul
-                  className="dropdown-menu dropdown-menu-end"
-                  aria-labelledby="userDropdownMobile"
-                >
+                <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdownMobile">
                   <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
                   <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
                   <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
@@ -136,11 +136,15 @@ const LayoutHeader = () => {
                     <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
                   )}
                   <li><hr className="dropdown-divider" /></li>
-                  <li><button className="dropdown-item" onClick={openLogoutModal}>Cerrar Sesión</button></li>
+                  <li>
+                    <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>Cerrar Sesión</button>
+                  </li>
                 </ul>
               </div>
             ) : (
-              <Link to="/login"><i className="bi bi-person-circle fs-4 text-dark"></i></Link>
+              <Link to="/login" role="button">
+                <i className="bi bi-person-circle fs-4 text-dark"></i>
+              </Link>
             )}
 
             <button
@@ -161,25 +165,15 @@ const LayoutHeader = () => {
               className="d-flex flex-grow-1 align-items-center me-md-4"
               onSubmit={handleSearchSubmit}
             >
-              <div className="input-group">
-                <input
-                  type="text"
-                  className="form-control rounded-pill-start"
-                  placeholder="Busca restaurantes, spas, actividades..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button
-                  className="btn btn-danger rounded-pill-end"
-                  type="submit"
-                  disabled={!searchTerm.trim()}
-                >
-                  <i className="bi bi-search"></i>
-                </button>
-              </div>
-
+              <input
+                type="text"
+                className="form-control me-2 rounded-pill"
+                placeholder="Busca restaurantes, spas, actividades..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
               <div
-                className="d-flex align-items-center bg-light px-3 py-2 rounded-pill ms-2"
+                className="d-flex align-items-center bg-light px-3 py-2 rounded-pill"
                 style={{ cursor: "pointer" }}
                 onClick={handleGetLocation}
               >
@@ -208,10 +202,7 @@ const LayoutHeader = () => {
                   >
                     <i className="bi bi-person-circle fs-4 text-dark"></i>
                   </button>
-                  <ul
-                    className="dropdown-menu dropdown-menu-end"
-                    aria-labelledby="userDropdownDesktop"
-                  >
+                  <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdownDesktop">
                     <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
                     <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
                     <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
@@ -220,11 +211,15 @@ const LayoutHeader = () => {
                       <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
                     )}
                     <li><hr className="dropdown-divider" /></li>
-                    <li><button className="dropdown-item" onClick={openLogoutModal}>Cerrar Sesión</button></li>
+                    <li>
+                      <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>Cerrar Sesión</button>
+                    </li>
                   </ul>
                 </div>
               ) : (
-                <Link to="/login"><i className="bi bi-person-circle fs-4 text-dark"></i></Link>
+                <Link to="/login" role="button">
+                  <i className="bi bi-person-circle fs-4 text-dark"></i>
+                </Link>
               )}
             </div>
           </div>
@@ -240,25 +235,62 @@ const LayoutHeader = () => {
         </div>
       </header>
 
-      {/* Modal de cierre de sesión */}
-      <Modal show={showLogoutModal} onHide={closeLogoutModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{loggingOut ? "Cerrando Sesión..." : "¿Deseas cerrar sesión?"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {loggingOut
-            ? "¡Gracias por tu visita! Cerrando sesión..."
-            : "Tu sesión actual se cerrará y volverás al inicio."}
-        </Modal.Body>
-        {!loggingOut && (
-          <Modal.Footer>
-            <Button variant="secondary" onClick={closeLogoutModal}>Cancelar</Button>
-            <Button variant="danger" onClick={handleLogout}>Cerrar Sesión</Button>
-          </Modal.Footer>
-        )}
-      </Modal>
+      {showLogoutModal && (
+        <div style={styles.overlay}>
+          <div style={styles.modal}>
+            <h5>¿Cerrar sesión?</h5>
+            <p>¿Estás seguro de que deseas cerrar sesión?</p>
+            <div className="d-flex justify-content-end gap-2">
+              <button className="btn btn-secondary" onClick={() => setShowLogoutModal(false)}>Cancelar</button>
+              <button className="btn btn-danger" onClick={confirmLogout}>Cerrar sesión</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLoggingOut && (
+        <div style={styles.loggingOut}>
+          <div className="spinner-border text-light me-2" role="status"></div>
+          <span>Cerrando sesión...</span>
+        </div>
+      )}
     </>
   );
 };
 
+const styles = {
+  overlay: {
+    position: "fixed",
+    top: 0, left: 0, width: "100%", height: "100%",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    zIndex: 1050,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  modal: {
+    backgroundColor: "#fff",
+    padding: "2rem",
+    borderRadius: "12px",
+    boxShadow: "0 0 20px rgba(0,0,0,0.2)",
+    width: "90%",
+    maxWidth: "400px"
+  },
+  loggingOut: {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    zIndex: 1051,
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    color: "white",
+    padding: "1rem 2rem",
+    borderRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    fontSize: "1rem"
+  }
+};
+
 export default LayoutHeader;
+

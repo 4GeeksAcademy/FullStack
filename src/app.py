@@ -26,6 +26,11 @@ from sqlalchemy import or_, func
 import traceback
 from api.mail_service import MailService
 from datetime import timedelta
+from flask import Flask, request, jsonify
+from werkzeug.security import generate_password_hash
+from itsdangerous import URLSafeTimedSerializer
+from api.models import db, User, PasswordResetToken
+from api.mail_service import MailService
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -2468,6 +2473,77 @@ def crear_admin():
     # Respuesta exitosa
     return jsonify({"message": "Administrador creado exitosamente"}), 201
 
+mail_service = MailService()
+serializer   = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json(force=True)
+    email = data.get('email')
+    if not email:
+        return jsonify({'message': 'Email requerido'}), 400
+
+    # Busca usuario por su correo
+    user = User.query.filter_by(correo=email).first()
+    # Siempre devolvemos HTTP 200 para no revelar si existe o no
+    if user:
+        # Genera token seguro basado en el correo
+        token = serializer.dumps(user.correo, salt='password-reset-salt')
+        # Guarda el token en BD
+        prt = PasswordResetToken(user_id=user.id, token=token)
+        db.session.add(prt)
+        db.session.commit()
+
+        # Construye el enlace de reset
+        frontend_url = os.getenv('FRONTEND_URL', 'https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev')
+        reset_link = f"{frontend_url}/reset-password?token={token}"
+
+        # Prepara y envía el email
+        subject = 'Restablece tu contraseña'
+        body = (
+            f"Hola,\n\n"
+            "Has solicitado cambiar tu contraseña. Haz clic en este enlace para hacerlo (válido 1 hora):\n\n"
+            f"{reset_link}\n\n"
+            "Si no solicitaste este cambio, puedes ignorar este mensaje."
+        )
+        mail_service.send_mail(
+            to_email=user.correo,
+            subject=subject,
+            text_content=body,
+            html_content=None
+        )
+
+    return jsonify({'message': 'Si existe esa cuenta, recibirás un email con instrucciones.'}), 200
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json(force=True)
+    token = data.get('token')
+    new_password = data.get('newPassword')
+    if not token or not new_password:
+        return jsonify({'message': 'Token y nueva contraseña requeridos'}), 400
+
+    # 1) Verifica y extrae el correo del token
+    try:
+        correo = serializer.loads(token, salt='password-reset-salt', max_age=3600)
+    except Exception:
+        return jsonify({'message': 'Token inválido o expirado'}), 400
+
+    # 2) Comprueba que el token exista
+    prt = PasswordResetToken.query.filter_by(token=token).first()
+    if not prt:
+        return jsonify({'message': 'Token no válido'}), 400
+
+    # 3) Actualiza la contraseña usando Bcrypt
+    user = User.query.get(prt.user_id)
+    hashed_pw = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    user.password = hashed_pw
+
+    # 4) Elimina el token y commitea
+    db.session.delete(prt)
+    db.session.commit()
+
+    return jsonify({'message': 'Contraseña restablecida correctamente.'}), 200
     
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')

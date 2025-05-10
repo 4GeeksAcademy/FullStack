@@ -623,6 +623,39 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       }
+
+    });
+
+    if (userResp.ok) {
+      const userData = await userResp.json();
+
+      // Guardamos directamente los datos del usuario (incluyendo el role) en localStorage
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Actualiza el estado del store si lo necesitas
+      setStore({ user: userData });
+
+      return true; // El login fue exitoso
+    } else {
+      // Si no conseguimos los datos del usuario, se guarda un objeto básico
+      localStorage.setItem('user', JSON.stringify({
+        correo: correo,
+        role: 'cliente'
+      }));
+      return true;
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    return false; // Si ocurre un error, retornamos false
+  }
+},
+setCartItems: (items) => {
+  setStore({ cartItems: items });
+},
+
+
+
+
     },
   };
 };

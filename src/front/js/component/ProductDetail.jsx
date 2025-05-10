@@ -17,7 +17,6 @@ const ProductDetail = () => {
 
   const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
 
-  // Nueva función para determinar la categoría basada en el ID
   const determineCategory = (offerId) => {
     if (typeof offerId === 'string' && offerId.startsWith('temp-')) {
       const categoryPrefix = offerId.split('-')[1];
@@ -28,16 +27,13 @@ const ProductDetail = () => {
         default: return '';
       }
     }
-    
     if (store.serviciosGastronomia.some(o => o.id === offerId)) return 'gastronomia';
     if (store.serviciosBelleza.some(o => o.id === offerId)) return 'belleza';
     if (store.serviciosViajes.some(o => o.id === offerId)) return 'viajes';
-    
     return '';
   };
 
   useEffect(() => {
-    // Si viene de navegación directa (con ID en la URL)
     if (id) {
       const category = determineCategory(id);
       setCurrentCategory(category);
@@ -68,43 +64,25 @@ const ProductDetail = () => {
         setLoading(false);
       }
     };
-
     loadData();
   }, [currentCategory]);
 
   useEffect(() => {
     if (loading) return;
-
     const findProduct = () => {
-      // Si tenemos offer del location.state, usamos ese
       if (locationOffer) return locationOffer;
-
-      // Si tenemos ID de la URL, buscamos en las categorías
       if (id) {
-        // Para IDs temporales (de FeaturedDeals)
         if (typeof id === 'string' && id.startsWith('temp-')) {
           const title = id.split('-').slice(2).join(' ');
-          const allOffers = [
-            ...store.serviciosGastronomia,
-            ...store.serviciosBelleza,
-            ...store.serviciosViajes
-          ];
+          const allOffers = [...store.serviciosGastronomia, ...store.serviciosBelleza, ...store.serviciosViajes];
           return allOffers.find(o => o.title === title);
         }
-
-        // Para IDs numéricos
         const numericId = parseInt(id);
-        const allOffers = [
-          ...store.serviciosGastronomia,
-          ...store.serviciosBelleza,
-          ...store.serviciosViajes
-        ];
+        const allOffers = [...store.serviciosGastronomia, ...store.serviciosBelleza, ...store.serviciosViajes];
         return allOffers.find(o => o.id === numericId);
       }
-
       return null;
     };
-
     const foundProduct = findProduct();
     setCompleteOffer(foundProduct);
   }, [id, locationOffer, store, loading]);
@@ -132,21 +110,30 @@ const ProductDetail = () => {
   const displayImage = displayData.image || displayData.imagen || defaultImage;
   const displayDescription = displayData.descripcion || displayData.description || "No hay descripción disponible.";
 
-  // Manejo de precios
   let actualPrice = displayData.price || displayData.precio || displayData.originalPrice || 1000;
   let actualDiscountPrice = displayData.discountPrice || Math.round(actualPrice * 0.7);
-  
   if (actualDiscountPrice >= actualPrice) {
     actualDiscountPrice = Math.round(actualPrice * 0.7);
   }
-
   const finalDiscount = Math.round(((actualPrice - actualDiscountPrice) / actualPrice) * 100);
-  
+
   const addToCart = () => {
     actions.addToCart({
       ...displayData,
       discountPrice: actualDiscountPrice,
       originalPrice: actualPrice
+    });
+  };
+
+  const handleBuyNow = () => {
+    navigate("/checkout", {
+      state: {
+        item: {
+          ...displayData,
+          discountPrice: actualDiscountPrice,
+          originalPrice: actualPrice
+        }
+      }
     });
   };
 
@@ -170,27 +157,18 @@ const ProductDetail = () => {
                 src={displayImage}
                 alt={displayTitle}
                 className="img-fluid"
-                style={{ 
-                  height: "auto", 
-                  maxHeight: "500px", 
-                  objectFit: "cover",
-                  backgroundColor: "#f8f9fa"
-                }}
-                onError={(e) => {
-                  e.target.src = defaultImage;
-                }}
+                style={{ height: "auto", maxHeight: "500px", objectFit: "cover", backgroundColor: "#f8f9fa" }}
+                onError={(e) => { e.target.src = defaultImage; }}
               />
             </Card>
           </Col>
           <Col md={6}>
             <div className="p-3">
               <h2 className="mb-3">{displayTitle}</h2>
-              
               <div className="d-flex align-items-center mb-3">
                 {renderStars(displayData.rating || 0)}
                 <span className="ms-2 text-muted">({displayData.reviews || 0} reseñas)</span>
               </div>
-              
               <div className="mb-4">
                 <div className="d-flex align-items-center">
                   <h3 className="text-danger fw-bold mb-0">${actualDiscountPrice}</h3>
@@ -199,23 +177,22 @@ const ProductDetail = () => {
                 </div>
                 <p className="text-success mt-2 mb-0">{displayData.buyers || 0} personas ya han comprado esta oferta</p>
               </div>
-              
               <div className="mb-4">
                 <h5 className="mb-2">Descripción:</h5>
                 <p className="text-muted">{displayDescription}</p>
               </div>
-              
               {displayData.city && (
                 <div className="mb-4">
                   <h5 className="mb-2">Ubicación:</h5>
                   <p className="text-muted">{displayData.city}</p>
                 </div>
               )}
-              
-              <Button variant="danger" onClick={addToCart} className="btn-lg w-100 mb-3">
+              <Button variant="danger" onClick={addToCart} className="btn-lg w-100 mb-2">
                 Agregar al carrito
               </Button>
-              
+              <Button variant="success" onClick={handleBuyNow} className="btn-lg w-100 mb-3">
+                Comprar ahora
+              </Button>
               <div className="alert alert-light border mt-4">
                 <small className="text-muted">
                   <i className="bi bi-shield-check me-2"></i>

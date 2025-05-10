@@ -15,7 +15,6 @@ const CartPage = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastProgress, setToastProgress] = useState(100);
 
-    // Cargar carrito al iniciar
     useEffect(() => {
         actions.loadCartFromLocalStorage();
     }, []);
@@ -27,7 +26,18 @@ const CartPage = () => {
         const newQuantity = item.quantity + change;
         if (newQuantity < 1) return;
 
-        actions.updateQuantity(id, newQuantity);
+        setToastMessage("Actualizando cantidad...");
+        setToastVisible(true);
+
+        const success = actions.updateQuantity(id, newQuantity);
+
+        if (success) {
+            setToastMessage("Cantidad actualizada");
+            setTimeout(() => setToastVisible(false), 1000);
+        } else {
+            setToastMessage("Error al actualizar");
+            setTimeout(() => setToastVisible(false), 2000);
+        }
     };
 
     const handleRemoveItem = (id) => {
@@ -39,8 +49,10 @@ const CartPage = () => {
     };
 
     const confirmRemoveItem = () => {
-        if (itemToRemove) {
-            actions.removeItemFromCart(itemToRemove.id);
+        if (!itemToRemove) return;
+
+        const success = actions.removeItemFromCart(itemToRemove.id);
+        if (success) {
             setShowModal(false);
             setToastMessage(`Producto eliminado: ${itemToRemove.title}`);
             setToastVisible(true);
@@ -55,59 +67,50 @@ const CartPage = () => {
                     setToastVisible(false);
                 }
             }, 50);
+        } else {
+            setToastMessage("Error al eliminar el producto");
+            setToastVisible(true);
         }
     };
 
-    const subtotal = cartItems.reduce(
-        (sum, item) => sum + (item.discountPrice * item.quantity),
-        0
-    );
+    const subtotal = cartItems.reduce((sum, item) => sum + item.discountPrice * item.quantity, 0);
 
-    const checkLoginStatus = () => {
-        const token = localStorage.getItem("token");
-        return !!token;
-    };
+    const checkLoginStatus = () => !!localStorage.getItem("token");
 
     const handleProceedToPayment = () => {
-        // Agregar imagen junto con los demás datos del carrito
         const cartWithImages = cartItems.map(item => ({
             id: item.id,
             title: item.title,
             quantity: item.quantity,
             price: item.discountPrice,
-            image: item.image, // Añadimos la imagen del producto
-            user_id: item.user_id // Aseguramos que el user_id esté presente
+            image: item.image,
+            user_id: item.user_id
         }));
 
-        // Mostrar los datos antes de proceder al pago (solo para pruebas)
         console.log("Carrito con imágenes:", cartWithImages);
-    
-        // Verificar el estado de login
+
         if (checkLoginStatus()) {
-            // Enviar estos datos al backend para procesar el pago
-            // Aquí iría la lógica para enviar los datos al backend con la imagen
-            navigate('/checkout'); // Redirigir a la página de checkout
+            navigate('/checkout');
         } else {
-            navigate('/login'); // Redirigir a login si no está logueado
+            navigate('/login');
         }
     };
 
     return (
         <div className="container py-5 position-relative">
-            <h2 className="mb-4">My Cart</h2>
+            <h2 className="mb-4">Mi Carrito</h2>
 
             {cartItems.length === 0 ? (
                 <div className="text-center py-5">
-                    <p className="text-muted mb-3">Your Cart is Empty</p>
+                    <p className="text-muted mb-3">Tu carrito está vacío</p>
                     <button className="btn btn-danger" onClick={() => navigate('/')}>
-                        Browse Offers
+                        Ver Ofertas
                     </button>
                 </div>
             ) : (
                 <>
                     <div className="list-group mb-4">
                         {cartItems.map(item => (
-                            console.log(item), // Verificar el contenido del item
                             <div key={item.id} className="list-group-item d-flex align-items-center">
                                 <img
                                     src={item.image}
@@ -119,13 +122,13 @@ const CartPage = () => {
                                     <h5 className="mb-1">{item.title}</h5>
                                     <small className="text-muted">{item.city}</small>
                                     <div className="d-flex justify-content-between align-items-center mt-2">
-                                        <div className="btn-group" role="group">
+                                        <div className="btn-group">
                                             <button
-                                                className={`btn btn-outline-secondary ${item.quantity <= 1 ? 'disabled' : ''}`}
+                                                className="btn btn-outline-secondary"
                                                 onClick={() => handleUpdateQuantity(item.id, -1)}
                                                 disabled={item.quantity <= 1}
                                             >
-                                                -
+                                                −
                                             </button>
                                             <span className="btn btn-outline-light border text-dark px-3">
                                                 {item.quantity}
@@ -143,7 +146,7 @@ const CartPage = () => {
                                 <button
                                     className="btn btn-link text-danger ms-3"
                                     onClick={() => handleRemoveItem(item.id)}
-                                    aria-label="Remove item"
+                                    aria-label="Eliminar"
                                 >
                                     <i className="bi bi-trash"></i>
                                 </button>
@@ -157,27 +160,24 @@ const CartPage = () => {
                             <span>€{subtotal.toFixed(2)}</span>
                         </div>
                         <div className="d-flex justify-content-between mb-2">
-                            <span>Shipping</span>
-                            <span>Free</span>
+                            <span>Envío</span>
+                            <span>Gratis</span>
                         </div>
                         <div className="d-flex justify-content-between fw-bold fs-5 mb-4">
                             <span>Total</span>
                             <span>€{subtotal.toFixed(2)}</span>
                         </div>
-                        <button 
-                            onClick={handleProceedToPayment} 
-                            className="btn btn-danger w-100 py-2"
-                        >
+                        <button onClick={handleProceedToPayment} className="btn btn-danger w-100 py-2">
                             Pagar Ahora
                         </button>
                     </div>
                 </>
             )}
 
-            {/* Modal de Confirmación */}
+            {/* Modal de confirmación */}
             {showModal && (
-                <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered" role="document">
+                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Confirmar eliminación</h5>
@@ -185,40 +185,32 @@ const CartPage = () => {
                             </div>
                             <div className="modal-body">
                                 <p>
-                                    ¿Estás seguro que deseas eliminar {
-                                        itemToRemove?.quantity > 1 
-                                            ? `los ${itemToRemove.quantity} productos` 
-                                            : `el producto "${itemToRemove?.title}"`
+                                    ¿Eliminar {
+                                        itemToRemove?.quantity > 1
+                                            ? `${itemToRemove.quantity} unidades`
+                                            : `"${itemToRemove?.title}"`
                                     } del carrito?
                                 </p>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                                <button type="button" className="btn btn-danger" onClick={confirmRemoveItem}>Eliminar</button>
+                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                                <button className="btn btn-danger" onClick={confirmRemoveItem}>Eliminar</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Toast de eliminación */}
+            {/* Toast */}
             {toastVisible && (
                 <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 1055 }}>
-                    <div className="toast show align-items-center text-white bg-danger border-0">
-                        <div className="d-flex">
-                            <div className="toast-body">
-                                {toastMessage}
+                    <div className="toast show bg-dark text-white">
+                        <div className="toast-body">
+                            {toastMessage}
+                            <div className="progress mt-2" style={{ height: '4px' }}>
+                                <div className="progress-bar bg-danger" style={{ width: `${toastProgress}%` }}></div>
                             </div>
-                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setToastVisible(false)}></button>
                         </div>
-                        <div 
-                            style={{
-                                height: '5px',
-                                width: `${toastProgress}%`,
-                                backgroundColor: 'white',
-                                transition: 'width 0.05s linear'
-                            }}
-                        />
                     </div>
                 </div>
             )}
@@ -226,4 +218,4 @@ const CartPage = () => {
     );
 };
 
-export default CartPage; 
+export default CartPage;

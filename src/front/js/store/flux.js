@@ -72,98 +72,80 @@ const getState = ({ getStore, getActions, setStore }) => {
         getActions().changeColor(0, "green");
       },
 
-      saveCartToLocalStorage: () => {
-        const store = getStore();
-        try {
-          localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
-          return true;
-        } catch (error) {
-          console.error("Error saving cart to localStorage:", error);
-          return false;
-        }
-      },
-      loadCartFromLocalStorage: () => {
-        try {
-          const storedCart = localStorage.getItem("cartItems");
-          if (storedCart) {
-            const parsedCart = JSON.parse(storedCart);
-            setStore({ cartItems: parsedCart });
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Error loading cart from localStorage:", error);
-          return false;
-        }
-      },
+     saveCartToLocalStorage: () => {
+  const store = getStore();
+  try {
+    localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+    return true;
+  } catch (error) {
+    console.error("Error saving cart to localStorage:", error);
+    return false;
+  }
+},
 
-      saveCartToLocalStorage: () => {
-        const store = getStore();
-        try {
-          localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
-          return true;
-        } catch (error) {
-          console.error("Error saving cart to localStorage:", error);
-          return false;
-        }
-      },
+loadCartFromLocalStorage: () => {
+  try {
+    const storedCart = localStorage.getItem("cartItems");
+    if (storedCart) {
+      const parsedCart = JSON.parse(storedCart);
+      setStore({ cartItems: parsedCart });
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Error loading cart from localStorage:", error);
+    return false;
+  }
+},
 
-      loadCartFromLocalStorage: () => {
-        try {
-          const storedCart = localStorage.getItem("cartItems");
-          if (storedCart) {
-            const parsedCart = JSON.parse(storedCart);
-            setStore({ cartItems: parsedCart });
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Error loading cart from localStorage:", error);
-          return false;
-        }
-      },
+addToCart: (item) => {
+  const store = getStore();
+  const existingItem = store.cartItems.find((cartItem) => cartItem.id === item.id);
 
-      addToCart: (item) => {
-        const store = getStore();
-        const existingItem = store.cartItems.find(
-          (cartItem) => cartItem.id === item.id
-        );
+  let updatedCart;
 
-        let updatedCart;
+  if (existingItem) {
+    updatedCart = store.cartItems.map((cartItem) =>
+      cartItem.id === item.id
+        ? { ...cartItem, quantity: cartItem.quantity + 1 }
+        : cartItem
+    );
+  } else {
+    updatedCart = [...store.cartItems, { ...item, quantity: 1 }];
+  }
 
-        if (existingItem) {
-          updatedCart = store.cartItems.map((cartItem) =>
-            cartItem.id === item.id
-              ? { ...cartItem, quantity: cartItem.quantity + 1 }
-              : cartItem
-          );
-        } else {
-          updatedCart = [...store.cartItems, { ...item, quantity: 1 }];
-        }
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();
+},
+      
+updateQuantity: (id, newQuantity) => {
+  const store = getStore();
 
-        setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage();
-        return true;
-      },
+  // Validación básica
+  if (newQuantity < 1) {
+    console.error("La cantidad no puede ser menor a 1");
+    return false;
+  }
 
-      removeItemFromCart: (id) => {
-        const store = getStore();
-        const updatedCart = store.cartItems.filter((item) => item.id !== id);
-        setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage();
-        return true;
-      },
+  const itemIndex = store.cartItems.findIndex(item => item.id === id);
+  if (itemIndex === -1) {
+    console.error("Ítem no encontrado en el carrito");
+    return false;
+  }
 
-      updateQuantity: (id, newQuantity) => {
-        if (newQuantity < 1) return false;
-        const store = getStore();
-        const updatedCart = store.cartItems.map((item) =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        );
-        setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage();
-        return true;
-      },
+  const updatedCart = store.cartItems.map((item, index) => 
+    index === itemIndex ? { ...item, quantity: newQuantity } : item
+  );
+
+  try {
+    setStore({ cartItems: updatedCart });
+    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar la cantidad:", error);
+    return false;
+  }
+},
 
       initializeApp: () => {
         getActions().loadCartFromLocalStorage();
@@ -270,37 +252,20 @@ const getState = ({ getStore, getActions, setStore }) => {
         setStore({ ofertasDisponibles: nuevasOfertas });
       },
 
-      // Agregar item al carrito
-      addToCart: (item) => {
-        const store = getStore();
-        // Comprobamos si el item ya está en el carrito
-        const existingItem = store.cartItems.find(
-          (cartItem) => cartItem.id === item.id
-        );
-
-        if (existingItem) {
-          // Si ya existe, solo aumentamos la cantidad
-          const updatedCart = store.cartItems.map((cartItem) =>
-            cartItem.id === item.id
-              ? { ...cartItem, quantity: cartItem.quantity + 1 }
-              : cartItem
-          );
-          setStore({ cartItems: updatedCart });
-        } else {
-          // Si no existe, agregamos el item con cantidad 1
-          setStore({
-            cartItems: [...store.cartItems, { ...item, quantity: 1 }],
-          });
-        }
-      },
+     
 
       // Eliminar item del carrito
-      removeItemFromCart: (id) => {
-        const store = getStore();
-        setStore({
-          cartItems: store.cartItems.filter((item) => item.id !== id),
-        });
-      },
+    removeItemFromCart: (id) => {
+  const store = getStore();
+  const updatedCart = store.cartItems.filter((item) => item.id !== id);
+  
+  setStore({ cartItems: updatedCart });
+  
+  // Actualizar localStorage inmediatamente
+  localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+  
+  return true; // Para confirmar que se eliminó
+},
 
       // Actualizar cantidad de un item en el carrito
       updateQuantity: (id, newQuantity) => {

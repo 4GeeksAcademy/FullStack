@@ -17,7 +17,7 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
   } = offer;
 
   // Imagen por defecto
-  const defaultImage = "https://images.unsplash.com/photo-1526397751294-331021109fbd";
+  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
 
   // Usar el título correcto (title o nombre)
   const displayTitle = title || nombre || "Sin título";

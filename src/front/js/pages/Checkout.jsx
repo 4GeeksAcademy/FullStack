@@ -17,11 +17,31 @@ const Checkout = () => {
   const fetchClientSecret = useCallback(() => {
     setError(null);
 
+    // Obtener el token de localStorage
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      return;
+    }
+
+    // Log para verificar cartItems
+    console.log("Cart Items to be sent to the backend:", cartItems);
+
     fetch(`${process.env.BACKEND_URL}/create-checkout-session`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
       body: JSON.stringify({
-        items: cartItems,
+        items: cartItems.map(item => ({
+          title: item.title,
+          discountPrice: item.discountPrice,
+          quantity: item.quantity,
+          image: item.image,  // Asegúrate de que existe en cada item
+          user_id: item.user_id  // Aquí agregamos el user_id
+        })),
         total: subtotal
       })
     })
@@ -35,6 +55,7 @@ const Checkout = () => {
         return res.json();
       })
       .then((data) => {
+        console.log("Response from server:", data); // Log para ver la respuesta completa del backend
         if (!data.clientSecret) {
           throw new Error("Client secret not found in response.");
         }

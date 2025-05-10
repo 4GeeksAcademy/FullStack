@@ -62,7 +62,14 @@ const SpecialOffersCarousel = () => {
                     <button
                       className="btn btn-outline-danger btn-sm mt-3 w-100"
                       onClick={() =>
-                        navigate("/product-detail", { state: { offer } }) // 🔴 Navegamos al detalle
+                        navigate("/product-detail", {
+                          state: {
+                            offer: {
+                              ...offer,
+                              category: "ofertas" // Añadir la categoría explícitamente
+                            }
+                          }
+                        })
                       }
                     >
                       Más información
@@ -96,11 +103,10 @@ const SpecialOffersCarousel = () => {
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index * CARDS_PER_PAGE)}
-                className={`btn btn-sm rounded-circle mx-1 ${
-                  currentIndex === index * CARDS_PER_PAGE
+                className={`btn btn-sm rounded-circle mx-1 ${currentIndex === index * CARDS_PER_PAGE
                     ? "btn-danger"
                     : "btn-secondary"
-                }`}
+                  }`}
                 style={{ width: "12px", height: "12px", padding: 0 }}
               ></button>
             ))}

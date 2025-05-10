@@ -10,43 +10,37 @@ const FeaturedDeals = ({ onViewService = () => {} }) => {
   // Obtener las ofertas asegurando que existan y tengan ID
   const getValidOffers = (offers, count) => {
     return offers
-      .filter(offer => offer && offer.id) // Filtramos ofertas válidas con ID
-      .slice(0, count); // Tomamos solo el número necesario
+      .filter(offer => offer && offer.id)
+      .slice(0, count);
   };
 
-  // Obtener ofertas destacadas
+  // Obtener ofertas destacadas con identificadores únicos
   const gastronomia = getValidOffers(store.serviciosGastronomia, 1)[0];
   const belleza = getValidOffers(store.serviciosBelleza, 1)[0];
   const viajes = getValidOffers(store.serviciosViajes, 2);
 
-  // Combinar todas las ofertas
-  const deals = [gastronomia, belleza, ...viajes].filter(offer => offer);
+  // Combinar todas las ofertas con identificador de origen
+  const deals = [
+    gastronomia ? { ...gastronomia, origin: 'featured-gastronomia' } : null,
+    belleza ? { ...belleza, origin: 'featured-belleza' } : null,
+    ...viajes.map(v => v ? { ...v, origin: 'featured-viajes' } : null)
+  ].filter(offer => offer);
 
   // Función para manejar el click en una card
   const handleViewOffer = (offer) => {
     if (!offer || !offer.id) return;
     
-    // Solución especial para "Ruta del vino en Mendoza"
-    const uniqueId = offer.id === 2 && offer.title === "Ruta del vino en Mendoza" 
-      ? '2-ruta-del-vino-en-mendoza' 
-      : offer.id;
-    
-    navigate(`/product-detail/${uniqueId}`, {
+    navigate(`/product-detail`, {
       state: {
-        offer,
-        category: getCategory(offer.id)
+        offer: {
+          ...offer,
+          // Forzamos la categoría correcta basada en el origen
+          category: offer.origin.replace('featured-', '')
+        }
       }
     });
     
     onViewService(offer);
-  };
-
-  // Función para determinar categoría
-  const getCategory = (offerId) => {
-    if (store.serviciosGastronomia.some(o => o.id === offerId)) return 'gastronomia';
-    if (store.serviciosBelleza.some(o => o.id === offerId)) return 'belleza';
-    if (store.serviciosViajes.some(o => o.id === offerId)) return 'viajes';
-    return '';
   };
 
   return (
@@ -55,7 +49,7 @@ const FeaturedDeals = ({ onViewService = () => {} }) => {
         <h2 className="mb-4 fw-bold fs-4">Ofertas destacadas</h2>
         <div className="row g-4">
           {deals.map((deal) => (
-            <div className="col-12 col-md-6 col-lg-3" key={deal.id}>
+            <div className="col-12 col-md-6 col-lg-3" key={`${deal.id}-${deal.origin}`}>
               <CategoryCard 
                 offer={deal} 
                 onViewService={() => handleViewOffer(deal)}

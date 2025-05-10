@@ -14,7 +14,7 @@ const RelatedContent = () => {
   });
 
   const categories = [
-    { id: "Belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
+    { id: "belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
     { id: "gastronomia", name: "Gastronomía", deals: store.serviciosGastronomia || [] },
     { id: "viajes", name: "Viajes", deals: store.serviciosViajes || [] },
   ];
@@ -42,13 +42,14 @@ const RelatedContent = () => {
       buyers: deal.buyers || 0,
       descripcion: deal.descripcion || "",
       city: deal.city || "",
-      category: categoryId // Añadimos explícitamente la categoría
+      category: categoryId,
+      ...deal
     };
 
     navigate(`/product-detail`, {
       state: { 
         offer: offer,
-        category: categoryId // Pasamos la categoría como dato separado también
+        category: categoryId
       }
     });
   };
@@ -98,14 +99,15 @@ const RelatedContent = () => {
                   </button>
 
                   <div className="row gx-3">
-                    {dealsToShow.map((deal) => (
-                      <div key={`${category.id}-${deal.id}`} className="col-12 col-sm-6 col-md-3">
+                    {dealsToShow.map((deal, index) => (
+                      <div key={`${category.id}-${deal.id}-${index}`} className="col-12 col-sm-6 col-md-3">
                         <CategoryCard
                           offer={{
                             ...deal,
                             title: deal.title || deal.nombre,
                             image: deal.image || deal.imagen,
-                            price: deal.price || deal.precio
+                            price: deal.price || deal.precio,
+                            category: category.id
                           }}
                           onViewService={() => handleNavigate(deal, category.id)}
                         />

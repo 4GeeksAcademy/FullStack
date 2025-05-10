@@ -72,103 +72,81 @@ const getState = ({ getStore, getActions, setStore }) => {
         getActions().changeColor(0, "green");
       },
 
-      saveCartToLocalStorage: () => {
-        const store = getStore();
-        try {
-          localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
-          return true;
-        } catch (error) {
-          console.error("Error saving cart to localStorage:", error);
-          return false;
-        }
-      },
-      loadCartFromLocalStorage: () => {
-        try {
-          const storedCart = localStorage.getItem("cartItems");
-          if (storedCart) {
-            const parsedCart = JSON.parse(storedCart);
-            setStore({ cartItems: parsedCart });
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Error loading cart from localStorage:", error);
-          return false;
-        }
-      },
+initializeApp: () => {
+    getActions().loadCartFromLocalStorage();
+    getActions().loadUserFromStorage();
+  },
 
-      saveCartToLocalStorage: () => {
-        const store = getStore();
-        try {
-          localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
-          return true;
-        } catch (error) {
-          console.error("Error saving cart to localStorage:", error);
-          return false;
-        }
-      },
 
-      loadCartFromLocalStorage: () => {
-        try {
-          const storedCart = localStorage.getItem("cartItems");
-          if (storedCart) {
-            const parsedCart = JSON.parse(storedCart);
-            setStore({ cartItems: parsedCart });
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Error loading cart from localStorage:", error);
-          return false;
-        }
-      },
+ saveCartToLocalStorage: () => {
+  const store = getStore();
+  try {
+    localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+    return true;
+  } catch (error) {
+    console.error("Error saving cart to localStorage:", error);
+    return false;
+  }
+},
 
-      addToCart: (item) => {
-        const store = getStore();
-        const existingItem = store.cartItems.find(
-          (cartItem) => cartItem.id === item.id
-        );
+loadCartFromLocalStorage: () => {
+  try {
+    const storedCart = localStorage.getItem("cartItems");
+    if (storedCart) {
+      const parsedCart = JSON.parse(storedCart);
+      setStore({ cartItems: parsedCart });
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Error loading cart from localStorage:", error);
+    return false;
+  }
+},
 
-        let updatedCart;
+addToCart: (item) => {
+  const store = getStore();
+  
+  // Validación de campos obligatorios
+  if (!item.id || !item.title || !item.category) {
+    console.error("El producto no tiene ID, título o categoría válidos");
+    return false;
+  }
 
-        if (existingItem) {
-          updatedCart = store.cartItems.map((cartItem) =>
-            cartItem.id === item.id
-              ? { ...cartItem, quantity: cartItem.quantity + 1 }
-              : cartItem
-          );
-        } else {
-          updatedCart = [...store.cartItems, { ...item, quantity: 1 }];
-        }
+  // Verificar si el producto ya existe en el carrito
+  const existingIndex = store.cartItems.findIndex(cartItem => 
+    String(cartItem.id) === String(item.id) && 
+    cartItem.title === item.title &&
+    cartItem.category === item.category
+  );
 
-        setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage();
-        return true;
-      },
+  let updatedCart;
+  
+  if (existingIndex >= 0) {
+    // Actualizar cantidad si ya existe
+    updatedCart = [...store.cartItems];
+    updatedCart[existingIndex] = {
+      ...updatedCart[existingIndex],
+      quantity: updatedCart[existingIndex].quantity + 1
+    };
+  } else {
+    // Agregar nuevo producto con categoría
+    updatedCart = [...store.cartItems, { 
+      ...item, 
+      quantity: 1,
+      category: item.category // Asegurar que la categoría está incluida
+    }];
+  }
 
-      removeItemFromCart: (id) => {
-        const store = getStore();
-        const updatedCart = store.cartItems.filter((item) => item.id !== id);
-        setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage();
-        return true;
-      },
+  // Actualizar estado y almacenamiento
+  setStore({ cartItems: updatedCart });
+  localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+  
+  return true;
+},
 
-      updateQuantity: (id, newQuantity) => {
-        if (newQuantity < 1) return false;
-        const store = getStore();
-        const updatedCart = store.cartItems.map((item) =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        );
-        setStore({ cartItems: updatedCart });
-        getActions().saveCartToLocalStorage();
-        return true;
-      },
+      
 
-      initializeApp: () => {
-        getActions().loadCartFromLocalStorage();
-        getActions().loadUserFromStorage();
-      },
       
    registerUser: async ({ correo, password, telefono, direccion, ciudad, nombre, apellido }) => {
     try {
@@ -270,47 +248,65 @@ const getState = ({ getStore, getActions, setStore }) => {
         setStore({ ofertasDisponibles: nuevasOfertas });
       },
 
-      // Agregar item al carrito
-      addToCart: (item) => {
-        const store = getStore();
-        // Comprobamos si el item ya está en el carrito
-        const existingItem = store.cartItems.find(
-          (cartItem) => cartItem.id === item.id
-        );
-
-        if (existingItem) {
-          // Si ya existe, solo aumentamos la cantidad
-          const updatedCart = store.cartItems.map((cartItem) =>
-            cartItem.id === item.id
-              ? { ...cartItem, quantity: cartItem.quantity + 1 }
-              : cartItem
-          );
-          setStore({ cartItems: updatedCart });
-        } else {
-          // Si no existe, agregamos el item con cantidad 1
-          setStore({
-            cartItems: [...store.cartItems, { ...item, quantity: 1 }],
-          });
-        }
-      },
+     
 
       // Eliminar item del carrito
-      removeItemFromCart: (id) => {
-        const store = getStore();
-        setStore({
-          cartItems: store.cartItems.filter((item) => item.id !== id),
-        });
-      },
+  removeItemFromCart: (id, title, category) => {
+  const store = getStore();
+  
+  // Versión mejorada del filtro con categoría
+  const updatedCart = store.cartItems.filter(item => {
+    return !(
+      String(item.id) === String(id) && 
+      item.title === title &&
+      item.category === category
+    );
+  });
 
+  // Actualizar el store y localStorage
+  setStore({ cartItems: updatedCart });
+  localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+  
+  return true;
+},
       // Actualizar cantidad de un item en el carrito
-      updateQuantity: (id, newQuantity) => {
-        const store = getStore();
-        if (newQuantity < 1) return;
-        const updatedCart = store.cartItems.map((item) =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        );
-        setStore({ cartItems: updatedCart });
-      },
+    
+updateQuantity: (id, title, category, newQuantity) => {
+  const store = getStore();
+  
+  // Validación mejorada
+  if (newQuantity < 1 || newQuantity > 99) {
+    console.error("La cantidad debe estar entre 1 y 99");
+    return false;
+  }
+
+  // Encontrar el índice del item con todos los identificadores
+  const itemIndex = store.cartItems.findIndex(item => 
+    item.id === id && 
+    item.title === title &&
+    item.category === category
+  );
+  
+  if (itemIndex === -1) {
+    console.error("Ítem no encontrado en el carrito");
+    return false;
+  }
+
+  // Crear nuevo array con la cantidad actualizada
+  const updatedCart = store.cartItems.map((item, index) => 
+    index === itemIndex ? { ...item, quantity: newQuantity } : item
+  );
+
+  try {
+    // Actualizar store y localStorage
+    setStore({ cartItems: updatedCart });
+    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar la cantidad:", error);
+    return false;
+  }
+},
 
       // Calcular subtotal del carrito
       calculateSubtotal: () => {
@@ -628,7 +624,19 @@ loginUser: async ({ correo, password }) => {
 },
 
 setCartItems: (items) => {
-  setStore({ cartItems: items });
+  // Validar que items sea un array
+  if (!Array.isArray(items)) {
+    console.error("Los items del carrito deben ser un array");
+    return;
+  }
+  
+  // Filtrar items inválidos
+  const validItems = items.filter(item => 
+    item && item.id !== undefined && item.title !== undefined
+  );
+  
+  setStore(prev => ({ ...prev, cartItems: validItems }));
+  localStorage.setItem("cartItems", JSON.stringify(validItems));
 },
 
     },

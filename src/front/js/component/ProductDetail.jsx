@@ -15,7 +15,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(locationCategory);
 
-  const defaultImage = "https://img.freepik.com/free-photo/beautiful-shot-green-forest-trees-with-wooden-path_181624-20615.jpg";
+  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
 
   const determineCategory = (offerId) => {
     if (typeof offerId === 'string' && offerId.startsWith('temp-')) {

@@ -16,9 +16,9 @@ const FormCrearServicio = () => {
   const [mostrarModalExito, setMostrarModalExito] = useState(false);
   const [redirectInfo, setRedirectInfo] = useState({ path: null, categoryName: null });
 
-  const MAX_TITULO = 255;
+  const MAX_TITULO = 100;
   const MAX_DESCRIPCION = 500;
-  const MAX_CIUDAD = 100;
+  const MAX_CIUDAD = 50;
 
   const navigate = useNavigate();
   const backendUrl = process.env.BACKEND_URL;
@@ -128,7 +128,7 @@ const FormCrearServicio = () => {
       descripcion,
       discountPrice: discountPrice,
       id: null,
-      image: imagen || null,
+      image: imagen || "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=",
       price: precioNumerico,
       rating: null,
       reviews: null,
@@ -248,7 +248,7 @@ const FormCrearServicio = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Ciudad</label>
+              <label className="form-label">Locación</label>
               <input
                 type="text"
                 className="form-control"
@@ -313,7 +313,7 @@ const FormCrearServicio = () => {
               <p><strong>Título:</strong> {redirectInfo.serviceData?.titulo}</p>
               <p><strong>Precio:</strong> ${formatearPrecio(redirectInfo.serviceData?.precio)}</p>
               <p><strong>Categoría:</strong> {redirectInfo.serviceData?.categoria}</p>
-              <p><strong>Ciudad:</strong> {redirectInfo.serviceData?.ciudad}</p>
+              <p><strong>Locación:</strong> {redirectInfo.serviceData?.ciudad}</p>
             </div>
           </>
         }

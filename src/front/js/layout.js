@@ -35,8 +35,12 @@ import Return from "./pages/Return.jsx";
 import CreateNewsletter from "./pages/CreateNewsletter.jsx";
 import VistaReservas from "./component/VistaReservas.jsx";
 import SearchResults from "./component/SearchResults.jsx"
+
 import ForgotPasswordModal from "./component/ForgotPasswordModal.jsx"
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
+
+import VistaBusqueda from "./pages/VistaBusqueda.jsx";
+
 
 const Layout = () => {
   const basename = process.env.BASENAME || "";
@@ -74,7 +78,7 @@ const Layout = () => {
             <Route path="/mis-compras" element={<VistaMisCompras />} /> 
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/return" element={<Return />} />
-            <Route path="/search/:keyword" element={<SearchResults />} />
+            <Route path="/search/:keyword" element={<VistaBusqueda />} />
             <Route path="/mis-reservas" element={<VistaReservas />} />
             <Route path="/product-detail/:id" element={<ProductDetail />} />
             <Route path="/newsletter" element={<CreateNewsletter />} />

@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Context } from '../store/appContext';
+import { useNavigate } from 'react-router-dom';
 
 const FormMiPerfil = () => {
     const { store, actions } = useContext(Context);
+    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
+        nombre: '',
+        apellido: '',
         ciudad: '',
         direccion_line1: '',
         telefono: '',
@@ -12,6 +17,7 @@ const FormMiPerfil = () => {
         password: '',
         confirmPassword: ''
     });
+
     const [changePassword, setChangePassword] = useState(false);
     const [passwordError, setPasswordError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -24,6 +30,8 @@ const FormMiPerfil = () => {
 
             if (userData && !initialLoad) {
                 setFormData({
+                    nombre: userData.nombre || '',
+                    apellido: userData.apellido || '',
                     ciudad: userData.ciudad || '',
                     direccion_line1: userData.direccion_line1 || '',
                     telefono: userData.telefono || '',
@@ -39,13 +47,22 @@ const FormMiPerfil = () => {
         loadUserData();
     }, [store.user, initialLoad]);
 
+    useEffect(() => {
+        if (successMessage) {
+            const timer = setTimeout(() => {
+                navigate('/');
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [successMessage, navigate]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
 
         if (changePassword && (name === 'password' || name === 'confirmPassword')) {
             if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
-                setPasswordError('');
+                setPasswordError('Las contraseñas no coinciden');
             } else {
                 setPasswordError('');
             }
@@ -93,14 +110,14 @@ const FormMiPerfil = () => {
                     currentPassword: formData.currentPassword,
                     newPassword: formData.password
                 });
-                
+
                 if (!passwordSuccess) {
                     throw new Error('Error al cambiar la contraseña. Verifica tu contraseña actual.');
                 }
             }
 
             if (profileSuccess && passwordSuccess) {
-                setSuccessMessage('Perfil actualizado correctamente');
+                setSuccessMessage('Perfil actualizado correctamente. Serás redirigido al inicio en 5 segundos...');
                 setChangePassword(false);
                 setFormData(prev => ({
                     ...prev,
@@ -127,10 +144,33 @@ const FormMiPerfil = () => {
                         </div>
                         <div className="card-body">
                             {successMessage && (
-                                <div className="alert alert-success">{successMessage}</div>
+                                <div className="alert alert-success d-flex justify-content-between align-items-center">
+                                    <span>{successMessage}</span>
+                                    <a href="/" className="btn btn-outline-secondary btn-sm ms-3 fw-bold">Ir ahora</a>
+                                </div>
                             )}
 
                             <form onSubmit={handleSubmit}>
+                                {/* Nombre y Apellido - Solo visualización */}
+                                <div className="mb-3">
+                                    <label className="form-label">Nombre</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={formData.nombre || ''}
+                                        disabled
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Apellido</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={formData.apellido || ''}
+                                        disabled
+                                    />
+                                </div>
+
                                 <div className="mb-3">
                                     <label className="form-label">Correo electrónico</label>
                                     <input
@@ -150,6 +190,8 @@ const FormMiPerfil = () => {
                                         value={formData.telefono || ''}
                                         onChange={handleChange}
                                         required
+                                        pattern="[0-9]+"
+                                        placeholder="Ingresa tu número de teléfono"
                                     />
                                 </div>
 

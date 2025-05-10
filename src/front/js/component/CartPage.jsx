@@ -24,11 +24,14 @@ const CartPage = () => {
         if (!item) return;
 
         const newQuantity = item.quantity + change;
-        if (newQuantity < 1) return;
+
+        // Validación adicional en el componente
+        if (newQuantity < 1 || newQuantity > 99) return;
 
         setToastMessage("Actualizando cantidad...");
         setToastVisible(true);
 
+        // Llamar a la acción y manejar el resultado
         const success = actions.updateQuantity(id, newQuantity);
 
         if (success) {
@@ -39,7 +42,6 @@ const CartPage = () => {
             setTimeout(() => setToastVisible(false), 2000);
         }
     };
-
     const handleRemoveItem = (id) => {
         const selectedItem = cartItems.find(item => item.id === id);
         if (selectedItem) {

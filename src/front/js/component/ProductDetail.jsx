@@ -14,6 +14,9 @@ const ProductDetail = () => {
   const [completeOffer, setCompleteOffer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(locationCategory);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastProgress, setToastProgress] = useState(100);
 
   const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
 
@@ -87,6 +90,43 @@ const ProductDetail = () => {
     setCompleteOffer(foundProduct);
   }, [id, locationOffer, store, loading]);
 
+  const showToast = (message) => {
+    setToastMessage(message);
+    setToastVisible(true);
+    setToastProgress(100);
+
+    let progress = 100;
+    const interval = setInterval(() => {
+      progress -= 2;
+      setToastProgress(progress);
+      if (progress <= 0) {
+        clearInterval(interval);
+        setToastVisible(false);
+      }
+    }, 50);
+  };
+
+  const addToCart = () => {
+    actions.addToCart({
+      ...displayData,
+      discountPrice: actualDiscountPrice,
+      originalPrice: actualPrice
+    });
+    showToast("Producto agregado al carrito");
+  };
+
+  const handleBuyNow = () => {
+    navigate("/checkout", {
+      state: {
+        item: {
+          ...displayData,
+          discountPrice: actualDiscountPrice,
+          originalPrice: actualPrice
+        }
+      }
+    });
+  };
+
   if (!completeOffer && !loading) {
     return (
       <Container className="my-5">
@@ -116,26 +156,6 @@ const ProductDetail = () => {
     actualDiscountPrice = Math.round(actualPrice * 0.7);
   }
   const finalDiscount = Math.round(((actualPrice - actualDiscountPrice) / actualPrice) * 100);
-
-  const addToCart = () => {
-    actions.addToCart({
-      ...displayData,
-      discountPrice: actualDiscountPrice,
-      originalPrice: actualPrice
-    });
-  };
-
-  const handleBuyNow = () => {
-    navigate("/checkout", {
-      state: {
-        item: {
-          ...displayData,
-          discountPrice: actualDiscountPrice,
-          originalPrice: actualPrice
-        }
-      }
-    });
-  };
 
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, i) => (
@@ -204,6 +224,20 @@ const ProductDetail = () => {
         </Row>
       </Container>
       <Footer />
+
+      {/* Toast de confirmación */}
+      {toastVisible && (
+        <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 1055 }}>
+          <div className="toast show bg-dark text-white">
+            <div className="toast-body">
+              {toastMessage}
+              <div className="progress mt-2" style={{ height: '4px' }}>
+                <div className="progress-bar bg-success" style={{ width: `${toastProgress}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

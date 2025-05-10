@@ -71,8 +71,14 @@ const getState = ({ getStore, getActions, setStore }) => {
       exampleFunction: () => {
         getActions().changeColor(0, "green");
       },
+      
+initializeApp: () => {
+    getActions().loadCartFromLocalStorage();
+    getActions().loadUserFromStorage();
+  },
 
-     saveCartToLocalStorage: () => {
+
+ saveCartToLocalStorage: () => {
   const store = getStore();
   try {
     localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
@@ -118,39 +124,7 @@ addToCart: (item) => {
   getActions().saveCartToLocalStorage();
 },
       
-updateQuantity: (id, newQuantity) => {
-  const store = getStore();
 
-  // Validación básica
-  if (newQuantity < 1) {
-    console.error("La cantidad no puede ser menor a 1");
-    return false;
-  }
-
-  const itemIndex = store.cartItems.findIndex(item => item.id === id);
-  if (itemIndex === -1) {
-    console.error("Ítem no encontrado en el carrito");
-    return false;
-  }
-
-  const updatedCart = store.cartItems.map((item, index) => 
-    index === itemIndex ? { ...item, quantity: newQuantity } : item
-  );
-
-  try {
-    setStore({ cartItems: updatedCart });
-    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
-    return true;
-  } catch (error) {
-    console.error("Error al actualizar la cantidad:", error);
-    return false;
-  }
-},
-
-      initializeApp: () => {
-        getActions().loadCartFromLocalStorage();
-        getActions().loadUserFromStorage();
-      },
       
    registerUser: async ({ correo, password, telefono, direccion, ciudad, nombre, apellido }) => {
     try {
@@ -268,14 +242,37 @@ updateQuantity: (id, newQuantity) => {
 },
 
       // Actualizar cantidad de un item en el carrito
-      updateQuantity: (id, newQuantity) => {
-        const store = getStore();
-        if (newQuantity < 1) return;
-        const updatedCart = store.cartItems.map((item) =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        );
-        setStore({ cartItems: updatedCart });
-      },
+    // En el objeto actions, reemplaza la función updateQuantity con esta versión mejorada:
+updateQuantity: (id, newQuantity) => {
+  const store = getStore();
+  
+  // Validación mejorada
+  if (newQuantity < 1) {
+    console.error("La cantidad no puede ser menor a 1");
+    return false;
+  }
+
+  const itemIndex = store.cartItems.findIndex(item => item.id === id);
+  if (itemIndex === -1) {
+    console.error("Ítem no encontrado en el carrito");
+    return false;
+  }
+
+  // Crear nuevo array con la cantidad actualizada
+  const updatedCart = store.cartItems.map(item => 
+    item.id === id ? { ...item, quantity: newQuantity } : item
+  );
+
+  try {
+    // Actualizar store y localStorage
+    setStore({ cartItems: updatedCart });
+    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar la cantidad:", error);
+    return false;
+  }
+},
 
       // Calcular subtotal del carrito
       calculateSubtotal: () => {

@@ -119,7 +119,7 @@ const ProductDetail = () => {
       category: displayData.category || currentCategory
     });
     showToast("Producto agregado al carrito");
-};
+  };
 
   const handleBuyNow = () => {
     navigate("/checkout", {
@@ -175,6 +175,16 @@ const ProductDetail = () => {
     <>
       <LayoutHeader />
       <Container className="my-5">
+        {/* Botón Volver al inicio - AÑADIDO */}
+        <div className="d-flex justify-content-start mb-4">
+          <button 
+            className="btn btn-outline-secondary" 
+            onClick={() => navigate('/')}
+          >
+            <i className="bi bi-house-door me-2"></i>Volver al inicio
+          </button>
+        </div>
+        
         <Row>
           <Col md={6} className="d-flex justify-content-center mb-4">
             <Card style={{ width: "100%" }}>
@@ -188,7 +198,7 @@ const ProductDetail = () => {
               />
             </Card>
           </Col>
-          <Col md={6}>
+          <Col md={6}> {/* CORRECCIÓN: Se cambió "6" por "6" y se cerró correctamente */}
             <div className="p-3">
               <h2 className="mb-3">{displayTitle}</h2>
               <div className="d-flex align-items-center mb-3">

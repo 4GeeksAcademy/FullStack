@@ -97,6 +97,9 @@ const FormMiPerfil = () => {
 
         try {
             const updatedProfile = {
+                nombre: formData.nombre,
+                apellido: formData.apellido,
+                correo: formData.correo,
                 telefono: formData.telefono,
                 direccion_line1: formData.direccion_line1,
                 ciudad: formData.ciudad
@@ -151,23 +154,27 @@ const FormMiPerfil = () => {
                             )}
 
                             <form onSubmit={handleSubmit}>
-                                {/* Nombre y Apellido - Solo visualización */}
+                                {/* Nombre y Apellido - Ahora editables */}
                                 <div className="mb-3">
                                     <label className="form-label">Nombre</label>
                                     <input
                                         type="text"
+                                        name="nombre"
                                         className="form-control"
                                         value={formData.nombre || ''}
-                                        disabled
+                                        onChange={handleChange}
+                                        required
                                     />
                                 </div>
                                 <div className="mb-3">
                                     <label className="form-label">Apellido</label>
                                     <input
                                         type="text"
+                                        name="apellido"
                                         className="form-control"
                                         value={formData.apellido || ''}
-                                        disabled
+                                        onChange={handleChange}
+                                        required
                                     />
                                 </div>
 
@@ -175,9 +182,11 @@ const FormMiPerfil = () => {
                                     <label className="form-label">Correo electrónico</label>
                                     <input
                                         type="email"
+                                        name="correo"
                                         className="form-control"
                                         value={formData.correo || ''}
-                                        disabled
+                                        onChange={handleChange}
+                                        required
                                     />
                                 </div>
 

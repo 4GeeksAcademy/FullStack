@@ -444,7 +444,18 @@ updateQuantity: (id, title, category, newQuantity) => {
           return false;
         }
       },
-    
+      clearCart: () => {
+  // Vaciar el carrito en el estado global
+  setStore({ cartItems: [] });
+  // Eliminar el carrito del localStorage
+  localStorage.removeItem("cartItems");
+  return true;
+},
+    emptyCart: () => {
+    localStorage.removeItem("cartItems");
+    setStore({ cartItems: [] });
+    return true;
+},
     createNewsLetter: async(services) => {
       try {
         const resp = await fetch(process.env.BACKEND_URL + '/newsletteradd', {

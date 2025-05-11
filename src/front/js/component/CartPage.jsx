@@ -10,6 +10,7 @@ const CartPage = () => {
     const navigate = useNavigate();
 
     const [showModal, setShowModal] = useState(false);
+    const [showEmptyCartModal, setShowEmptyCartModal] = useState(false);
     const [itemToRemove, setItemToRemove] = useState(null);
     const [toastVisible, setToastVisible] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -20,12 +21,12 @@ const CartPage = () => {
     }, []);
 
     const handleUpdateQuantity = (id, title, category, change) => {
-        const item = cartItems.find(item => 
-            item.id === id && 
-            item.title === title && 
+        const item = cartItems.find(item =>
+            item.id === id &&
+            item.title === title &&
             item.category === category
         );
-        
+
         if (!item) return;
 
         const newQuantity = item.quantity + change;
@@ -46,15 +47,40 @@ const CartPage = () => {
     };
 
     const handleRemoveItem = (id, title, category) => {
-        const selectedItem = cartItems.find(item => 
-            String(item.id) === String(id) && 
-            item.title === title && 
+        const selectedItem = cartItems.find(item =>
+            String(item.id) === String(id) &&
+            item.title === title &&
             item.category === category
         );
-        
+
         if (selectedItem) {
             setItemToRemove(selectedItem);
             setShowModal(true);
+        }
+    };
+
+    const handleEmptyCart = () => {
+        setShowEmptyCartModal(true);
+    };
+
+    const confirmEmptyCart = () => {
+        setShowEmptyCartModal(false);
+        const success = actions.emptyCart();
+
+        if (success) {
+            setToastMessage("Carrito vaciado");
+            setToastVisible(true);
+            setToastProgress(100);
+
+            let progress = 100;
+            const interval = setInterval(() => {
+                progress -= 2;
+                setToastProgress(progress);
+                if (progress <= 0) {
+                    clearInterval(interval);
+                    setToastVisible(false);
+                }
+            }, 50);
         }
     };
 
@@ -62,13 +88,13 @@ const CartPage = () => {
         if (!itemToRemove) return;
 
         setShowModal(false);
-        
+
         const success = await actions.removeItemFromCart(
-            itemToRemove.id, 
+            itemToRemove.id,
             itemToRemove.title,
             itemToRemove.category
         );
-        
+
         if (success) {
             setToastMessage(`Producto eliminado: ${itemToRemove.title}`);
             setToastVisible(true);
@@ -87,13 +113,17 @@ const CartPage = () => {
             setToastMessage("Error al eliminar el producto");
             setToastVisible(true);
         }
-        
+
         setItemToRemove(null);
     };
 
     const closeModal = () => {
         setShowModal(false);
         setItemToRemove(null);
+    };
+
+    const closeEmptyCartModal = () => {
+        setShowEmptyCartModal(false);
     };
 
     const subtotal = cartItems.reduce((sum, item) => sum + item.discountPrice * item.quantity, 0);
@@ -117,6 +147,8 @@ const CartPage = () => {
             navigate('/login');
         }
     };
+
+    const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
         <div className="container py-5 position-relative">
@@ -189,14 +221,48 @@ const CartPage = () => {
                             <span>Total</span>
                             <span>€{subtotal.toFixed(2)}</span>
                         </div>
-                        <button onClick={handleProceedToPayment} className="btn btn-danger w-100 py-2">
-                            Pagar Ahora
-                        </button>
+                        <div className="d-flex justify-content-between gap-2">
+                            <button 
+                                onClick={handleEmptyCart} 
+                                className="btn btn-outline-danger w-50 py-2"
+                            >
+                                <i className="bi bi-trash me-2"></i>Vaciar Carrito
+                            </button>
+                            <button onClick={handleProceedToPayment} className="btn btn-success w-50 py-2">
+                                Pagar Ahora
+                            </button>
+                        </div>
                     </div>
                 </>
             )}
 
-            {/* Modal de confirmación */}
+            {/* Modal de confirmación para vaciar carrito */}
+            {showEmptyCartModal && (
+                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Vaciar carrito</h5>
+                                <button type="button" className="btn-close" onClick={closeEmptyCartModal}></button>
+                            </div>
+                            <div className="modal-body">
+                                <p>¿Estás seguro que deseas vaciar completamente tu carrito?</p>
+                                <p className="text-muted">Se eliminarán {totalItems} producto{totalItems !== 1 ? 's' : ''}</p>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn btn-secondary" onClick={closeEmptyCartModal}>
+                                    Cancelar
+                                </button>
+                                <button className="btn btn-danger" onClick={confirmEmptyCart}>
+                                    <i className="bi bi-trash me-2"></i>Vaciar Carrito
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de confirmación para eliminar item */}
             {showModal && (
                 <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">

@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Context } from "../store/appContext";
 
 const Return = () => {
   const [status, setStatus] = useState(null);
   const [customerEmail, setCustomerEmail] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { actions } = useContext(Context);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -26,6 +28,11 @@ const Return = () => {
       .then((data) => {
         setStatus(data.status);
         setCustomerEmail(data.customer_email);
+        
+        // AÑADIDO: Vaciar carrito cuando el pago es exitoso
+        if (data.status === "complete" || data.status === "paid") {
+          actions.clearCart();
+        }
       })
       .catch((error) => {
         console.error("Error al obtener el estado de la sesión:", error);
@@ -86,7 +93,3 @@ const Return = () => {
 };
 
 export default Return;
-
-
-
-

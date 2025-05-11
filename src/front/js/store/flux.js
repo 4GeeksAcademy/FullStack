@@ -451,7 +451,11 @@ updateQuantity: (id, title, category, newQuantity) => {
   localStorage.removeItem("cartItems");
   return true;
 },
-    
+    emptyCart: () => {
+    localStorage.removeItem("cartItems");
+    setStore({ cartItems: [] });
+    return true;
+},
     createNewsLetter: async(services) => {
       try {
         const resp = await fetch(process.env.BACKEND_URL + '/newsletteradd', {

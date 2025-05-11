@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 
 // Función utilitaria para normalizar textos
@@ -8,9 +8,10 @@ const normalize = (str) =>
 
 const SearchResults = () => {
   const { keyword } = useParams();
-  const { store, actions } = useContext(Context); // Traer tanto el store como los actions
+  const { store, actions } = useContext(Context);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Efecto para cargar los datos y realizar la búsqueda
   useEffect(() => {
@@ -51,7 +52,39 @@ const SearchResults = () => {
 
     setResults(filtered);
     setLoading(false);
-  }, [keyword, store, actions]); // Dependemos de store y actions
+  }, [keyword, store, actions]);
+
+  // Función para navegar al detalle del producto
+  const navigateToProductDetail = (product) => {
+    navigate("/product-detail", {
+      state: {
+        offer: {
+          ...product,
+          title: product.title || "Sin título",
+          image: product.image || "https://via.placeholder.com/300x200?text=Sin+imagen",
+          rating: product.rating || 4,
+          reviews: product.reviews || 20,
+          price: product.price || 0,
+          discountPrice: product.discountPrice || null,
+          originalPrice: product.originalPrice || null,
+          buyers: product.buyers || 0,
+          descripcion: product.descripcion || "",
+          city: product.city || ""
+        },
+        category: determineCategory(product.id)
+      }
+    });
+  };
+
+  // Función para determinar la categoría de un producto
+  const determineCategory = (productId) => {
+    if (store.serviciosViajes.some(item => item.id === productId)) return "viajes";
+    if (store.serviciosGastronomia.some(item => item.id === productId)) return "gastronomia";
+    if (store.serviciosBelleza.some(item => item.id === productId)) return "belleza";
+    if (store.serviciosOfertas.some(item => item.id === productId)) return "ofertas";
+    if (store.serviciosTop.some(item => item.id === productId)) return "top";
+    return "general";
+  };
 
   return (
     <div className="container mt-4">
@@ -91,7 +124,7 @@ const SearchResults = () => {
       ) : results.length > 0 ? (
         <div className="row">
           {results.map((item, index) => (
-            <div className="col-md-4 mb-4" key={index}>
+            <div className="col-md-4 mb-4" key={`${item.id}-${index}`}>
               <div className="card h-100 shadow-sm">
                 {item.image && (
                   <img
@@ -114,12 +147,12 @@ const SearchResults = () => {
                   </div>
                 </div>
                 <div className="card-footer bg-white border-top-0">
-                  <Link
-                    to={`/product-detail/${item.id}`}
+                  <button
+                    onClick={() => navigateToProductDetail(item)}
                     className="btn btn-danger w-100"
                   >
                     Ver oferta
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>

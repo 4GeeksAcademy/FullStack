@@ -152,7 +152,16 @@ const CartPage = () => {
 
     return (
         <div className="container py-5 position-relative">
-            <h2 className="mb-4">Mi Carrito</h2>
+            {/* Botón Volver al inicio - AÑADIDO */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2 className="mb-0">Mi Carrito</h2>
+                <button 
+                    className="btn btn-outline-secondary" 
+                    onClick={() => navigate('/')}
+                >
+                    <i className="bi bi-house-door me-2"></i>Volver al inicio
+                </button>
+            </div>
 
             {cartItems.length === 0 ? (
                 <div className="text-center py-5">

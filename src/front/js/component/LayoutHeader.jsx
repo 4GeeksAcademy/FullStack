@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Context } from "../store/appContext.js";
 import { Link, useNavigate } from "react-router-dom";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -26,7 +26,11 @@ const LayoutHeader = () => {
 
     if (token && storedUser) {
       setIsLoggedIn(true);
-      setUser(JSON.parse(storedUser));
+      const parsed = JSON.parse(storedUser);
+      setUser(parsed);
+      // detect admin role (normalize to lowercase)
+      const role = (parsed.role || "").toString().toLowerCase();
+      setUser({ ...parsed, isAdmin: role === "administrador" || role === "admin" });
       if (storedCart) {
         actions.setCartItems(JSON.parse(storedCart));
       }
@@ -133,12 +137,11 @@ const LayoutHeader = () => {
                   <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
                   <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
 
-                  {user?.role === 'Administrador' && (
-                    <>
-                      <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
-                      <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>
-                      <li><Link className="dropdown-item" to="/admin/users">Admin</Link></li>
-                    </>
+                  {user.isAdmin && (
+                    <li><Link className="dropdown-item" to="/admin">Panel Admin</Link></li>
+                  )}
+                  {user.isAdmin && (
+                    <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>
                   )}
 
                   <li><hr className="dropdown-divider" /></li>
@@ -215,15 +218,14 @@ const LayoutHeader = () => {
                     <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
                     <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
                     <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
-                    
-                    {user?.role === 'Administrador' && (
-                      <>
-                        <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
-                        <li><Link className="dropdown-item" to="/admin/users">Admin</Link></li>
-                      </>
+
+                    {user.isAdmin && (
+                      <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
                     )}
-                    
-                    <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>
+                    {user.isAdmin && (
+                      <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>
+                    )}
+
                     <li><hr className="dropdown-divider" /></li>
                     <li>
                       <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>Cerrar Sesión</button>
@@ -241,10 +243,26 @@ const LayoutHeader = () => {
 
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav p-3 border-top">
-            <li className="nav-item py-2"><Link className="nav-link" to="/top" onClick={() => actions.setCategory("top")}>Ofertas del día</Link></li>
-            <li className="nav-item py-2"><Link className="nav-link" to="/gastronomia" onClick={() => actions.setCategory("food")}>Restaurantes</Link></li>
-            <li className="nav-item py-2"><Link className="nav-link" to="/belleza" onClick={() => actions.setCategory("beauty")}>Belleza y spa</Link></li>
-            <li className="nav-item py-2"><Link className="nav-link" to="/viajes" onClick={() => actions.setCategory("travel")}>Viajes</Link></li>
+            <li className="nav-item py-2">
+              <Link className="nav-link" to="/top" onClick={() => actions.setCategory("top")}>
+                Ofertas del día
+              </Link>
+            </li>
+            <li className="nav-item py-2">
+              <Link className="nav-link" to="/gastronomia" onClick={() => actions.setCategory("food")}>
+                Restaurantes
+              </Link>
+            </li>
+            <li className="nav-item py-2">
+              <Link className="nav-link" to="/belleza" onClick={() => actions.setCategory("beauty")}>
+                Belleza y spa
+              </Link>
+            </li>
+            <li className="nav-item py-2">
+              <Link className="nav-link" to="/viajes" onClick={() => actions.setCategory("travel")}>
+                Viajes
+              </Link>
+            </li>
           </ul>
         </div>
       </header>
@@ -307,3 +325,4 @@ const styles = {
 };
 
 export default LayoutHeader;
+

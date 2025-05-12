@@ -1,5 +1,6 @@
 import React from "react";
 import { Admin, Resource } from "react-admin";
+import Dashboard from '../pages/Dashboard.jsx'
 
 // Asegurate que esta ruta es correcta respecto a donde esté AdminDashboard.jsx
 import dataProvider from "../dp/dataProvider";
@@ -37,7 +38,7 @@ import GastronomiaCreate from "../component/GastronomiaCreate.jsx";
 
 const AdminDashboard = () => {
   return (
-    <Admin basename="/admin" dataProvider={dataProvider}>
+    <Admin basename="/admin" dataProvider={dataProvider} dashboard={Dashboard}>
       <Resource name="users" list={UserList} show={UserShow} edit={UserEdit} create={CreateUser} />
       <Resource name="oferta" list={OfertList} show={OfertShow} edit={OfertEdit} create={OfertCreate}/>
       <Resource name="viajes" list={ViajeList} show={ViajeShow} edit={ViajeEdit} create={ViajeCreate}/>

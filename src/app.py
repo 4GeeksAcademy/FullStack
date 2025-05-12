@@ -16,8 +16,8 @@ from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation,
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db
-from datetime import datetime
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from datetime import datetime, timedelta
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, verify_jwt_in_request
 from flask_bcrypt import Bcrypt
 from api.payment import payment_bp
 from flask_cors import CORS 
@@ -31,6 +31,8 @@ from werkzeug.security import generate_password_hash
 from itsdangerous import URLSafeTimedSerializer
 from api.models import db, User, PasswordResetToken
 from api.mail_service import MailService
+from sqlalchemy import extract
+import json
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -2634,7 +2636,88 @@ def reset_password():
     db.session.commit()
 
     return jsonify({'message': 'Contraseña restablecida correctamente.'}), 200
-    
+
+online_users_last_seen = {}
+ONLINE_THRESHOLD = timedelta(minutes=5)
+
+@app.before_request
+def track_user_activity():
+    try:
+        verify_jwt_in_request(optional=True)
+        identity = get_jwt_identity()
+        if identity:
+            u = User.query.filter_by(correo=identity).first()
+            if u:
+                online_users_last_seen[u.id] = datetime.utcnow()
+    except Exception:
+        pass
+
+@app.route('/metrics/onlineUsers', methods=['GET'])
+def online_users():
+    cutoff = datetime.utcnow() - ONLINE_THRESHOLD
+    count = sum(1 for ts in online_users_last_seen.values() if ts > cutoff)
+    return jsonify({"id": "onlineUsers", "count": count}), 200
+
+@app.route('/orders', methods=['GET'])
+def list_payments():
+    """
+    Devuelve todos los pagos con estado 'pagado', opcionalmente filtrados por mes y día.
+    Cada pago incluye:
+      - id
+      - amount (en céntimos)
+      - payment_date
+      - estado
+      - customer_name (nombre + apellido)
+      - total_items (suma de quantity en PaymentItem)
+      - item_titles (lista de títulos de los PaymentItem)
+    Espera un query param `filter` con JSON: ?filter={"month":5,"day":14}
+    """
+    # 1) Leer filtro de la querystring
+    month = day = 0
+    filter_str = request.args.get('filter')
+    if filter_str:
+        try:
+            payload = json.loads(filter_str)
+            month = int(payload.get('month', 0))
+            day   = int(payload.get('day',   0))
+        except Exception:
+            month = day = 0
+
+    # 2) Solo pagos pagados
+    q = Payment.query.filter_by(estado='pagado')
+
+    # 3) Filtrar mes y día si procede
+    if 1 <= month <= 12:
+        q = q.filter(extract('month', Payment.payment_date) == month)
+    if 1 <= day <= 31:
+        q = q.filter(extract('day', Payment.payment_date) == day)
+
+    # 4) Ejecutar consulta y serializar
+    payments = q.order_by(Payment.payment_date.desc()).all()
+    serialized = []
+    for p in payments:
+        user = User.query.get(p.user_id)
+        customer_name = f"{user.nombre or ''} {user.apellido or ''}".strip()
+        total_items   = sum(item.quantity for item in p.items)
+        item_titles   = [item.title for item in p.items]
+
+        base = p.serialize()
+        base.update({
+            "customer_name": customer_name,
+            "total_items": total_items,
+            "item_titles": item_titles
+        })
+        serialized.append(base)
+
+    total = len(serialized)
+
+    # 5) Responder con cabeceras para React-Admin
+    resp = jsonify(serialized)
+    resp.headers['X-Total-Count'] = str(total)
+    resp.headers['Content-Range']   = f'orders 0-{total-1}/{total}'
+    resp.headers['Access-Control-Expose-Headers'] = 'Content-Range, X-Total-Count'
+    return resp, 200
+
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
 

@@ -15,7 +15,7 @@ def create_admin_user():
     user = User(
         correo='admin@outlook.com',
         password=hashed_password,
-        role='Administrador'
+        role='admin'
     )
     db.session.add(user)
     db.session.commit()

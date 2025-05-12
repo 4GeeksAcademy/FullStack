@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Context } from '../store/appContext';
+import { useNavigate } from 'react-router-dom';
 
 const FormMiPerfil = () => {
     const { store, actions } = useContext(Context);
+    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
         ciudad: '',
         direccion_line1: '',
@@ -12,6 +15,7 @@ const FormMiPerfil = () => {
         password: '',
         confirmPassword: ''
     });
+
     const [changePassword, setChangePassword] = useState(false);
     const [passwordError, setPasswordError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -38,6 +42,15 @@ const FormMiPerfil = () => {
 
         loadUserData();
     }, [store.user, initialLoad]);
+
+    useEffect(() => {
+        if (successMessage) {
+            const timer = setTimeout(() => {
+                navigate('/');
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [successMessage, navigate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -93,14 +106,14 @@ const FormMiPerfil = () => {
                     currentPassword: formData.currentPassword,
                     newPassword: formData.password
                 });
-                
+
                 if (!passwordSuccess) {
                     throw new Error('Error al cambiar la contraseña. Verifica tu contraseña actual.');
                 }
             }
 
             if (profileSuccess && passwordSuccess) {
-                setSuccessMessage('Perfil actualizado correctamente');
+                setSuccessMessage('Perfil actualizado correctamente. Serás redirigido al inicio en 5 segundos...');
                 setChangePassword(false);
                 setFormData(prev => ({
                     ...prev,
@@ -127,7 +140,10 @@ const FormMiPerfil = () => {
                         </div>
                         <div className="card-body">
                             {successMessage && (
-                                <div className="alert alert-success">{successMessage}</div>
+                                <div className="alert alert-success d-flex justify-content-between align-items-center">
+                                    <span>{successMessage}</span>
+                                    <a href="/" className="btn btn-light btn-sm ms-3 fw-bold">Ir ahora</a>
+                                </div>
                             )}
 
                             <form onSubmit={handleSubmit}>
@@ -150,6 +166,8 @@ const FormMiPerfil = () => {
                                         value={formData.telefono || ''}
                                         onChange={handleChange}
                                         required
+                                        pattern="[0-9]+"  // Esto restringe a 10 dígitos numéricos (puedes ajustarlo a la cantidad que necesites)
+                                        placeholder="Ingresa tu número de teléfono"
                                     />
                                 </div>
 

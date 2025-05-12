@@ -55,7 +55,32 @@ const SearchResults = () => {
 
   return (
     <div className="container mt-4">
-      <h2 className="mb-4">Resultados para: "{keyword}"</h2>
+      <h2
+        className="text-start mb-5 fw-normal display-5 text-gradient"
+        style={{
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          letterSpacing: "0.02em",
+          position: "relative",
+          paddingBottom: "15px"
+        }}
+      >
+        Resultados para:
+        <span
+          className="fw-medium ms-2 text-primary"
+          style={{ textTransform: "capitalize" }}
+        >
+          "{keyword}"
+        </span>
+        <div
+          className="mx-auto mt-3"
+          style={{
+            width: "150px",
+            height: "3px",
+            background: "linear-gradient(90deg, #ff8a00, #e52e71)",
+            borderRadius: "3px"
+          }}
+        />
+      </h2>
 
       {loading ? (
         <div className="text-center my-5">

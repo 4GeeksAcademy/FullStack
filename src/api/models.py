@@ -97,6 +97,7 @@ class Payment(db.Model):
     items = db.relationship('PaymentItem', backref='payment', cascade="all, delete-orphan")
     reservation = db.relationship('Reservation', back_populates='payment', uselist=False)
 
+
     def serialize(self):
         return {
             "id": self.id,
@@ -116,17 +117,21 @@ class PaymentItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
-    unit_price = db.Column(db.Integer, nullable=False)  # en centavos
+    unit_price = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-
+    image_url = db.Column(db.String(500))  # Nuevo campo para la imagen
+    servicio_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  
     payment_id = db.Column(db.Integer, db.ForeignKey('payments.id'), nullable=False)
 
     def serialize(self):
         return {
             "title": self.title,
             "unit_price": self.unit_price,
-            "quantity": self.quantity
+            "quantity": self.quantity,
+            "image_url": self.image_url,
+            "servicio_id": self.servicio_id
         }
+
 class Reservation(db.Model):
     __tablename__ = 'reservations'
 

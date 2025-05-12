@@ -137,6 +137,16 @@ const ProductDetail = () => {
     <>
       <LayoutHeader />
       <Container className="my-5">
+        {/* Botón Volver al inicio - AÑADIDO */}
+        <div className="d-flex justify-content-start mb-4">
+          <button 
+            className="btn btn-outline-secondary" 
+            onClick={() => navigate('/')}
+          >
+            <i className="bi bi-house-door me-2"></i>Volver al inicio
+          </button>
+        </div>
+        
         <Row>
           <Col md={6} className="mb-4">
             <Card>
@@ -148,6 +158,7 @@ const ProductDetail = () => {
               />
             </Card>
           </Col>
+
           <Col md={6}>
             <h2 className="mb-3">{title}</h2>
             <div className="mb-3 d-flex align-items-center">

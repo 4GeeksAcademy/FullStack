@@ -118,7 +118,16 @@ const ProductDetailBusqueda = () => {
   return (
     <>
       <LayoutHeader />
-      <Container className="my-5">
+        <Container className="my-5">
+              {/* Botón Volver al inicio - AÑADIDO */}
+              <div className="d-flex justify-content-start mb-4">
+                <button 
+                  className="btn btn-outline-secondary" 
+                  onClick={() => navigate('/')}
+                >
+                  <i className="bi bi-house-door me-2"></i>Volver al inicio
+                </button>
+              </div>
         <Row>
           <Col md={6} className="d-flex justify-content-center mb-4">
             <Card style={{ width: "100%" }}>

@@ -16,8 +16,8 @@ from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation,
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db
-from datetime import datetime
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from datetime import datetime, timedelta
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, verify_jwt_in_request
 from flask_bcrypt import Bcrypt
 from api.payment import payment_bp
 from flask_cors import CORS 
@@ -31,6 +31,8 @@ from werkzeug.security import generate_password_hash
 from itsdangerous import URLSafeTimedSerializer
 from api.models import db, User, PasswordResetToken
 from api.mail_service import MailService
+from sqlalchemy import extract
+import json
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -2383,28 +2385,118 @@ def session_status():
         return jsonify({'error': 'session_id faltante'}), 400
 
     try:
-        # Consultar a Stripe por el estado de la sesión
-        session = stripe.checkout.Session.retrieve(session_id)
+        # 1) Recuperar sesión de Stripe (con ítems implicados)
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=["line_items", "customer_details"]
+        )
 
-        # Buscar el pago en tu base de datos
+        # 2) Buscar tu Payment en BD
         payment = Payment.query.filter_by(paypal_payment_id=session_id).first()
         if not payment:
             return jsonify({'error': 'Pago no encontrado'}), 404
 
-        # Actualizar estado si fue pagado
+        # 3) Si acaba de pagarse, actualizar estado y enviar factura
         if session.payment_status == 'paid' and payment.estado != 'pagado':
             payment.estado = 'pagado'
             db.session.commit()
 
+            # 3.a) Recuperar datos del usuario
+            user = User.query.get(payment.user_id)
+            nombre_completo = f"{user.nombre or ''} {user.apellido or ''}".strip()
+            direccion = ", ".join(filter(None, [
+                user.direccion_line1,
+                user.direccion_line2,
+                user.ciudad,
+                user.codigo_postal,
+                user.pais
+            ]))
+            telefono = user.telefono or "No disponible"
+
+            # 3.b) Construir filas de la factura
+            total_cents = 0
+            rows_html = ""
+            for item in payment.items:
+                unit = item.unit_price
+                qty  = item.quantity
+                subtotal = unit * qty
+                total_cents += subtotal
+                rows_html += f"""
+                  <tr>
+                    <td>{item.title}</td>
+                    <td align="center">{qty}</td>
+                    <td align="right">€{unit/100:.2f}</td>
+                    <td align="right">€{subtotal/100:.2f}</td>
+                  </tr>
+                """
+
+            # 3.c) Cuerpo HTML de la factura
+            html_invoice = f"""
+              <div style="font-family: Arial, sans-serif; max-width: 800px; margin:auto; padding:20px;">
+                <!-- Logo -->
+                <div style="display:flex; align-items:center; margin-bottom:20px;">
+                  <i class="bi bi-house-fill" style="font-size:2rem; color:#dc3545; margin-right:8px;"></i>
+                  <h1 style="font-size:1.5rem; margin:0;">GroupOn</h1>
+                </div>
+
+                <h2 style="margin-bottom:0.5em;">Factura #{payment.id}</h2>
+                <p><strong>Fecha:</strong> {payment.payment_date.strftime('%Y-%m-%d %H:%M')}</p>
+
+                <!-- Datos del cliente -->
+                <h3 style="margin-top:1.5em;">Datos del Cliente</h3>
+                <p>
+                  <strong>Nombre:</strong> {nombre_completo}<br/>
+                  <strong>Email:</strong> {session.customer_details.email}<br/>
+                  <strong>Teléfono:</strong> {telefono}<br/>
+                  <strong>Dirección:</strong> {direccion}
+                </p>
+
+                <!-- Detalle de ítems -->
+                <table width="100%" border="1" cellspacing="0" cellpadding="5"
+                       style="border-collapse: collapse; margin-top:1em;">
+                  <thead style="background:#f8f9fa;">
+                    <tr>
+                      <th>Producto</th>
+                      <th>Cantidad</th>
+                      <th>Precio unitario</th>
+                      <th>Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows_html}
+                  </tbody>
+                </table>
+
+                <h2 style="text-align:right; margin-top:1em;">
+                  Total: €{total_cents/100:.2f}
+                </h2>
+
+                <!-- Pie de página -->
+                <hr style="margin:2em 0;" />
+                <p style="font-size:0.9em; color:#555;">
+                  Para cambios de dirección o cualquier consulta, contáctanos al
+                  <strong>+34 912 345 678</strong> antes de 24 horas.
+                </p>
+              </div>
+            """
+
+            # 3.d) Enviar el correo con la factura
+            mail_service.send_mail(
+                to_email     = session.customer_details.email,
+                subject      = f"Tu factura de Pedido #{payment.id}",
+                text_content = f"Gracias por tu compra. El total ha sido €{total_cents/100:.2f}.",
+                html_content = html_invoice
+            )
+
+        # 4) Responder al frontend
         return jsonify({
             'status': session.payment_status,
-            'customer_email': session.customer_email
+            'customer_email': session.customer_details.email
         }), 200
 
     except Exception as e:
-        print('Error en session-status:', e)
+        app.logger.error(f"Error en session-status: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
-
     
 @api.route('/change-password', methods=['PUT'])
 @jwt_required()
@@ -2544,7 +2636,88 @@ def reset_password():
     db.session.commit()
 
     return jsonify({'message': 'Contraseña restablecida correctamente.'}), 200
-    
+
+online_users_last_seen = {}
+ONLINE_THRESHOLD = timedelta(minutes=5)
+
+@app.before_request
+def track_user_activity():
+    try:
+        verify_jwt_in_request(optional=True)
+        identity = get_jwt_identity()
+        if identity:
+            u = User.query.filter_by(correo=identity).first()
+            if u:
+                online_users_last_seen[u.id] = datetime.utcnow()
+    except Exception:
+        pass
+
+@app.route('/metrics/onlineUsers', methods=['GET'])
+def online_users():
+    cutoff = datetime.utcnow() - ONLINE_THRESHOLD
+    count = sum(1 for ts in online_users_last_seen.values() if ts > cutoff)
+    return jsonify({"id": "onlineUsers", "count": count}), 200
+
+@app.route('/orders', methods=['GET'])
+def list_payments():
+    """
+    Devuelve todos los pagos con estado 'pagado', opcionalmente filtrados por mes y día.
+    Cada pago incluye:
+      - id
+      - amount (en céntimos)
+      - payment_date
+      - estado
+      - customer_name (nombre + apellido)
+      - total_items (suma de quantity en PaymentItem)
+      - item_titles (lista de títulos de los PaymentItem)
+    Espera un query param `filter` con JSON: ?filter={"month":5,"day":14}
+    """
+    # 1) Leer filtro de la querystring
+    month = day = 0
+    filter_str = request.args.get('filter')
+    if filter_str:
+        try:
+            payload = json.loads(filter_str)
+            month = int(payload.get('month', 0))
+            day   = int(payload.get('day',   0))
+        except Exception:
+            month = day = 0
+
+    # 2) Solo pagos pagados
+    q = Payment.query.filter_by(estado='pagado')
+
+    # 3) Filtrar mes y día si procede
+    if 1 <= month <= 12:
+        q = q.filter(extract('month', Payment.payment_date) == month)
+    if 1 <= day <= 31:
+        q = q.filter(extract('day', Payment.payment_date) == day)
+
+    # 4) Ejecutar consulta y serializar
+    payments = q.order_by(Payment.payment_date.desc()).all()
+    serialized = []
+    for p in payments:
+        user = User.query.get(p.user_id)
+        customer_name = f"{user.nombre or ''} {user.apellido or ''}".strip()
+        total_items   = sum(item.quantity for item in p.items)
+        item_titles   = [item.title for item in p.items]
+
+        base = p.serialize()
+        base.update({
+            "customer_name": customer_name,
+            "total_items": total_items,
+            "item_titles": item_titles
+        })
+        serialized.append(base)
+
+    total = len(serialized)
+
+    # 5) Responder con cabeceras para React-Admin
+    resp = jsonify(serialized)
+    resp.headers['X-Total-Count'] = str(total)
+    resp.headers['Content-Range']   = f'orders 0-{total-1}/{total}'
+    resp.headers['Access-Control-Expose-Headers'] = 'Content-Range, X-Total-Count'
+    return resp, 200
+
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
 

@@ -2,9 +2,24 @@ import React, { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 
-// Función utilitaria para normalizar textos
-const normalize = (str) =>
-  str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+// Mapea IDs numéricos y strings a los slugs de ruta
+const slugMap = {
+  1:           "viajes",
+  2:           "belleza",
+  3:           "top",
+  4:           "gastronomia",
+  5:           "ofertas",
+
+  viajes:      "viajes",
+  belleza:     "belleza",
+  top:         "top",
+  gastronomia: "gastronomia",
+  ofertas:     "ofertas",
+  beauty:      "belleza",  // por si tu API usa "beauty"
+};
+
+const normalize = str =>
+  str?.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
 const SearchResults = () => {
   const { keyword } = useParams();
@@ -13,46 +28,43 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Efecto para cargar los datos y realizar la búsqueda
   useEffect(() => {
     if (!keyword) {
       setResults([]);
-      setLoading(false);
-      return;
+      return setLoading(false);
     }
 
-    // Cargar los datos de cada categoría si no están cargados
-    if (!store.serviciosViajes.length) actions.cargarServiciosViajes();
+    // Carga todas las colecciones si no están
+    if (!store.serviciosViajes.length)      actions.cargarServiciosViajes();
     if (!store.serviciosGastronomia.length) actions.cargarServiciosGastronomia();
-    if (!store.serviciosBelleza.length) actions.cargarServiciosBelleza();
-    if (!store.serviciosTop.length) actions.cargarServiciosTop();
-    if (!store.serviciosOfertas.length) actions.cargarServiciosOfertas();
+    if (!store.serviciosBelleza.length)     actions.cargarServiciosBelleza();
+    if (!store.serviciosTop.length)         actions.cargarServiciosTop();
+    if (!store.serviciosOfertas.length)     actions.cargarServiciosOfertas();
 
     setLoading(true);
+    const term = normalize(keyword);
 
-    // Normalizamos el término de búsqueda
-    const searchTerm = normalize(keyword);
-
-    // Filtramos por cada categoría de servicios
-    const filtered = [
+    const all = [
       ...store.serviciosViajes,
       ...store.serviciosGastronomia,
       ...store.serviciosBelleza,
       ...store.serviciosTop,
       ...store.serviciosOfertas,
-    ].filter((item) => {
-      return (
-        normalize(item.title).includes(searchTerm) ||
-        normalize(item.descripcion).includes(searchTerm) ||
-        normalize(item.category).includes(searchTerm) ||
-        (Array.isArray(item.tags) &&
-          item.tags.some((tag) => normalize(tag).includes(searchTerm)))
-      );
-    });
+    ];
+
+    const filtered = all.filter(item =>
+      normalize(item.title).includes(term) ||
+      normalize(item.descripcion).includes(term) ||
+      normalize(item.category).includes(term) ||
+      normalize(item.category_id).includes(term) ||
+      (Array.isArray(item.tags) &&
+       item.tags.some(tag => normalize(tag).includes(term)))
+    );
 
     setResults(filtered);
     setLoading(false);
   }, [keyword, store, actions]);
+
 
   // Función para navegar al detalle del producto
   const navigateToProductDetail = (product) => {
@@ -86,33 +98,11 @@ const SearchResults = () => {
     return "general";
   };
 
+
   return (
     <div className="container mt-4">
-      <h2
-        className="text-start mb-5 fw-normal display-5 text-gradient"
-        style={{
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          letterSpacing: "0.02em",
-          position: "relative",
-          paddingBottom: "15px"
-        }}
-      >
-        Resultados para:
-        <span
-          className="fw-medium ms-2 text-primary"
-          style={{ textTransform: "capitalize" }}
-        >
-          "{keyword}"
-        </span>
-        <div
-          className="mx-auto mt-3"
-          style={{
-            width: "150px",
-            height: "3px",
-            background: "linear-gradient(90deg, #ff8a00, #e52e71)",
-            borderRadius: "3px"
-          }}
-        />
+      <h2 className="text-start mb-5">
+        Resultados para <span className="text-primary">"{keyword}"</span>
       </h2>
 
       {loading ? (
@@ -123,6 +113,7 @@ const SearchResults = () => {
         </div>
       ) : results.length > 0 ? (
         <div className="row">
+
           {results.map((item, index) => (
             <div className="col-md-4 mb-4" key={`${item.id}-${index}`}>
               <div className="card h-100 shadow-sm">
@@ -153,18 +144,21 @@ const SearchResults = () => {
                   >
                     Ver oferta
                   </button>
+
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="alert alert-warning">
-          No se encontraron resultados para "{keyword}". Intenta con otro término.
+          No se encontraron resultados para “{keyword}”.
         </div>
       )}
     </div>
   );
 };
 
+
 export default SearchResults;
+

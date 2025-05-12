@@ -3,6 +3,7 @@ import { Context } from '../store/appContext';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import LayoutHeader from '../component/LayoutHeader.jsx'
 
 const CartPage = () => {
     const { store, actions } = useContext(Context);
@@ -16,9 +17,13 @@ const CartPage = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastProgress, setToastProgress] = useState(100);
 
+
+    // Carga inicial del carrito desde localStorage
+
     useEffect(() => {
         actions.loadCartFromLocalStorage();
     }, []);
+
 
     const handleUpdateQuantity = (id, title, category, change) => {
         const item = cartItems.find(item =>
@@ -27,9 +32,11 @@ const CartPage = () => {
             item.category === category
         );
 
-        if (!item) return;
 
+  
+        if (!item) return;
         const newQuantity = item.quantity + change;
+
         if (newQuantity < 1 || newQuantity > 99) return;
 
         setToastMessage("Actualizando cantidad...");
@@ -55,9 +62,12 @@ const CartPage = () => {
 
         if (selectedItem) {
             setItemToRemove(selectedItem);
+
+ 
             setShowModal(true);
         }
     };
+
 
     const handleEmptyCart = () => {
         setShowEmptyCartModal(true);
@@ -126,11 +136,14 @@ const CartPage = () => {
         setShowEmptyCartModal(false);
     };
 
+ 
+
     const subtotal = cartItems.reduce((sum, item) => sum + item.discountPrice * item.quantity, 0);
 
     const checkLoginStatus = () => !!localStorage.getItem("token");
 
     const handleProceedToPayment = () => {
+
         const cartWithImages = cartItems.map(item => ({
             id: item.id,
             title: item.title,
@@ -146,11 +159,13 @@ const CartPage = () => {
         } else {
             navigate('/login');
         }
+
     };
 
     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
+
         <div className="container py-5 position-relative">
             {/* Botón Volver al inicio - AÑADIDO */}
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -202,10 +217,18 @@ const CartPage = () => {
                                             >
                                                 +
                                             </button>
+
                                         </div>
-                                        <span className="fw-medium">€{(item.discountPrice * item.quantity).toFixed(2)}</span>
                                     </div>
+                                    <button
+                                        className="btn btn-link text-danger ms-3"
+                                        onClick={() => handleRemoveItem(item.id)}
+                                        aria-label="Remove item"
+                                    >
+                                        <i className="bi bi-trash"></i>
+                                    </button>
                                 </div>
+
                                 <button
                                     className="btn btn-link text-danger ms-3"
                                     onClick={() => handleRemoveItem(item.id, item.title, item.category)}
@@ -292,8 +315,16 @@ const CartPage = () => {
                             <div className="modal-footer">
                                 <button className="btn btn-secondary" onClick={closeModal}>Cancelar</button>
                                 <button className="btn btn-danger" onClick={confirmRemoveItem}>Eliminar</button>
+
                             </div>
+                            <button 
+                                onClick={handleProceedToPayment} 
+                                className="btn btn-danger w-100 py-2"
+                            >
+                                Pagar Ahora
+                            </button>
                         </div>
+
                     </div>
                 </div>
             )}
@@ -308,11 +339,14 @@ const CartPage = () => {
                                 <div className="progress-bar bg-danger" style={{ width: `${toastProgress}%` }}></div>
                             </div>
                         </div>
+
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
 
+
 export default CartPage;
+

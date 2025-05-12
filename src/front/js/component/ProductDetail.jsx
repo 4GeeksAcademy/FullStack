@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom"; 
-import { Button, Container, Row, Col, Card, Spinner } from "react-bootstrap";
+import { Button, Container, Row, Col, Card, Spinner, InputGroup, FormControl } from "react-bootstrap";
 import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
@@ -11,84 +11,62 @@ const ProductDetail = () => {
   const { id } = useParams();
   const { offer: locationOffer, category: locationCategory } = location.state || {};
   const { store, actions } = useContext(Context);
+
   const [completeOffer, setCompleteOffer] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState(locationCategory);
+
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastProgress, setToastProgress] = useState(100);
 
-  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
+
+  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg";
 
   const determineCategory = (offerId) => {
-    if (typeof offerId === 'string' && offerId.startsWith('temp-')) {
-      const categoryPrefix = offerId.split('-')[1];
-      switch(categoryPrefix) {
-        case 'gast': return 'gastronomia';
-        case 'bell': return 'belleza';
-        case 'viaj': return 'viajes';
-        default: return '';
-      }
-    }
-    if (store.serviciosGastronomia.some(o => o.id === offerId)) return 'gastronomia';
-    if (store.serviciosBelleza.some(o => o.id === offerId)) return 'belleza';
-    if (store.serviciosViajes.some(o => o.id === offerId)) return 'viajes';
+    const numId = parseInt(offerId, 10);
+    if (store.serviciosViajes.some(o => o.id === numId)) return 'viajes';
+    if (store.serviciosBelleza.some(o => o.id === numId)) return 'belleza';
+    if (store.serviciosGastronomia.some(o => o.id === numId)) return 'gastronomia';
+    if (store.serviciosTop.some(o => o.id === numId)) return 'top';
+    if (store.serviciosOfertas.some(o => o.id === numId)) return 'ofertas';
     return '';
   };
 
   useEffect(() => {
-    if (id) {
-      const category = determineCategory(id);
-      setCurrentCategory(category);
-    }
-  }, [id, store]);
-
-  useEffect(() => {
-    const loadData = async () => {
+    const loadCategory = async () => {
       setLoading(true);
-      try {
-        if (currentCategory) {
-          switch(currentCategory) {
-            case 'belleza':
-              if (store.serviciosBelleza.length === 0) await actions.cargarServiciosBelleza();
-              break;
-            case 'gastronomia':
-              if (store.serviciosGastronomia.length === 0) await actions.cargarServiciosGastronomia();
-              break;
-            case 'viajes':
-              if (store.serviciosViajes.length === 0) await actions.cargarServiciosViajes();
-              break;
-            case 'ofertas':
-              if (store.serviciosOfertas.length === 0) await actions.cargarServiciosOfertas();
-              break;
-          }
-        }
-      } finally {
-        setLoading(false);
+      const cat = locationCategory || determineCategory(id);
+      setCurrentCategory(cat);
+
+      switch(cat) {
+        case 'viajes':
+          if (!store.serviciosViajes.length) await actions.cargarServiciosViajes();
+          break;
+        case 'belleza':
+          if (!store.serviciosBelleza.length) await actions.cargarServiciosBelleza();
+          break;
+        case 'gastronomia':
+          if (!store.serviciosGastronomia.length) await actions.cargarServiciosGastronomia();
+          break;
+        case 'top':
+          if (!store.serviciosTop.length) await actions.cargarServiciosTop();
+          break;
+        case 'ofertas':
+          if (!store.serviciosOfertas.length) await actions.cargarServiciosOfertas();
+          break;
+        default:
+          break;
       }
+      setLoading(false);
     };
-    loadData();
-  }, [currentCategory]);
+
+    loadCategory();
+  }, [id, locationCategory, store, actions]);
 
   useEffect(() => {
     if (loading) return;
-    const findProduct = () => {
-      if (locationOffer) return locationOffer;
-      if (id) {
-        if (typeof id === 'string' && id.startsWith('temp-')) {
-          const title = id.split('-').slice(2).join(' ');
-          const allOffers = [...store.serviciosGastronomia, ...store.serviciosBelleza, ...store.serviciosViajes];
-          return allOffers.find(o => o.title === title);
-        }
-        const numericId = parseInt(id);
-        const allOffers = [...store.serviciosGastronomia, ...store.serviciosBelleza, ...store.serviciosViajes];
-        return allOffers.find(o => o.id === numericId);
-      }
-      return null;
-    };
-    const foundProduct = findProduct();
-    setCompleteOffer(foundProduct);
-  }, [id, locationOffer, store, loading]);
+
 
   const showToast = (message) => {
     setToastMessage(message);
@@ -141,6 +119,7 @@ const ProductDetail = () => {
     );
   }
 
+
   if (loading) {
     return (
       <Container className="my-5 text-center">
@@ -151,24 +130,34 @@ const ProductDetail = () => {
     );
   }
 
-  const displayData = completeOffer;
-  const displayTitle = displayData.title || displayData.nombre || "Sin título";
-  const displayImage = displayData.image || displayData.imagen || defaultImage;
-  const displayDescription = displayData.descripcion || displayData.description || "No hay descripción disponible.";
-
-  let actualPrice = displayData.price || displayData.precio || displayData.originalPrice || 1000;
-  let actualDiscountPrice = displayData.discountPrice || Math.round(actualPrice * 0.7);
-  if (actualDiscountPrice >= actualPrice) {
-    actualDiscountPrice = Math.round(actualPrice * 0.7);
+  if (!completeOffer) {
+    return (
+      <Container className="my-5">
+        <div className="alert alert-warning">
+          No se encontraron detalles del producto en “{currentCategory}”
+        </div>
+      </Container>
+    );
   }
-  const finalDiscount = Math.round(((actualPrice - actualDiscountPrice) / actualPrice) * 100);
+
+  const display = completeOffer;
+  const title = display.title || display.nombre || "Sin título";
+  const image = display.image || display.imagen || defaultImage;
+  const desc  = display.descripcion || display.description || "No hay descripción disponible.";
+
+  const original = display.originalPrice ?? display.price ?? 0;
+  let discountPrice = display.discountPrice ?? Math.round(original * 0.7);
+  if (discountPrice >= original) discountPrice = Math.round(original * 0.7);
+  const pctOff = original > 0 ? Math.round((original - discountPrice) / original * 100) : 0;
+
 
   const renderStars = (rating) =>
+
     Array.from({ length: 5 }, (_, i) => (
       <i
         key={i}
-        className={`bi ${i < rating ? "bi-star-fill text-warning" : "bi-star text-secondary"} me-1`}
-      ></i>
+        className={`bi ${i < (display.rating||0) ? "bi-star-fill text-warning" : "bi-star text-secondary"} me-1`}
+      />
     ));
 
   return (
@@ -186,18 +175,17 @@ const ProductDetail = () => {
         </div>
         
         <Row>
-          <Col md={6} className="d-flex justify-content-center mb-4">
-            <Card style={{ width: "100%" }}>
+          <Col md={6} className="mb-4">
+            <Card>
               <Card.Img
                 variant="top"
-                src={displayImage}
-                alt={displayTitle}
-                className="img-fluid"
-                style={{ height: "auto", maxHeight: "500px", objectFit: "cover", backgroundColor: "#f8f9fa" }}
-                onError={(e) => { e.target.src = defaultImage; }}
+                src={image}
+                style={{ objectFit: "cover", maxHeight: 500 }}
+                onError={e => { e.target.src = defaultImage; }}
               />
             </Card>
           </Col>
+
           <Col md={6}> {/* CORRECCIÓN: Se cambió "6" por "6" y se cerró correctamente */}
             <div className="p-3">
               <h2 className="mb-3">{displayTitle}</h2>
@@ -213,28 +201,37 @@ const ProductDetail = () => {
                 </div>
                 <p className="text-success mt-2 mb-0">{displayData.buyers || 0} personas ya han comprado esta oferta</p>
               </div>
+
               <div className="mb-4">
-                <h5 className="mb-2">Descripción:</h5>
-                <p className="text-muted">{displayDescription}</p>
+                <h5 className="mb-2">Ubicación:</h5>
+                <p className="text-muted">{display.city}</p>
               </div>
-              {displayData.city && (
-                <div className="mb-4">
-                  <h5 className="mb-2">Ubicación:</h5>
-                  <p className="text-muted">{displayData.city}</p>
-                </div>
-              )}
-              <Button variant="danger" onClick={addToCart} className="btn-lg w-100 mb-2">
-                Agregar al carrito
+            )}
+
+            <div className="mb-4">
+              <h5>Cantidad:</h5>
+              <InputGroup style={{ maxWidth: 120 }}>
+                <Button variant="outline-secondary" onClick={() => setQuantity(q => Math.max(1, q - 1))}>−</Button>
+                <FormControl
+                  type="number"
+                  value={quantity}
+                  min={1}
+                  onChange={e => {
+                    const v = parseInt(e.target.value,10);
+                    if (!isNaN(v) && v>0) setQuantity(v);
+                  }}
+                />
+                <Button variant="outline-secondary" onClick={() => setQuantity(q => q + 1)}>+</Button>
+              </InputGroup>
+            </div>
+
+            <div className="d-grid gap-2">
+              <Button variant="danger" size="lg" onClick={addToCart}>
+                <i className="bi bi-cart-plus me-2" /> Agregar al carrito
               </Button>
-              <Button variant="success" onClick={handleBuyNow} className="btn-lg w-100 mb-3">
+              <Button variant="success" size="lg" onClick={buyNow}>
                 Comprar ahora
               </Button>
-              <div className="alert alert-light border mt-4">
-                <small className="text-muted">
-                  <i className="bi bi-shield-check me-2"></i>
-                  Garantía de satisfacción: Si no estás conforme con el servicio, te devolvemos tu dinero.
-                </small>
-              </div>
             </div>
           </Col>
         </Row>

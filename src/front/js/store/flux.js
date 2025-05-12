@@ -649,6 +649,40 @@ setCartItems: (items) => {
   setStore(prev => ({ ...prev, cartItems: validItems }));
   localStorage.setItem("cartItems", JSON.stringify(validItems));
 },
+// Dentro de getState → actions:
+addToCart: (item) => {
+  const store = getStore();
+  const actions = getActions();
+
+  // ¿Ya existía ese producto en el carrito?
+  const existing = store.cartItems.find(ci => ci.id === item.id);
+
+  let updatedCart;
+  if (existing) {
+    // Si existía, sólo incrementamos su cantidad
+    const addQty = item.quantity ?? 1;
+    updatedCart = store.cartItems.map(ci =>
+      ci.id === item.id
+        ? { ...ci, quantity: ci.quantity + addQty }
+        : ci
+    );
+  } else {
+    // Si es nuevo, lo añadimos con cantidad inicial (o la que venga en item.quantity)
+    updatedCart = [
+      ...store.cartItems,
+      { ...item, quantity: item.quantity ?? 1 }
+    ];
+  }
+
+  setStore({ cartItems: updatedCart });
+  actions.saveCartToLocalStorage();  // persistimos siempre
+},
+
+  // **Nueva acción** para vaciar todo el carrito
+    clearCart: () => {
+      setStore({ cartItems: [] });
+      getActions().saveCartToLocalStorage();
+    },
 
     },
   };

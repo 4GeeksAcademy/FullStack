@@ -9,7 +9,7 @@ const Footer = () => {
       <div className="container">
         <div className="row mb-4">
           <div className="col-12 col-md-3">
-            <h4 className="font-weight-bold mb-3">GrouponClone</h4>
+            <h4 className="font-weight-bold mb-3">GroupOn</h4>
             <p>
               Descubre las mejores ofertas en tu ciudad y ahorra hasta un 70%.
             </p>
@@ -62,7 +62,7 @@ const Footer = () => {
         </div>
         <div className="border-top border-secondary pt-3 d-flex flex-column flex-md-row justify-content-between align-items-center">
           <p className="mb-3 mb-md-0">
-            © 2023 GrouponClone. Todos los derechos reservados.
+            © 2023 GroupOn. Todos los derechos reservados.
           </p>
           <div className="d-flex ml-3">
             {/* Añadí gap en lugar de solo margin-right */}

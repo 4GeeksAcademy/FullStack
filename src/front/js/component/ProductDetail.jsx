@@ -6,16 +6,16 @@ import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
 
 const ProductDetail = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const location   = useLocation();
+  const navigate   = useNavigate();
+  const { id }     = useParams();
   const { offer: locationOffer, category: locationCategory } = location.state || {};
   const { store, actions } = useContext(Context);
 
   const [completeOffer, setCompleteOffer] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]             = useState(true);
   const [currentCategory, setCurrentCategory] = useState(locationCategory);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity]           = useState(1);
 
   const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg";
 
@@ -29,8 +29,9 @@ const ProductDetail = () => {
     return '';
   };
 
+  // 1) Cargo datos según categoría
   useEffect(() => {
-    const loadCategory = async () => {
+    (async () => {
       setLoading(true);
       const cat = locationCategory || determineCategory(id);
       setCurrentCategory(cat);
@@ -51,40 +52,21 @@ const ProductDetail = () => {
         case 'ofertas':
           if (!store.serviciosOfertas.length) await actions.cargarServiciosOfertas();
           break;
-        default:
-          break;
       }
-      setLoading(false);
-    };
 
-    loadCategory();
+      setLoading(false);
+    })();
   }, [id, locationCategory, store, actions]);
 
+  // 2) Determino la oferta concreta
   useEffect(() => {
     if (loading) return;
-
     if (locationOffer) {
       setCompleteOffer(locationOffer);
       return;
     }
-
     const numId = parseInt(id, 10);
-    let list = [];
-    switch (currentCategory) {
-      case 'viajes':
-        list = store.serviciosViajes; break;
-      case 'belleza':
-        list = store.serviciosBelleza; break;
-      case 'gastronomia':
-        list = store.serviciosGastronomia; break;
-      case 'top':
-        list = store.serviciosTop; break;
-      case 'ofertas':
-        list = store.serviciosOfertas; break;
-      default:
-        list = [];
-    }
-
+    const list = store[`servicios${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}`] || [];
     setCompleteOffer(list.find(o => o.id === numId) || null);
   }, [loading, currentCategory, id, locationOffer, store]);
 
@@ -97,7 +79,6 @@ const ProductDetail = () => {
       </Container>
     );
   }
-
   if (!completeOffer) {
     return (
       <Container className="my-5">
@@ -109,26 +90,38 @@ const ProductDetail = () => {
   }
 
   const display = completeOffer;
-  const title = display.title || display.nombre || "Sin título";
-  const image = display.image || display.imagen || defaultImage;
-  const desc  = display.descripcion || display.description || "No hay descripción disponible.";
+  const title   = display.title || display.nombre || "Sin título";
+  const image   = display.image || display.imagen || defaultImage;
+  const desc    = display.descripcion || display.description || "No hay descripción disponible.";
 
-  const original = display.originalPrice ?? display.price ?? 0;
-  let discountPrice = display.discountPrice ?? Math.round(original * 0.7);
+  const original      = display.originalPrice ?? display.price ?? 0;
+  let discountPrice  = display.discountPrice ?? Math.round(original * 0.7);
   if (discountPrice >= original) discountPrice = Math.round(original * 0.7);
-  const pctOff = original > 0 ? Math.round((original - discountPrice) / original * 100) : 0;
+  const pctOff       = original > 0 ? Math.round((original - discountPrice) / original * 100) : 0;
 
+  // 3) Agregar con distinción de categoría
   const addToCart = () => {
     actions.addToCart({
       ...display,
-      originalPrice: original,
       discountPrice,
-      quantity
+      originalPrice: original,
+      quantity,
+      category: currentCategory
     });
   };
+
+  // 4) Comprar ahora
   const buyNow = () => {
     navigate("/checkout", {
-      state: { item: { ...display, originalPrice: original, discountPrice, quantity } }
+      state: {
+        item: {
+          ...display,
+          originalPrice: original,
+          discountPrice,
+          quantity,
+          category: currentCategory
+        }
+      }
     });
   };
 
@@ -190,8 +183,8 @@ const ProductDetail = () => {
                   value={quantity}
                   min={1}
                   onChange={e => {
-                    const v = parseInt(e.target.value,10);
-                    if (!isNaN(v) && v>0) setQuantity(v);
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v) && v > 0) setQuantity(v);
                   }}
                 />
                 <Button variant="outline-secondary" onClick={() => setQuantity(q => q + 1)}>+</Button>
@@ -215,3 +208,4 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
+

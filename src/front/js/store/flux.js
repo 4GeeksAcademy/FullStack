@@ -271,28 +271,30 @@ const getState = ({ getStore, getActions, setStore }) => {
       },
 
       // Agregar item al carrito
-      addToCart: (item) => {
-        const store = getStore();
-        // Comprobamos si el item ya está en el carrito
-        const existingItem = store.cartItems.find(
-          (cartItem) => cartItem.id === item.id
-        );
+       addToCart: (item) => {
+    const store = getStore();
+    // Buscamos si ya existía (mismo id **y** misma categoría)
+    const existing = store.cartItems.find(ci =>
+      ci.id === item.id && ci.category === item.category
+    );
 
-        if (existingItem) {
-          // Si ya existe, solo aumentamos la cantidad
-          const updatedCart = store.cartItems.map((cartItem) =>
-            cartItem.id === item.id
-              ? { ...cartItem, quantity: cartItem.quantity + 1 }
-              : cartItem
-          );
-          setStore({ cartItems: updatedCart });
-        } else {
-          // Si no existe, agregamos el item con cantidad 1
-          setStore({
-            cartItems: [...store.cartItems, { ...item, quantity: 1 }],
-          });
-        }
-      },
+    let updatedCart;
+    if (existing) {
+      updatedCart = store.cartItems.map(ci =>
+        ci.id === item.id && ci.category === item.category
+          ? { ...ci, quantity: ci.quantity + (item.quantity ?? 1) }
+          : ci
+      );
+    } else {
+      updatedCart = [
+        ...store.cartItems,
+        { ...item, quantity: item.quantity ?? 1 }
+      ];
+    }
+
+    setStore({ cartItems: updatedCart });
+    getActions().saveCartToLocalStorage();
+  },
 
       // Eliminar item del carrito
       removeItemFromCart: (id) => {
@@ -659,11 +661,86 @@ addToCart: (item) => {
   actions.saveCartToLocalStorage();  // persistimos siempre
 },
 
+ emptyCart: () => {
+    localStorage.removeItem("cartItems");
+    setStore({ cartItems: [] });
+    return true;
+},
+
   // **Nueva acción** para vaciar todo el carrito
     clearCart: () => {
       setStore({ cartItems: [] });
       getActions().saveCartToLocalStorage();
     },
+
+   addToCart: (item) => {
+  const store = getStore();
+  // Buscamos si ya existía (mismo id, misma categoría y mismo título)
+  const existing = store.cartItems.find(ci =>
+    ci.id === item.id &&
+    ci.category === item.category &&
+    ci.title === item.title
+  );
+
+  let updatedCart;
+  if (existing) {
+    updatedCart = store.cartItems.map(ci =>
+      ci.id === item.id &&
+      ci.category === item.category &&
+      ci.title === item.title
+        ? { ...ci, quantity: ci.quantity + (item.quantity ?? 1) }
+        : ci
+    );
+  } else {
+    updatedCart = [
+      ...store.cartItems,
+      { ...item, quantity: item.quantity ?? 1 }
+    ];
+  }
+
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();
+},
+
+updateQuantity: (id, category, title, newQuantity) => {
+  if (newQuantity < 1) return false;
+  const store = getStore();
+  const updatedCart = store.cartItems.map(ci =>
+    ci.id === id &&
+    ci.category === category &&
+    ci.title === title
+      ? { ...ci, quantity: newQuantity }
+      : ci
+  );
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();
+  return true;
+},
+
+removeItemFromCart: (id, category, title) => {
+  const store = getStore();
+  const updatedCart = store.cartItems.filter(ci =>
+    !(ci.id === id && ci.category === category && ci.title === title)
+  );
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();
+  return true;
+},
+
+emptyCart: () => {
+  setStore({ cartItems: [] });
+  getActions().saveCartToLocalStorage();
+  return true;
+}, 
+
+  saveCartToLocalStorage: () => {
+    const store = getStore();
+    localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+  },
+  loadCartFromLocalStorage: () => {
+    const stored = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    setStore({ cartItems: stored });
+  },
 
     },
   };

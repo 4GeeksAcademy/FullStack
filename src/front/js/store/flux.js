@@ -909,24 +909,6 @@ emptyCart: () => {
     const stored = JSON.parse(localStorage.getItem("cartItems") || "[]");
     setStore({ cartItems: stored });
   },
-
-            return true; // El login fue exitoso
-          } else {
-            // Si no conseguimos los datos del usuario, se guarda un objeto básico
-            localStorage.setItem(
-              "user",
-              JSON.stringify({
-                correo: correo,
-                role: "cliente",
-              })
-            );
-            return true;
-          }
-        } catch (error) {
-          console.error("Login error:", error);
-          return false; // Si ocurre un error, retornamos false
-        }
-      },
     },
   };
 };

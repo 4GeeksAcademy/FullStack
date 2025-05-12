@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Context } from '../store/appContext';
 import { useContext } from 'react';
@@ -18,6 +18,15 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        // Recuperar email si viene de un registro previo
+        const savedEmail = localStorage.getItem('correo_registrado');
+        if (isLogin && savedEmail) {
+            setCorreo(savedEmail);
+            localStorage.removeItem('correo_registrado'); // lo quitamos para no dejarlo ahí
+        }
+    }, [isLogin]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -33,6 +42,7 @@ const LoginPage = () => {
             } else {
                 const success = await actions.registerUser({ correo, password, telefono, direccion, ciudad });
                 if (success) {
+                    localStorage.setItem('correo_registrado', correo); // guardamos el email
                     setError('¡Registro exitoso! Ahora puedes iniciar sesión.');
                     setIsLogin(true);
                     setCorreo('');
@@ -103,7 +113,7 @@ const LoginPage = () => {
                         <label className="form-label">Contraseña</label>
                         <div className="input-group">
                             <span className="input-group-text"><i className="bi bi-key"></i></span>
-                            <input type={showPassword ? "text" : "password"} className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="6" />
+                            <input type={showPassword ? "text" : "password"} className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="5" />
                             <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword(!showPassword)}>
                                 <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                             </button>
@@ -131,4 +141,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-

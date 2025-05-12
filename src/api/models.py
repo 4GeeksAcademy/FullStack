@@ -49,31 +49,54 @@ class User(db.Model):
         }
 
 
+class NewsletterSubscriptions(db.Model):
+    __tablename__ = 'newslettersubscription'
+
+    id = db.Column(db.Integer, primary_key=True)
+    correo = correo = db.Column(db.String(120), unique=True, nullable=False)
+
 class Newsletter(db.Model):
     __tablename__ = 'newsletter'
 
     id = db.Column(db.Integer, primary_key=True)
-    correo = db.Column(db.String(120), unique=True, nullable=False)
+    titulo = db.Column(db.String(120), nullable=False)
+    asunto = db.Column(db.String(120), nullable=False)
+    enviado = db.Column(db.Boolean(), default=False)
+    services = db.relationship('NewsletterServices', lazy='dynamic', cascade='all, delete-orphan')
 
     def serialize(self):
         return {
             "id": self.id,
-            "correo": self.correo
         }
+
+class NewsletterServices(db.Model):
+    __tablename__ = 'newsletterservices'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, nullable=False)
+    service_type = db.Column(db.String(50), nullable=False)  # 'viajes', 'top', 'belleza', 'gastronomia' 
+
+    newsletter_id = db.Column(db.Integer, db.ForeignKey('newsletter.id'), nullable=False)
+
+    
 
 class Payment(db.Model):
     __tablename__ = 'payments'
 
     id = db.Column(db.Integer, primary_key=True)
     currency = db.Column(db.String(3), nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
+    amount = db.Column(db.Integer, nullable=False)  # total
     payment_date = db.Column(db.DateTime, default=datetime.utcnow)
     paypal_payment_id = db.Column(db.String(255), unique=True, nullable=False)
+    estado = db.Column(db.String(50), default='pendiente')
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    servicio_id = db.Column(db.Integer, nullable=True)  # Nuevo campo opcional por ahora
+    servicio_id = db.Column(db.Integer, nullable=True)
 
+    # Relación con los items
+    items = db.relationship('PaymentItem', backref='payment', cascade="all, delete-orphan")
     reservation = db.relationship('Reservation', back_populates='payment', uselist=False)
+
 
     def serialize(self):
         return {
@@ -81,10 +104,33 @@ class Payment(db.Model):
             "currency": self.currency,
             "amount": self.amount,
             "payment_date": self.payment_date.isoformat(),
+            "paypal_payment_id": self.paypal_payment_id,
             "user_id": self.user_id,
-            "servicio_id": self.servicio_id  # Lo agregamos también en el JSON
+            "servicio_id": self.servicio_id,
+            "estado": self.estado,
+            "items": [item.serialize() for item in self.items]
         }
 
+
+class PaymentItem(db.Model):
+    __tablename__ = 'payment_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    unit_price = db.Column(db.Integer, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    image_url = db.Column(db.String(500))  # Nuevo campo para la imagen
+    servicio_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  
+    payment_id = db.Column(db.Integer, db.ForeignKey('payments.id'), nullable=False)
+
+    def serialize(self):
+        return {
+            "title": self.title,
+            "unit_price": self.unit_price,
+            "quantity": self.quantity,
+            "image_url": self.image_url,
+            "servicio_id": self.servicio_id
+        }
 
 class Reservation(db.Model):
     __tablename__ = 'reservations'

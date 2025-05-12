@@ -12,7 +12,7 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas, Payment
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas, Payment, PaymentItem, NewsletterSubscriptions, NewsletterServices
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db
@@ -22,11 +22,13 @@ from flask_bcrypt import Bcrypt
 from api.payment import payment_bp
 from flask_cors import CORS 
 from api.politicas import crear_politicas, Politica
-from flask_cors import CORS
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 import traceback
+from api.mail_service import MailService
+from datetime import timedelta
 
 
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 load_dotenv()
 
@@ -35,10 +37,10 @@ static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = "6Smc-TWCMZkUXJ5DN6ZUmOq5OHHzjZID8NGt7c1VxpxK0TJ7Nzv0bFJ3wD7lTGiYiNk1TUnRhjM"
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 
 bcrypt = Bcrypt(app)
-
 app.url_map.strict_slashes = False
 CORS(app, origins=["*"])
 
@@ -186,29 +188,786 @@ def crear_usuario():
 
     correo = data.get('correo')
     password = data.get('password')
+    telefono = data.get('telefono', '')
+    direccion = data.get('direccion_line1', '')  # Asegúrate de usar direccion_line1
+    ciudad = data.get('ciudad', '')
     role = data.get('role', 'cliente')
 
     if not correo or not password:
         return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
 
-    # Validar si el correo ya existe
     usuario_existente = User.query.filter_by(correo=correo).first()
     if usuario_existente:
         return jsonify({"error": "El usuario ya existe"}), 409
 
-    # Encriptar contraseña
     pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     nuevo_usuario = User(
         correo=correo,
         password=pw_hash,
+        telefono=telefono,
+        direccion_line1=direccion,  # Usar direccion_line1 aquí
+        ciudad=ciudad,
         role=role,
         is_active=True
     )
+    
     db.session.add(nuevo_usuario)
     db.session.commit()
 
-    return jsonify({"mensaje": "Usuario creado correctamente"}), 201
+    # Devuelve los datos del usuario creado
+    return jsonify({
+        "mensaje": "Usuario creado correctamente",
+        "user": nuevo_usuario.serialize()
+    }), 201
+
+@app.route('/gastronomiapag', methods=['GET'])
+def paginated_gastronomia():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Gastronomia, sort_field, Gastronomia.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(Gastronomia).count()
+    gastronomias = Gastronomia.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': g.id,
+        'nombre': g.title,
+        'descripcion': g.descripcion,
+        'ciudad': g.city,
+        'precio': g.price,
+        'precio descuento': g.discountPrice,
+        'imagen': g.image,
+    } for g in gastronomias]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/gastronomia/<int:id>', methods=['PUT'])
+def edit_gastronomia(id):
+    gasronomia = Gastronomia.query.get(id)
+    if not gasronomia:
+        return jsonify({'error': 'Gastronomia no encontrado'}), 404 
+
+    data = request.get_json()
+    gasronomia.title = data['nombre']
+    gasronomia.descripcion = data['descripcion']
+    gasronomia.city = data['ciudad']
+    gasronomia.price = data['precio']
+    gasronomia.discountPrice = data['precio descuento']
+    gasronomia.image = data['imagen']
+
+    db.session.commit()
+
+    return jsonify({'id': gasronomia.id,
+        'nombre': gasronomia.title,
+        'descripcion': gasronomia.descripcion,
+        'ciudad': gasronomia.city,
+        'precio': gasronomia.price,
+        'precio descuento': gasronomia.discountPrice,
+        'imagen': gasronomia.image}), 201
+
+@app.route('/gastronomia/<int:id>', methods=['GET'])
+def get_one_gastronomia(id):
+    gastronomia = Gastronomia.query.get(id)
+
+    if not gastronomia:
+        return jsonify({'error': 'Gastronomia no encontrado'}), 404
+    
+    data = {
+        'id': gastronomia.id,
+        'nombre': gastronomia.title,
+        'descripcion': gastronomia.descripcion,
+        'ciudad': gastronomia.city,
+        'precio': gastronomia.price,
+        'precio descuento': gastronomia.discountPrice,
+        'imagen': gastronomia.image
+        }
+    return jsonify(data)
+
+@app.route('/dashboard/gastronomia', methods=['POST'])
+def create_gastronomia_dashboard():
+    data = request.get_json()
+
+    categoria = Category.query.filter_by(nombre='Gastronomia').first()
+    
+    gastronomia = Gastronomia(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        user_id = data['usuario'],
+        category_id = categoria.id,
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+    db.session.add(gastronomia)
+    db.session.commit()
+
+    data = {
+        'id': gastronomia.id,
+        'nombre': gastronomia.title,
+        'descripcion': gastronomia.descripcion,
+        'ciudad': gastronomia.city,
+        'precio': gastronomia.price,
+        'precio descuento': gastronomia.discountPrice,
+        'imagen': gastronomia.image
+    }
+    return jsonify(data), 201
+
+@app.route('/dashboard/gastronomia/<int:id>', methods=['DELETE'])
+def delete_gastronomia_dashboard(id):
+    gastronomia = Gastronomia.query.get(id)
+
+    if not gastronomia:
+        return jsonify({'error':'Gastronomia no encontrado'}), 404
+    
+    db.session.delete(gastronomia)
+    db.session.commit()
+
+    return jsonify({'message': 'Gastronomia eliminado exitosamente'}), 200
+
+@app.route('/toppag', methods=['GET'])
+def paginated_top():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Top, sort_field, Top.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(Top).count()
+    tops = Top.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': t.id,
+        'nombre': t.title,
+        'descripcion': t.descripcion,
+        'ciudad': t.city,
+        'precio': t.price,
+        'precio descuento': t.discountPrice,
+        'imagen': t.image,
+    } for t in tops]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/top/<int:id>', methods=['PUT'])
+def edit_top(id):
+    top = Top.query.get(id)
+    if not top:
+        return jsonify({'error': 'Top no encontrado'}), 404
+    
+    data = request.get_json()
+    top.title = data['nombre']
+    top.descripcion = data['descripcion']
+    top.city = data['ciudad']
+    top.price = data['precio']
+    top.discountPrice = data['precio descuento']
+    top.image = data['imagen']
+
+    db.session.commit()
+
+    return jsonify({'id': top.id,
+        'nombre': top.title,
+        'descripcion': top.descripcion,
+        'ciudad': top.city,
+        'precio': top.price,
+        'precio descuento': top.discountPrice,
+        'imagen': top.image}), 201
+
+@app.route('/top/<int:id>', methods=['GET'])
+def get_one_top(id):
+    top = Top.query.get(id)
+    if not top:
+        return jsonify({'error': 'Top no encontrado'}), 404
+    
+    data = {
+        'id': top.id,
+        'nombre': top.title,
+        'descripcion': top.descripcion,
+        'ciudad': top.city,
+        'precio': top.price,
+        'precio descuento': top.discountPrice,
+        'imagen': top.image
+        }
+    
+    return jsonify(data)
+
+@app.route('/dashboard/top', methods=['POST'])
+def create_top_dashboard():
+    data = request.get_json()
+
+    categoria = Category.query.filter_by(nombre='Top').first()
+
+    top = Top(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        user_id = data['usuario'],
+        category_id = categoria.id,
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+    db.session.add(top)
+    db.session.commit()
+
+    data = {
+        'id': top.id,
+        'nombre': top.title,
+        'descripcion': top.descripcion,
+        'ciudad': top.city,
+        'precio': top.price,
+        'precio descuento': top.discountPrice,
+        'imagen': top.image
+    }
+    return jsonify(data), 201
+
+@app.route('/dashboard/top/<int:id>', methods=['DELETE'])
+def delete_top_dashboard(id):
+    top = Top.query.get(id)
+
+    if not top:
+        return jsonify({'error':'Top no encontrado'}), 404
+    
+    db.session.delete(top)
+    db.session.commit()
+
+    return jsonify({'message': 'Top eliminado exitosamente'}), 200
+
+@app.route('/viajespag', methods=['GET'])
+def paginated_viajes():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Viajes, sort_field, Viajes.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(Viajes).count()
+    viajes = Viajes.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': v.id,
+        'nombre': v.title,
+        'descripcion': v.descripcion,
+        'ciudad': v.city,
+        'precio': v.price,
+        'precio descuento': v.discountPrice,
+        'imagen': v.image,
+    } for v in viajes]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/viajes/<int:id>', methods=['PUT'])
+def edit_viaje(id):
+    viaje = Viajes.query.get(id);
+    if not viaje:
+        return jsonify({'error': 'Viaje no encontrada'}), 404
+    
+    data = request.get_json()
+    viaje.title = data['nombre']
+    viaje.descripcion = data['descripcion']
+    viaje.city = data['ciudad']
+    viaje.price = data['precio']
+    viaje.discountPrice = data['precio descuento']
+    viaje.image = data['imagen']
+
+    db.session.commit()
+    return jsonify({'id': viaje.id,
+        'nombre': viaje.title,
+        'descripcion': viaje.descripcion,
+        'ciudad': viaje.city,
+        'precio': viaje.price,
+        'precio descuento': viaje.discountPrice,
+        'imagen': viaje.image}), 201
+
+@app.route('/viajes/<int:id>', methods=['GET'])
+def get_one_viaje(id):
+    viaje = Viajes.query.get(id)
+    if not viaje:
+        return jsonify({'error': 'Viaje no encontrada'}), 404
+    
+    data = {
+        'id': viaje.id,
+        'nombre': viaje.title,
+        'descripcion': viaje.descripcion,
+        'ciudad': viaje.city,
+        'precio': viaje.price,
+        'precio descuento': viaje.discountPrice,
+        'imagen': viaje.image
+        }
+    return jsonify(data)
+
+@app.route('/dashboard/viajes', methods=['POST'])
+def create_viaje_dashboard():
+    data = request.get_json();
+
+    categoria = Category.query.filter_by(nombre='Viajes').first()
+
+    viaje = Viajes(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        user_id = data['usuario'],
+        category_id = categoria.id,
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+
+    db.session.add(viaje)
+    db.session.commit()
+    
+    data = {
+        'id': viaje.id,
+        'nombre': viaje.title,
+        'descripcion': viaje.descripcion,
+        'ciudad': viaje.city,
+        'precio': viaje.price,
+        'precio descuento': viaje.discountPrice,
+        'imagen': viaje.image
+    }
+    return jsonify(data), 201
+
+@app.route('/dashboard/viajes/<int:id>', methods=['DELETE'])
+def delete_viaje_dashboard(id):
+    viaje = Viajes.query.get(id)
+
+    if not viaje:
+        return jsonify({'error': 'Viaje no encontrada'}), 404
+    
+    db.session.delete(viaje)
+    db.session.commit()
+    return jsonify({'message': 'Viaje eliminada exitosamente'}), 200
+
+@app.route('/bellezapag', methods=['GET'])
+def paginated_belleza():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Belleza, sort_field, Belleza.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(Belleza).count()
+    bellezas = Belleza.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': b.id,
+        'nombre': b.title,
+        'descripcion': b.descripcion,
+        'ciudad': b.city,
+        'precio': b.price,
+        'precio descuento': b.discountPrice,
+        'categoria': b.category.nombre
+    } for b in bellezas]
+    
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/belleza/<int:id>', methods=['PUT'])
+def edit_belleza(id):
+    belleza = Belleza.query.get(id)
+
+    if not belleza:
+        return jsonify({'error': 'Belleza no encontrada'}), 404
+
+    data = request.get_json()
+    belleza.title = data['nombre']
+    belleza.descripcion = data['descripcion']
+    belleza.city = data['ciudad']
+    belleza.price = data['precio']
+    belleza.discountPrice = data['precio descuento']
+    belleza.image = data['imagen']
+
+    db.session.commit()
+
+    return jsonify({'id': belleza.id,
+        'nombre': belleza.title,
+        'descripcion': belleza.descripcion,
+        'ciudad': belleza.city,
+        'precio': belleza.price,
+        'precio descuento': belleza.discountPrice,
+        'imagen': belleza.image}), 201
+
+@app.route('/belleza/<int:id>', methods=['GET'])
+def get_one_belleza(id):
+    belleza = Belleza.query.get(id)
+
+    if not belleza:
+        return jsonify({'error': 'Viaje no encontrada'}), 404
+    
+    data = {
+        'id': belleza.id,
+        'nombre': belleza.title,
+        'descripcion': belleza.descripcion,
+        'ciudad': belleza.city,
+        'precio': belleza.price,
+        'precio descuento': belleza.discountPrice,
+        'imagen': belleza.image
+        }
+    return jsonify(data)
+
+@app.route('/dashboard/belleza', methods=['POST'])
+def create_belleza_dashboard():
+    data = request.get_json()
+
+    categoria = Category.query.filter_by(nombre='Belleza').first()
+
+    belleza = Belleza(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        user_id = data['usuario'],
+        category_id = categoria.id,
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+    db.session.add(belleza)
+    db.session.commit()
+
+    data = {
+        'id': belleza.id,
+        'nombre': belleza.title,
+        'descripcion': belleza.descripcion,
+        'ciudad': belleza.city,
+        'precio': belleza.price,
+        'precio descuento': belleza.discountPrice,
+        'imagen': belleza.image
+    }
+    return jsonify(data), 201
+
+@app.route('/dashboard/belleza/<int:id>', methods=['DELETE'])
+def delete_belleza_dashboard(id):
+    belleza = Belleza.query.get(id)
+
+    if not belleza:
+       return jsonify({'error': 'Belleza no encontrada'}), 404 
+    
+    db.session.delete(belleza)
+    db.session.commit()
+
+    return jsonify({'message': 'Belleza eliminada exitosamente'}), 200
+
+@app.route('/ofertaspag', methods=['GET'])
+def paginated_offrts():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(Ofertas, sort_field, Ofertas.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+
+    total = db.session.query(Ofertas).count()
+    ofertas = Ofertas.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{
+        'id': o.id,
+        'nombre': o.title,
+        'descripcion': o.descripcion,
+        'ciudad': o.city,
+        'precio': o.price,
+        'precio descuento': o.discountPrice,
+        'categoria': o.category.nombre
+    } for o in ofertas]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = str(total)
+    return response
+
+@app.route('/oferta/<int:id>', methods=['PUT'])
+def edit_ofert(id):
+
+    oferta = Ofertas.query.get(id)
+    if not oferta:
+        return jsonify({'error': 'Oferta no encontrada'}), 404
+    
+    data = request.get_json()
+
+    oferta.title = data['nombre']
+    oferta.descripcion = data['descripcion']
+    oferta.city = data['ciudad']
+    oferta.price = data['precio']
+    oferta.discountPrice = data['precio descuento']
+    oferta.category_id = data['categoria']
+    oferta.image = data['imagen']
+    
+    db.session.commit()
+
+    return jsonify({'id': oferta.id, 'nombre': oferta.title, 'descripcion': oferta.descripcion, 'ciudad': oferta.city, 'precio': oferta.price, 'precio descuento': oferta.discountPrice, 'cateogria': oferta.category.nombre}), 200
+
+@app.route('/oferta/<int:id>', methods=['GET'])
+def get_one_ofert(id):
+    oferta = Ofertas.query.get(id)
+    if not oferta:
+        return jsonify({'error': 'Oferta no encontrada'}), 404
+    
+    data = {
+        'id': oferta.id, 
+        'nombre': oferta.title, 
+        'descripcion': oferta.descripcion, 
+        'ciudad': oferta.city, 
+        'precio': oferta.price, 
+        'precio descuento': oferta.discountPrice, 
+        'categoria': oferta.category.nombre,
+        'imagen': oferta.image,
+        'categoria_id': oferta.category_id
+        }
+    return jsonify(data)
+
+@app.route('/dashboard/oferta', methods=['POST'])
+def create_oferta_dashboard():
+    data = request.get_json()
+
+    oferta = Ofertas(
+        title = data['nombre'],
+        descripcion = data['descripcion'],
+        image = data['url'],
+        city = data['ciudad'],
+        discountPrice = data['precio descuento'],
+        price = data['precio'],
+        category_id = data['categoria'],
+        user_id = data['usuario'],
+        rating = 0,
+        reviews = 0,
+        buyers = 0
+    )
+
+    db.session.add(oferta)
+    db.session.commit()
+
+    data = {
+        'id': oferta.id, 
+        'nombre': oferta.title, 
+        'descripcion': oferta.descripcion, 
+        'ciudad': oferta.city, 
+        'precio': oferta.price, 
+        'precio descuento': oferta.discountPrice, 
+        'cateogria': oferta.category.nombre,
+        'categoria_id': oferta.category_id
+        }
+    return jsonify(data), 201
+
+@app.route('/dashboard/oferta/<int:id>', methods=['DELETE'])
+def delete_oferta_dashboard(id):
+    oferta = Ofertas.query.get(id)
+
+    if not oferta:
+        return jsonify({'error': 'Oferta no encontrada'}), 404
+    
+    db.session.delete(oferta)
+    db.session.commit()
+    return jsonify({'message': 'Oferta eliminada exitosamente'}), 200
+
+@app.route('/usuarios', methods=['GET'])
+def get_all_users():
+    usuarios = User.query.filter(func.upper(User.role) != "ADMINISTRADOR").all()
+    usrs = []
+    for u in usuarios:
+        usrs.append({'id': u.id, 'correo': u.correo})
+    return jsonify({'usuarios': usrs}), 200
+
+@app.route('/usuariospag', methods=['GET'])
+def paged_users():
+    sort_field = request.args.get('_sort', 'id')
+    sort_order = request.args.get('_order', 'ASC')
+    start = int(request.args.get('_start', 0))
+    end = int(request.args.get('_end', 10))
+    limit = end - start
+
+    column = getattr(User, sort_field, User.id)
+    if sort_order.upper() == 'DESC':
+        column = column.desc()
+    else:
+        column = column.asc()
+    
+    total = db.session.query(User).count();
+
+    users = User.query.order_by(column).offset(start).limit(limit).all()
+
+    data = [{'id': u.id, 'correo': u.correo, 'telefono': u.telefono, 'direccion 1': u.direccion_line1, 'direccion 2': u.direccion_line2, 'ciudad': u.ciudad, 'pais': u.pais, 'rol': u.role, 'activo': u.is_active} for u in users]
+
+    response = jsonify({'data': data, 'total': total})
+    response.headers['Access-Control-Expose-Headers'] = 'X-Total-Count'
+    response.headers['X-Total-Count'] = total
+    return response
+
+@app.route('/usuario/<int:id>', methods=['PUT'])
+def edit_user_info(id):
+    user = User.query.get(id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    data = request.get_json()
+
+    if data.get('correo'): user.correo = data['correo']
+    if data.get('telefono'): user.telefono = data['telefono']
+    if data.get('direccion 1'): user.direccion_line1 = data['direccion 1']
+    if data.get('direccion 2'): user.direccion_line2 = data['direccion 2']
+    if data.get('ciudad'): user.ciudad = data['ciudad']
+    if data.get('pais'): user.pais = data['pais']
+    if data.get('rol'): user.role = data['rol']
+    if 'activo' in data: user.is_active = data['activo'] 
+
+    db.session.commit()
+
+    return jsonify({
+        'id': user.id,
+        'correo': user.correo,
+        'telefono': user.telefono,
+        'direccion 1': user.direccion_line1,
+        'direccion 2': user.direccion_line2,
+        'ciudad': user.ciudad,
+        'pais': user.pais,
+        'rol': user.role,
+        'activo': user.is_active
+    }), 200
+
+        
+@app.route('/usuario/<int:id>', methods=['GET'])
+def get_user_info(id):
+    user = User.query.get(id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    data = {
+        'id': user.id,
+        'correo': user.correo,
+        'telefono': user.telefono,
+        'direccion 1': user.direccion_line1,
+        'direccion 2': user.direccion_line2,
+        'ciudad': user.ciudad,
+        'pais': user.pais,
+        'rol': user.role,
+        'activo': user.is_active
+    }
+    return jsonify(data)
+
+@app.route('/dashboard/usuario', methods=['POST'])
+def create_user_dashboard():
+    data = request.get_json()
+    user = User.query.filter_by(correo=data['correo']).first()
+    if not user:
+        pw_hash = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+        user = User(
+            correo = data['correo'],
+            password = pw_hash,
+            telefono = data['telefono'],
+            direccion_line1 = data['direccion 1'],
+            direccion_line2 = data['direccion 2'],
+            ciudad = data['ciudad'],
+            pais = data['pais'],
+            codigo_postal = data['codigo postal'],
+            role = data['rol'],
+            is_active = data['activo']
+        )
+        db.session.add(user)
+        db.session.commit()
+    
+    return jsonify({
+        'id': user.id,
+        'correo': user.correo,
+        'telefono': user.telefono,
+        'direccion 1': user.direccion_line1,
+        'direccion 2': user.direccion_line2,
+        'ciudad': user.ciudad,
+        'pais': user.pais,
+        'rol': user.role,
+        'activo': user.is_active
+    }), 201
+
+
+@app.route('/usuario/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    user = User.query.get(id)
+
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    # Eliminar objetos relacionados
+    for viaje in user.viajes_list:
+        db.session.delete(viaje)
+    
+    for top in user.top_list:
+        db.session.delete(top)
+    
+    for belleza in user.belleza_list:
+        db.session.delete(belleza)
+    
+    for gastronomia in user.gastronomia_list:
+        db.session.delete(gastronomia)
+    
+    for oferta in user.ofertas_list:
+        db.session.delete(oferta)
+    
+    for payment in user.payments:
+        db.session.delete(payment)
+    
+    for reservation in user.reservations:
+        db.session.delete(reservation)
+
+    # Verificar si el carrito (cart) existe antes de eliminarlo
+    if user.cart:
+        db.session.delete(user.cart)
+
+    # Finalmente, eliminar al propio usuario
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({'message': 'Usuario eliminado exitosamente'}), 200
 
 @app.route('/usuarios/me', methods=['GET'])
 @jwt_required()
@@ -232,17 +991,23 @@ def actualizar_perfil():
     if not usuario:
         return jsonify({"msg": "Usuario no encontrado"}), 404
 
-    usuario.telefono = data.get('telefono', usuario.telefono)
-    usuario.ciudad = data.get('ciudad', usuario.ciudad)
-    usuario.direccion_line1 = data.get('direccion', usuario.direccion_line1)
+    # Actualiza solo los campos permitidos
+    if 'telefono' in data:
+        usuario.telefono = data['telefono']
+    if 'direccion_line1' in data:
+        usuario.direccion_line1 = data['direccion_line1']
+    if 'ciudad' in data:
+        usuario.ciudad = data['ciudad']
 
     try:
         db.session.commit()
-        return jsonify({"msg": "Perfil actualizado correctamente"}), 200
+        return jsonify({
+            "msg": "Perfil actualizado correctamente",
+            "user": usuario.serialize()
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar el perfil", "error": str(e)}), 500
-
 # Ruta para obtener todos los usuarios
 @app.route('/usuarios', methods=['GET'])
 
@@ -298,6 +1063,12 @@ def iniciar_sesion():
     access_token = create_access_token(identity=usuario.correo)
     return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token, "user_id": usuario.id}), 200
 
+@app.route('/api/verify-token', methods=['GET'])
+@jwt_required()
+def verificar_token():
+    usuario = get_jwt_identity()
+    return jsonify({"user": usuario, "valid": True}), 200 
+
 # Ruta para editar usuario (cambiar contraseña)
 @app.route('/editar', methods=['PUT'])
 def editar_usuario():
@@ -319,21 +1090,310 @@ def editar_usuario():
 
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
 
+@app.route('/newsletteradd', methods=['POST'])
+@jwt_required()
+def create_newsletter():
+    data = request.get_json()
+    services = data['services']
+    if not services:
+        return jsonify({'error': 'Error al crear newsletter'}), 400
+    newsletter = Newsletter(
+        titulo = data['titulo'],
+        asunto = data['asunto']
+    )
+    db.session.add(newsletter)
+    db.session.commit()
+
+    for service in services:
+        newsletter_service = NewsletterServices(
+            service_id=service['id'],
+            service_type=service['service_type'],
+            newsletter_id=newsletter.id
+        )
+        db.session.add(newsletter_service)
+    
+    db.session.commit()
+    return jsonify({'message': 'newsletter creado con exito'}), 201
+
+@app.route('/newsletter/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_newsletter(id):
+    n_s = Newsletter.query.get(id);
+    if not n_s:
+        return jsonify({'message': 'Newsletter no encontrado'}), 404
+    db.session.delete(n_s)
+    db.session.commit()
+
+    return jsonify({'message': 'Newsletter eliminado con exito'}), 201
+
+@app.route('/newsletter/send', methods=['POST'])
+@jwt_required()
+def send_newsletter():
+    data = request.get_json()
+    
+    n_s = Newsletter.query.get(data['id'])
+    
+    if not n_s:
+        return jsonify({'message': 'Newsletter no encontrado'})
+    
+    subscriptors = NewsletterSubscriptions.query.all()
+
+    text_content = f"""\
+¡Newsletter ha llegado! 🎉
+
+Hola,
+
+Tu nuevo newsletter está disponible. Visita el siguiente enlace para verlo:
+
+{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}
+
+¿Problemas con el enlace? Copia y pega esta URL en tu navegador:
+{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}
+"""
+
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Tu Newsletter está listo!</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }}
+        .email-container {{
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }}
+        .header {{
+            background-color: #4CAF50;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }}
+        .content {{
+            padding: 30px;
+            text-align: center;
+        }}
+        .newsletter-link {{
+            display: inline-block;
+            margin: 25px 0;
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }}
+        .newsletter-link:hover {{
+            background-color: #45a049;
+        }}
+        .footer {{
+            background-color: #f4f4f4;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }}
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>¡Newsletter ha llegado! 🎉</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hola,</p>
+            <p>Tu nuevo newsletter está disponible. Visita el siguiente enlace para verlo:</p>
+        
+            <a href="{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}" class="newsletter-link">
+                Ver Newsletter
+            </a>
+
+            <p>¿Problemas con el enlace? Copia y pega esta URL en tu navegador:<br>
+            <span style="color: #4CAF50; word-break: break-all;">{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}</span></p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+    mail_service = MailService()
+
+    for subcriptor in subscriptors:
+        mail_service.send_mail(
+            to_email=subcriptor.correo,
+            subject=n_s.asunto,
+            text_content=text_content,
+            html_content=html_content
+        )
+    n_s.enviado = True
+    db.session.commit()
+    return jsonify({'message': 'newsletter enviado exitoasmente'});
+
+@app.route('/newsletter/<int:id>', methods=['GET'])
+def get_newsletter(id):
+    n_s = Newsletter.query.get(id)
+    
+    services = [{
+        'service_id': s.service_id,
+        'service_type': s.service_type 
+    } for s in n_s.services.all()]
+    
+    data = {
+        'titulo': n_s.titulo,
+        'asunto': n_s.asunto,
+        'servicios': services
+    }
+    
+    return jsonify(data), 200
+
+@app.route('/newsletter/<int:id>', methods=['PUT'])
+@jwt_required()
+def editar_newsletter(id):
+    data = request.get_json()
+    new_services = data.get('servicios', [])
+    
+    newsletter = Newsletter.query.get(id)
+    
+    newsletter.services.delete()
+    
+    for s in new_services:
+        ns = NewsletterServices(
+            service_id=s['id'],
+            service_type=s['service_type'],
+            newsletter_id=id
+        )
+        db.session.add(ns)
+    
+    newsletter.titulo = data['titulo']
+    newsletter.asunto = data['asunto']
+    
+    db.session.commit()
+    return jsonify({'message': 'Newsletter editado'}), 200
+
 @app.route('/newsletter', methods=['POST'])
 def agregar_a_newsletter():
     data = request.get_json()
-    correo = data.get('correo')
+    email = data.get('correo')
 
-    if not correo:
+    if not email:
         return jsonify({"error": "Correo es obligatorio"}), 400
 
-    existente = Newsletter.query.filter_by(correo=correo).first()
-    if existente:
-        return jsonify({"mensaje": "Este correo ya está suscrito"}), 200
+    sub = NewsletterSubscriptions.query.filter_by(correo=email).first()
 
-    nuevo = Newsletter(correo=correo)
-    db.session.add(nuevo)
+    if sub:
+        return jsonify({"mensaje": "Este correo ya está suscrito"}), 404
+
+    sub = NewsletterSubscriptions(
+        correo = email
+    )
+
+    db.session.add(sub)
     db.session.commit()
+
+    subject = "¡Gracias por suscribirte a Groupponclon!"
+    text_content = f"""Hola,\n\nTu suscripción a nuestro newsletter ha sido exitosa.
+    \n\nA partir de ahora recibirás nuestras mejores ofertas y promociones exclusivas.\n\n¡Gracias por unirte a nuestra comunidad!\n\nEl equipo de Groupponclon"""
+
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gracias por suscribirte</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f4;
+                color: #333;
+            }
+            .email-container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .header {
+                background-color: #4CAF50;
+                color: white;
+                padding: 30px 20px;
+                text-align: center;
+            }
+            .content {
+                padding: 30px;
+            }
+            .footer {
+                background-color: #f4f4f4;
+                padding: 20px;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+            }
+            .button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 12px 25px;
+                text-decoration: none;
+                border-radius: 4px;
+                display: inline-block;
+                margin: 20px 0;
+                font-weight: bold;
+            }
+            .logo {
+                max-width: 150px;
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="email-container">
+            <div class="header">
+                <h1>¡Gracias por suscribirte!</h1>
+            </div>
+            
+            <div class="content">
+                <p>Hola,</p>
+                <p>Tu suscripción a nuestro newsletter ha sido exitosa. A partir de ahora recibirás:</p>
+                
+                <ul>
+                    <li>Las mejores ofertas exclusivas</li>
+                    <li>Novedades de productos</li>
+                    <li>Descuentos especiales para suscriptores</li>
+                </ul>
+                
+                <p>¡Esperamos que disfrutes de nuestros contenidos!</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    mail_service = MailService()  # Asegúrate de tener la instancia
+    mail_service.send_mail(
+        to_email=email,
+        subject=subject,
+        text_content=text_content,
+        html_content=html_content
+    )
 
     return jsonify({"mensaje": "Suscripción exitosa"}), 201
 
@@ -341,8 +1401,15 @@ def agregar_a_newsletter():
 @app.route('/newsletter', methods=['GET'])
 @jwt_required()
 def obtener_newsletter():
-    subs = Newsletter.query.all()
-    return jsonify({"correos_suscritos": [s.correo for s in subs]}), 200
+    newsletters = Newsletter.query.all()
+    data = [{
+        'id': ns.id,
+        'titulo': ns.titulo,
+        'asunto': ns.asunto,
+        'enviado': ns.enviado
+    } for ns in newsletters]
+
+    return jsonify(data), 200
 
 
 # Ruta para categoria 
@@ -364,7 +1431,6 @@ def crear_categoria():
         "nombre": nueva_categoria.nombre
     }), 201
 
-# Crear categorías si no existen al iniciar la app
 # Crear categorías si no existen al iniciar la app
 @app.before_request
 def crear_categorias():
@@ -440,20 +1506,6 @@ def obtener_politica_por_id(id):
 
     return jsonify(politica.serialize()), 200
 
-
-
-# Ruta para obtener todas las categorías
-@app.route('/categorias', methods=['GET'])
-def obtener_categorias():
-    categorias = Category.query.all()
-    categorias_serializadas = [{
-        "id": categoria.id,
-        "nombre": categoria.nombre
-    } for categoria in categorias]
-
-    return jsonify({"categorias": categorias_serializadas}), 200
-
-
 @app.before_request
 def inicializar_db():
     # Aquí debes usar un ID de usuario válido y los IDs de las categorías correspondientes.
@@ -473,6 +1525,19 @@ def inicializar_db():
         gastronomia_category_id,
         ofertas_category_id
     )
+
+
+
+# Ruta para obtener todas las categorías
+@app.route('/categorias', methods=['GET'])
+def obtener_categorias():
+    categorias = Category.query.all()
+    categorias_serializadas = [{
+        "id": categoria.id,
+        "nombre": categoria.nombre
+    } for categoria in categorias]
+
+    return jsonify({"categorias": categorias_serializadas}), 200
 
 # RUTAS
 @app.route('/ofertas', methods=['POST'])
@@ -524,31 +1589,53 @@ def eliminar_oferta(id):
 def crear_viaje():
     data = request.get_json()
 
-    nuevo_viaje = Viajes(
-        title=data.get('title'),
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),
-        city=data.get('city'),
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación básica de campos requeridos
+    if not data.get('title') or not data.get('descripcion') or not data.get('price'):
+        return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    db.session.add(nuevo_viaje)
-    db.session.commit()
+    try:
+        nuevo_viaje = Viajes(
+            title=data.get('title'),
+            descripcion=data.get('descripcion'),
+            price=data.get('price'),
+            city=data.get('city', ''),  # Valor por defecto si no se proporciona
+            image=data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.0),  # Valor por defecto
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data.get('user_id'),
+            category_id=data.get('category_id', 1)  # Valor por defecto para viajes
+        )
 
-    return jsonify(nuevo_viaje.serialize()), 201
+        db.session.add(nuevo_viaje)
+        db.session.commit()
+
+        # Devolver el viaje creado con su ID
+        return jsonify({
+            "message": "Viaje creado exitosamente",
+            "viaje": nuevo_viaje.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/viajes', methods=['GET'])
 def obtener_viajes():
-    viajes_items = Viajes.query.all()
-    viajes_serializados = [viaje.serialize() for viaje in viajes_items]
+    try:
+       # Ordenar por ID ascendente para mantener el orden original (último al final)
+        viajes_items = Viajes.query.order_by(Viajes.id.asc()).all()
+        viajes_serializados = [viaje.serialize() for viaje in viajes_items]
 
-    return jsonify({"viajes": viajes_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(viajes_serializados),
+            "viajes": viajes_serializados
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/top', methods=['POST'])
@@ -556,63 +1643,136 @@ def obtener_viajes():
 def crear_top():
     data = request.get_json()
 
-    nuevo_top = Top(
-        title=data.get('title'),  # Nombre cambiado por title
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),  # Precio cambiado por Price
-        city=data.get('city'),  # Ubicación cambiada por city
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación de campos requeridos
+    required_fields = ['title', 'descripcion', 'price', 'user_id']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"error": f"Campo requerido faltante: {field}"}), 400
 
-    db.session.add(nuevo_top)
-    db.session.commit()
+    try:
+        nuevo_top = Top(
+            title=data['title'],
+            descripcion=data['descripcion'],
+            price=data['price'],
+            city=data.get('city', ''),
+            image=data.get('image', 'https://img.freepik.com/free-photo/beautiful-shot-u-s-route-66-arizona-usa-with-clear-blue-sky-background_181624-53248.jpg'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.5),
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data['user_id'],
+            category_id=data.get('category_id', 3)  # ID de categoría para Top
+        )
 
-    return jsonify(nuevo_top.serialize()), 201
+        db.session.add(nuevo_top)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Top creado exitosamente",
+            "top": nuevo_top.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/top', methods=['GET'])
 def obtener_top():
-    top_items = Top.query.all()
-    top_serializados = [top.serialize() for top in top_items]
+    try:
+        # Ordenar por ID descendente para mostrar los más recientes primero
+        top_items = Top.query.order_by(Top.id.asc()).all()
+        top_serializados = [top.serialize() for top in top_items]
 
-    return jsonify({"top": top_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(top_serializados),
+            "top": top_serializados
+        }), 200
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Función para crear servicios iniciales de Top
+def crear_servicios_top(user_id, top_category_id):
+    # Verificar cuáles ya existen para no duplicar
+    existing_titles = {t.title for t in Top.query.filter_by(category_id=top_category_id).all()}
+    
+    top_services = [
+        Top(
+            title="Crucero de lujo por el Mediterráneo",
+            descripcion="Disfrutá 7 días de lujo en altamar visitando Italia, Grecia y España.",
+            image="https://img.freepik.com/free-photo/cruise-ship-sailing-ocean-sunset_181624-24289.jpg",
+            city="Mar Mediterráneo",
+            price=3500,
+            discountPrice=4200,
+            rating=4.8,
+            reviews=300,
+            buyers=450,
+            user_id=user_id,
+            category_id=top_category_id
+        ),
+        # ... (otros servicios con imágenes de Freepik como en viajes)
+    ]
+
+    # Filtrar solo los que no existen
+    new_services = [t for t in top_services if t.title not in existing_titles]
+    
+    if new_services:
+        db.session.bulk_save_objects(new_services)
+        db.session.commit()
 
 @app.route('/gastronomia', methods=['POST'])
 @jwt_required()
 def crear_gastronomia():
     data = request.get_json()
 
-    nuevo_gastronomia = Gastronomia(
-        title=data.get('title'),
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),
-        city=data.get('city'),
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación básica de campos requeridos
+    if not data.get('title') or not data.get('descripcion') or not data.get('price'):
+        return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    db.session.add(nuevo_gastronomia)
-    db.session.commit()
+    try:
+        nuevo_gastronomia = Gastronomia(
+            title=data.get('title'),
+            descripcion=data.get('descripcion'),
+            price=data.get('price'),
+            city=data.get('city', ''),  # Valor por defecto si no se proporciona
+            image=data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            discountPrice=data.get('discountPrice'),
+            rating=data.get('rating', 4.0),  # Valor por defecto
+            reviews=data.get('reviews', 0),
+            buyers=data.get('buyers', 0),
+            user_id=data.get('user_id'),
+            category_id=data.get('category_id', 4)  # Valor por defecto para gastronomía
+        )
 
-    return jsonify(nuevo_gastronomia.serialize()), 201
+        db.session.add(nuevo_gastronomia)
+        db.session.commit()
+
+        # Devolver el gastronomía creado con su ID
+        return jsonify({
+            "message": "Servicio de gastronomía creado exitosamente",
+            "gastronomia": nuevo_gastronomia.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/gastronomia', methods=['GET'])
 def obtener_gastronomia():
-    gastronomia_items = Gastronomia.query.all()
-    gastronomia_serializados = [gastronomia.serialize() for gastronomia in gastronomia_items]
+    try:
+        # Ordenar por ID ascendente para mantener el orden original (último al final)
+        gastronomia_items = Gastronomia.query.order_by(Gastronomia.id.asc()).all()
+        gastronomia_serializados = [gastronomia.serialize() for gastronomia in gastronomia_items]
 
-    return jsonify({"gastronomia": gastronomia_serializados}), 200
+        return jsonify({
+            "success": True,
+            "count": len(gastronomia_serializados),
+            "gastronomia": gastronomia_serializados
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/belleza', methods=['POST'])
@@ -649,71 +1809,34 @@ def obtener_belleza():
 
 
 # Ruta para manejar el webhook de Stripe
+endpoint_secret ='whsec_toq2QoiSG9PJIRMmYPZubqAc8oRNuYIW'
+
 
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
+    print("Webhook recibido")  # Esto te ayudará a saber si la ruta está siendo llamada
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
-    endpoint_secret = "whsec_MMNDXmbt4VJAhPs0vCjAFmNvOWVMff64"
+
+    event = None
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError as e:
-        print(f"❌ Payload inválido: {str(e)}")
+        print("Error al verificar la firma del webhook:", e)
         return 'Invalid payload', 400
     except stripe.error.SignatureVerificationError as e:
-        print(f"❌ Firma inválida: {str(e)}")
+        print("Error al verificar la firma del webhook:", e)
         return 'Invalid signature', 400
 
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
-        session_id = session['id']
-        print(f"✅ Pago completado para la sesión {session_id}")
+        print('Pago completado:', session)
+    elif event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        print('Pago exitoso:', payment_intent)
 
-        try:
-            # Recuperamos la sesión con los line_items
-            session_with_items = stripe.checkout.Session.retrieve(session_id, expand=['line_items'])
-            line_items = session_with_items['line_items']['data']
-
-            # ⚠️ Extraer información crítica desde metadata
-            metadata = session.get('metadata', {})
-            user_id = int(metadata.get('user_id'))
-            service_id = int(metadata.get('service_id'))
-            service_type = metadata.get('service_type')
-
-            if not all([user_id, service_id, service_type]):
-                raise ValueError("Faltan datos necesarios en metadata")
-
-            # Guardar el pago
-            payment = Payment(
-                currency=session['currency'],
-                amount=int(session['amount_total']),
-                paypal_payment_id=session_id,
-                user_id=user_id,
-                payment_date=datetime.utcnow()
-            )
-            db.session.add(payment)
-            db.session.flush()  # para obtener el ID del pago antes de hacer commit
-
-            # Crear reserva y vincularla con el pago
-            reservation = Reservation(
-                user_id=user_id,
-                service_id=service_id,
-                service_type=service_type,
-                payment_id=payment.id,
-                date=datetime.utcnow()
-            )
-            db.session.add(reservation)
-            db.session.commit()
-
-            print(f"✅ Reserva y pago registrados: {reservation.serialize()}")
-
-        except Exception as e:
-            print(f"❌ Error al procesar webhook: {str(e)}")
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
-
-    return '', 200
+    return jsonify({'status': 'success'}), 200
 
 
 # Ruta para obtener todas las reservas de un usuario
@@ -750,25 +1873,14 @@ def obtener_reservas():
 
 # Ruta para obtener todas las compras de un usuario desde la base de datos
 @app.route('/compras/<int:user_id>', methods=['GET'])
+@jwt_required()
 def obtener_compras(user_id):
     compras = Payment.query.filter_by(user_id=user_id).all()
-    compras_data = []
-
-    for compra in compras:
-        compras_data.append({
-            'id': compra.id,
-            'monto': compra.amount,
-            'fecha': compra.payment_date,
-            'servicio_id': compra.servicio_id
-        })
-
+    compras_data = [compra.serialize() for compra in compras]
     return jsonify({'compras': compras_data}), 200
 
-
-
 # Ruta para obtener todas las compras
-@app.route('/compras', methods=['GET'])
-@jwt_required()
+""""@app.route('/compras', methods=['GET'])
 def obtener_todas_las_compras():
     # 🔍 Consultamos todas las compras en la base de datos
     compras = Payment.query.all()
@@ -777,6 +1889,40 @@ def obtener_todas_las_compras():
         return jsonify({"mensaje": "No se encontraron compras"}), 404
 
     compras_serializadas = [compra.serialize() for compra in compras]
+
+    return jsonify({
+        "total": len(compras_serializadas),
+        "compras": compras_serializadas
+    }), 200"""
+
+@app.route('/compras', methods=['GET'])
+def obtener_todas_las_compras():
+    # Consultamos todas las compras en la base de datos
+    compras = Payment.query.all()
+
+    if not compras:
+        return jsonify({"mensaje": "No se encontraron compras"}), 404
+
+    compras_serializadas = []
+    
+    for compra in compras:
+        compra_dict = compra.serialize()  # Serializamos la compra
+        # Verificamos si la compra tiene items
+        if compra_dict.get("items"):
+            # Si tiene items, los agregamos a la respuesta
+            compras_serializadas.append(compra_dict)
+        else:
+            # Si no tiene items, la compra se omite o se agrega vacía
+            compras_serializadas.append({
+                "id": compra.id,
+                "currency": compra.currency,
+                "amount": compra.amount,
+                "payment_date": compra.payment_date.isoformat(),
+                "paypal_payment_id": compra.paypal_payment_id,
+                "estado": compra.estado,
+                "user_id": compra.user_id,
+                "items": []  # No hay productos en esta compra
+            })
 
     return jsonify({
         "total": len(compras_serializadas),
@@ -801,22 +1947,96 @@ def registrar_compra():
 
     return jsonify({"mensaje": "Compra registrada correctamente", "compra": nueva_compra.serialize()}), 201
 
-@app.route('/reservas/proveedor/<int:proveedor_id>', methods=['GET'])
+
+
+""""@app.route('/pagos/proveedor', methods=['GET'])
 @jwt_required()
-def reservas_por_proveedor(proveedor_id):
-    # Consultar las reservas filtrando por `user_id`
-    reservas = Reservation.query.filter_by(user_id=proveedor_id).all()
+def pagos_proveedor():
+    # 1. Obtener el correo del proveedor autenticado desde el token
+    correo_usuario = get_jwt_identity()
+    if not correo_usuario:
+        return jsonify({'mensaje': 'Token inválido o no proporcionado'}), 401
 
-    if not reservas:
-        return jsonify({"mensaje": "No hay reservas para los servicios de este proveedor"}), 404
+    # 2. Buscar al usuario por correo
+    usuario = User.query.filter_by(correo=correo_usuario).first()
+    if not usuario:
+        return jsonify({'mensaje': 'Usuario no encontrado'}), 404
 
-    # Serializar las reservas
-    reservas_serializadas = [reserva.serialize() for reserva in reservas]
+    id_proveedor = usuario.id
 
-    return jsonify({
-        "reservas": reservas_serializadas,
-        "total": len(reservas_serializadas)
-    })
+    # 3. Buscar los pagos asociados a ese proveedor
+    pagos = PaymentItem.query.join(Payment)\
+               .filter(PaymentItem.servicio_id == id_proveedor,
+                       Payment.estado == 'pagado')\
+               .all()
+    if not pagos:
+        return jsonify({'mensaje': 'No se encontraron pagos para este proveedor'}), 404
+
+    # 4. Serializar los resultados
+    resultado = []
+    for item in pagos:
+        resultado.append({
+            'id': item.id,
+            'servicio_id': item.servicio_id,
+            'monto': item.monto,
+            'fecha': item.fecha.isoformat(),
+            # agrega más campos si quieres
+        })
+
+    return jsonify(resultado), 200"""
+
+@app.route('/pagos', methods=['GET'])
+@jwt_required()
+def pagos_proveedor():
+    try:
+        correo_usuario = get_jwt_identity()
+        if not correo_usuario:
+            return jsonify({'mensaje': 'Token inválido o no proporcionado'}), 401
+
+        usuario = User.query.filter_by(correo=correo_usuario).first()
+        if not usuario:
+            return jsonify({'mensaje': 'Usuario no encontrado'}), 404
+
+        id_proveedor = usuario.id
+
+        # Obtener los títulos de todos los servicios creados por este proveedor
+        titulos_servicios = set()
+        for modelo in [Top, Viajes, Ofertas, Belleza, Gastronomia]:
+            servicios = modelo.query.filter_by(user_id=id_proveedor).all()
+            titulos_servicios.update([s.title.strip().lower() for s in servicios if s.title])
+
+        if not titulos_servicios:
+            return jsonify({'mensaje': 'Este proveedor no tiene servicios creados'}), 404
+
+        # Filtrar pagos por coincidencia de título
+        payments = Payment.query.filter_by(estado='pagado').all()
+
+        pagos_del_proveedor = []
+        for pago in payments:
+            for item in pago.items:
+                if item.title and item.title.strip().lower() in titulos_servicios:
+                    cliente = User.query.get(pago.user_id)
+                    pagos_del_proveedor.append({
+                        'id': pago.id,
+                        'amount': item.unit_price * item.quantity,
+                        'currency': pago.currency,
+                        'estado': pago.estado,
+                        'payment_date': pago.payment_date.isoformat() if pago.payment_date else None,
+                        'paypal_payment_id': pago.paypal_payment_id,
+                        'user_email': cliente.correo if cliente else 'Desconocido',
+                        'title': item.title,
+                        'quantity': item.quantity,
+                        'image_url': item.image_url
+                    })
+
+        if not pagos_del_proveedor:
+            return jsonify({'mensaje': 'No se encontraron pagos para este proveedor'}), 404
+
+        return jsonify({'pagos': pagos_del_proveedor}), 200
+
+    except Exception as e:
+        return jsonify({'mensaje': 'Error al procesar la solicitud', 'error': str(e)}), 500
+
 
 @app.route('/compras/test', methods=['POST'])
 def crear_compra_test():
@@ -1030,50 +2250,329 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-YOUR_DOMAIN = "https://glowing-garbanzo-x5v7q4ggw64phv9x6-3000.app.github.dev"  # Cambia esta URL si es otro entorno
+YOUR_DOMAIN = "https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev"  # Cambia esta URL si es otro entorno
 
-@app.route('/create-checkout-session', methods=['POST'])
+""""@app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
     try:
-        # Recibimos los datos del carrito
+        if not request.is_json:
+            return jsonify({'error': 'Missing or invalid JSON'}), 400
+
         data = request.get_json()
         cart_items = data.get("items", [])
         total_price = data.get("total", 0)
 
-        # Creamos una sesión de Stripe con los productos del carrito
+
+        if not cart_items:
+            return jsonify({'error': 'No items in cart'}), 400
+
         line_items = []
         for item in cart_items:
+            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
+                return jsonify({'error': 'Invalid item data'}), 400
+
             line_items.append({
                 'price_data': {
-                    'currency': 'eur',
+                    'currency': 'usd',
                     'product_data': {
                         'name': item['title'],
-                        'description': item['description'],
                     },
-                    'unit_amount': int(item['discountPrice'] * 100),  # Convertimos a centavos
+                    'unit_amount': int(item['discountPrice'] * 100),
                 },
                 'quantity': item['quantity'],
             })
 
-        # Crear la sesión de pago
+
         session = stripe.checkout.Session.create(
             line_items=line_items,
             mode='payment',
-            success_url=YOUR_DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=YOUR_DOMAIN + '/cancel',
+            ui_mode='embedded',
+            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
         )
 
-        return jsonify({'sessionId': session.id})
+          # Guardar el pago en la base de datos con estado inicial 'pendiente'
+        new_payment = Payment(
+            currency='usd',
+            amount=int(total_price * 100),  # Guardar el monto en centavos
+            payment_date=datetime.utcnow(),
+            paypal_payment_id=session.id,  # Usar el ID de sesión de Stripe
+            user_id=user_id,
+            estado='pendiente',  # Estado inicial como pendiente
+        )
+
+        db.session.add(new_payment)
+        db.session.commit()
+
+        return jsonify({
+            'sessionId': session.id,
+            'clientSecret': session.client_secret
+        })
 
     except Exception as e:
-        return jsonify(error=str(e)), 500
+        print("Error creating session:", e)
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500"""
 
+
+""""@app.route('/create-checkout-session', methods=['POST'])
+@jwt_required()
+def create_checkout_session():
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Missing or invalid JSON'}), 400
+
+        data = request.get_json()
+        cart_items = data.get("items", [])
+        total_price = data.get("total", 0)
+
+        if not cart_items:
+            return jsonify({'error': 'No items in cart'}), 400
+
+        # Obtener el usuario desde el token
+        correo_usuario = get_jwt_identity()
+        usuario = User.query.filter_by(correo=correo_usuario).first()
+        if not usuario:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+
+        line_items = []
+        for item in cart_items:
+            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
+                return jsonify({'error': 'Invalid item data'}), 400
+
+            line_items.append({
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': item['title'],
+                    },
+                    'unit_amount': int(item['discountPrice'] * 100),
+                },
+                'quantity': item['quantity'],
+            })
+
+        session = stripe.checkout.Session.create(
+            line_items=line_items,
+            mode='payment',
+            ui_mode='embedded',
+            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
+        )
+
+        new_payment = Payment(
+            currency='usd',
+            amount=int(total_price * 100),
+            payment_date=datetime.utcnow(),
+            paypal_payment_id=session.id,
+            user_id=usuario.id,
+            estado='pendiente',
+        )
+
+        db.session.add(new_payment)
+        db.session.commit()
+
+        return jsonify({
+            'sessionId': session.id,
+            'clientSecret': session.client_secret
+        })
+
+    except Exception as e:
+        print("Error creating session:", e)
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500"""
+
+@app.route('/create-checkout-session', methods=['POST'])
+@jwt_required()
+def create_checkout_session():
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Missing or invalid JSON'}), 400
+
+        data = request.get_json()
+        cart_items = data.get("items", [])
+        total_price = data.get("total", 0)
+
+        if not cart_items:
+            return jsonify({'error': 'No items in cart'}), 400
+
+        # Obtener el usuario desde el token
+        correo_usuario = get_jwt_identity()
+        usuario = User.query.filter_by(correo=correo_usuario).first()
+        if not usuario:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+
+        line_items = []
+        for item in cart_items:
+            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
+                return jsonify({'error': 'Invalid item data'}), 400
+
+            line_items.append({
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': item['title'],
+                    },
+                    'unit_amount': int(item['discountPrice'] * 100),
+                },
+                'quantity': item['quantity'],
+            })
+
+        session = stripe.checkout.Session.create(
+            line_items=line_items,
+            mode='payment',
+            ui_mode='embedded',
+            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
+        )
+
+        # Crear el Payment
+        new_payment = Payment(
+            currency='usd',
+            amount=int(total_price * 100),
+            payment_date=datetime.utcnow(),
+            paypal_payment_id=session.id,
+            user_id=usuario.id,
+            estado='pendiente',
+        )
+        db.session.add(new_payment)
+        db.session.flush()  # Para obtener el ID antes de hacer commit
+
+        # Crear los items
+        for item in cart_items:
+            payment_item = PaymentItem(
+                title=item['title'],
+                unit_price=int(item['discountPrice'] * 100),
+                quantity=item['quantity'],
+                payment_id=new_payment.id,
+                image_url=item['image'],
+                servicio_id=item.get('user_id')
+            )
+            db.session.add(payment_item)
+
+        db.session.commit()
+
+        return jsonify({
+            'sessionId': session.id,
+            'clientSecret': session.client_secret
+        })
+
+    except Exception as e:
+        print("Error creating session:", e)
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+
+""""@app.route('/session-status', methods=['GET'])
+def session_status():
+    session_id = request.args.get('session_id')
+
+    # Aquí obtienes el estado de la sesión de Stripe o lo que sea necesario
+    # Supón que obtienes el estado desde Stripe:
+    session = stripe.checkout.Session.retrieve(session_id)
+
+    if session:
+        return jsonify({
+            "status": session["payment_status"],  # O lo que sea relevante
+            "customer_email": session.get("customer_email", "unknown")
+        })
+    else:
+        return jsonify({"error": "Session not found"}), 404"""
 
 @app.route('/session-status', methods=['GET'])
 def session_status():
     session_id = request.args.get('session_id')
-    session = stripe.checkout.Session.retrieve(session_id)
-    return jsonify(status=session.status, customer_email=session.customer_details.email)
+    if not session_id:
+        return jsonify({'error': 'session_id faltante'}), 400
+
+    try:
+        # Consultar a Stripe por el estado de la sesión
+        session = stripe.checkout.Session.retrieve(session_id)
+
+        # Buscar el pago en tu base de datos
+        payment = Payment.query.filter_by(paypal_payment_id=session_id).first()
+        if not payment:
+            return jsonify({'error': 'Pago no encontrado'}), 404
+
+        # Actualizar estado si fue pagado
+        if session.payment_status == 'paid' and payment.estado != 'pagado':
+            payment.estado = 'pagado'
+            db.session.commit()
+
+        return jsonify({
+            'status': session.payment_status,
+            'customer_email': session.customer_email
+        }), 200
+
+    except Exception as e:
+        print('Error en session-status:', e)
+        return jsonify({'error': str(e)}), 500
+
+    
+@api.route('/change-password', methods=['PUT'])
+@jwt_required()
+def change_password():
+    try:
+        data = request.get_json()
+        current_password = data.get("currentPassword")
+        new_password = data.get("newPassword")
+
+        # Obtener correo desde el token JWT
+        correo = get_jwt_identity()
+        user = User.query.filter_by(correo=correo).first()
+
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+
+        # Verificar contraseña actual con Bcrypt
+        if not bcrypt.check_password_hash(user.password, current_password):
+            return jsonify({"msg": "Contraseña actual incorrecta"}), 401
+
+        # Generar nuevo hash con Bcrypt
+        user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        db.session.commit()
+
+        return jsonify({"msg": "Contraseña actualizada exitosamente"}), 200
+
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+    
+    # Ruta para crear un administrador
+@app.route('/api/create-admin', methods=['POST'])
+def crear_admin():
+    # Obtener los datos de la solicitud (JSON)
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No se recibieron datos JSON"}), 400
+
+    correo = data.get('correo')
+    password = data.get('password')
+
+    # Validación de datos obligatorios
+    if not correo or not password:
+        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+
+    # Verificar si el correo ya está registrado
+    usuario_existente = User.query.filter_by(correo=correo).first()
+    if usuario_existente:
+        return jsonify({"error": "El correo ya está registrado"}), 409
+
+    # Encriptar la contraseña
+    pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    # Crear el nuevo usuario con el rol 'Administrador'
+    nuevo_admin = User(
+        correo=correo,
+        password=pw_hash,
+        role='Administrador',  # El rol siempre será 'Administrador'
+        is_active=True  # Asegúrate de que el admin esté activo
+    )
+
+    # Guardar en la base de datos
+    db.session.add(nuevo_admin)
+    db.session.commit()
+
+    # Respuesta exitosa
+    return jsonify({"message": "Administrador creado exitosamente"}), 201
+
     
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')

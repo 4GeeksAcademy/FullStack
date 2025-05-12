@@ -36,6 +36,8 @@ import CreateNewsletter from "./pages/CreateNewsletter.jsx";
 import VistaReservas from "./component/VistaReservas.jsx";
 import SearchResults from "./component/SearchResults.jsx";
 import AdminNewsletter from "./pages/AdminNewsletter.jsx";
+import EditNewsletter from "./pages/EditNewsletter.jsx";
+import ViewNewsletter from "./pages/ViewNewsletter.jsx";
 
 const Layout = () => {
   const basename = process.env.BASENAME || "";
@@ -84,6 +86,8 @@ const Layout = () => {
             <Route path="/product-detail/:id" element={<ProductDetail />} />
             <Route path="/newsletter/create" element={<CreateNewsletter />} />
             <Route path="/newsletter" element={<AdminNewsletter />} />
+            <Route path="/newsletter/edit-newsletter/:id" element={<EditNewsletter />}/>
+            <Route path="/newsletter/view-newsletter/:id" element={<ViewNewsletter />}/>
           </Routes>
           <Footer />
         </ScrollToTop>

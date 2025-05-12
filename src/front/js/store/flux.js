@@ -530,6 +530,55 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       },
+      editNewsletter: async(services, titulo, asunto, id) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(process.env.BACKEND_URL + '/newsletter/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({
+              "titulo": titulo,
+              "asunto": asunto,
+              "servicios": services
+            }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            }
+          });
+          const data = await resp.json();
+          if (!resp.ok) {
+            console.error("Error al editar newsletter", data);
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error("Error al editar newsletter", error);
+          return false;
+        }
+      }
+      ,
+      getOneNewsletter: async (id) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(process.env.BACKEND_URL + "/newsletter/" + id, {
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              }
+          });
+          if (!resp.ok) {
+            console.error("Error al obtene newsletter")
+            return null;
+          }
+          const data = await resp.json();
+          return data;
+        } catch (error) {
+            console.error("Error al obtener newsletter", error);
+            return null
+        }
+      }
+      ,
       getCategorias: async () => {
         let categorias = [];
         await fetch(`${process.env.BACKEND_URL}/categorias`)

@@ -185,7 +185,7 @@ const AdminNewsletter = () => {
                                                         <i className="bi bi-send"></i>
                                                     </button>
                                                     <button
-                                                        onClick={() => navigate(`/edit-newsletter/${ns.id}`)}
+                                                        onClick={() => navigate(`/newsletter/edit-newsletter/${ns.id}`)}
                                                         className="btn btn-sm btn-primary"
                                                         disabled={loading}
                                                         aria-label={`Editar newsletter ${ns.titulo}`}

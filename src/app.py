@@ -1143,10 +1143,10 @@ Hola,
 
 Tu nuevo newsletter está disponible. Visita el siguiente enlace para verlo:
 
-{os.getenv("FRONT_END_URL")}/newsletter/{n_s.id}
+{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}
 
 ¿Problemas con el enlace? Copia y pega esta URL en tu navegador:
-{os.getenv("FRONT_END_URL")}/newsletter/{n_s.id}
+{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}
 """
 
     html_content = f"""
@@ -1217,12 +1217,12 @@ Tu nuevo newsletter está disponible. Visita el siguiente enlace para verlo:
             <p>Hola,</p>
             <p>Tu nuevo newsletter está disponible. Visita el siguiente enlace para verlo:</p>
         
-            <a href="{os.getenv("FRONT_END_URL")}/newsletter/{n_s.id}" class="newsletter-link">
+            <a href="{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}" class="newsletter-link">
                 Ver Newsletter
             </a>
 
             <p>¿Problemas con el enlace? Copia y pega esta URL en tu navegador:<br>
-            <span style="color: #4CAF50; word-break: break-all;">{os.getenv("FRONT_END_URL")}/newsletter/{n_s.id}</span></p>
+            <span style="color: #4CAF50; word-break: break-all;">{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}</span></p>
         </div>
     </div>
 </body>
@@ -1241,6 +1241,47 @@ Tu nuevo newsletter está disponible. Visita el siguiente enlace para verlo:
     n_s.enviado = True
     db.session.commit()
     return jsonify({'message': 'newsletter enviado exitoasmente'});
+
+@app.route('/newsletter/<int:id>', methods=['GET'])
+def get_newsletter(id):
+    n_s = Newsletter.query.get(id)
+    
+    services = [{
+        'service_id': s.service_id,
+        'service_type': s.service_type 
+    } for s in n_s.services.all()]
+    
+    data = {
+        'titulo': n_s.titulo,
+        'asunto': n_s.asunto,
+        'servicios': services
+    }
+    
+    return jsonify(data), 200
+
+@app.route('/newsletter/<int:id>', methods=['PUT'])
+@jwt_required()
+def editar_newsletter(id):
+    data = request.get_json()
+    new_services = data.get('servicios', [])
+    
+    newsletter = Newsletter.query.get(id)
+    
+    newsletter.services.delete()
+    
+    for s in new_services:
+        ns = NewsletterServices(
+            service_id=s['id'],
+            service_type=s['service_type'],
+            newsletter_id=id
+        )
+        db.session.add(ns)
+    
+    newsletter.titulo = data['titulo']
+    newsletter.asunto = data['asunto']
+    
+    db.session.commit()
+    return jsonify({'message': 'Newsletter editado'}), 200
 
 @app.route('/newsletter', methods=['POST'])
 def agregar_a_newsletter():

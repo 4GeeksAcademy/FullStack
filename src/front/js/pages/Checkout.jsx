@@ -2,89 +2,104 @@ import React, { useCallback, useContext, useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { Context } from "../store/appContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const stripePromise = loadStripe("pk_test_51RHkEqFNyrX4spGdBv11uJQXp9SbJRaSxzsolRbEeZVVYuzxZqtdF4uBytcTV0BkfQRgMemgaA2DnGI4lriZZpWb00g736yfzD");
+const stripePromise = loadStripe(
+  "pk_test_51RHkEqFNyrX4spGdBv11uJQXp9SbJRaSxzsolRbEeZVVYuzxZqtdF4uBytcTV0BkfQRgMemgaA2DnGI4lriZZpWb00g736yfzD"
+);
 
 const Checkout = () => {
-  const { store } = useContext(Context);
-  const cartItems = store.cartItems || [];
+  const { store, actions } = useContext(Context);
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const subtotal = cartItems.reduce((acc, item) => acc + item.discountPrice * item.quantity, 0);
+  // Si viene un item por "Comprar ahora", lo procesamos solo a él.
+  const single = location.state?.item;
+  const cartItems = single ? [single] : store.cartItems || [];
+  const subtotal = cartItems.reduce(
+    (sum, i) => sum + i.discountPrice * (i.quantity || 1),
+    0
+  );
+
   const [clientSecret, setClientSecret] = useState(null);
   const [error, setError] = useState(null);
 
-  // Función para obtener el client secret
+  // Pedir el clientSecret al backend
   const fetchClientSecret = useCallback(() => {
     setError(null);
-
-    // Obtener el token de localStorage
     const token = localStorage.getItem("token");
-
     if (!token) {
-      setError("No estás autenticado. Por favor, inicia sesión.");
+      setError("No estás autenticado. Inicia sesión.");
       return;
     }
-
-    // Log para verificar cartItems
-    console.log("Cart Items to be sent to the backend:", cartItems);
 
     fetch(`${process.env.BACKEND_URL}/create-checkout-session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        items: cartItems.map(item => ({
-          title: item.title,
-          discountPrice: item.discountPrice,
-          quantity: item.quantity,
-          image: item.image,  // Asegúrate de que existe en cada item
-          user_id: item.user_id  // Aquí agregamos el user_id
+        items: cartItems.map(it => ({
+          title: it.title,
+          discountPrice: it.discountPrice,
+          quantity: it.quantity || 1,
+          image: it.image || "",
+          user_id: it.user_id || null
         })),
         total: subtotal
       })
     })
-      .then(async (res) => {
-        const contentType = res.headers.get("content-type");
-        if (!res.ok || !contentType.includes("application/json")) {
-          const text = await res.text();
-          console.error("Unexpected response:", text);
-          throw new Error("Invalid response from server.");
+      .then(res => res.json())
+      .then(data => {
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+        } else {
+          setError("No se pudo obtener clientSecret");
         }
-        return res.json();
       })
-      .then((data) => {
-        console.log("Response from server:", data); // Log para ver la respuesta completa del backend
-        if (!data.clientSecret) {
-          throw new Error("Client secret not found in response.");
-        }
-        setClientSecret(data.clientSecret);
-      })
-      .catch((error) => {
-        console.error("Error fetching client secret:", error);
-        setError(error.message);
-      });
+      .catch(err => setError(err.message));
   }, [cartItems, subtotal]);
 
-  // Llamar a fetchClientSecret cuando el componente se monte
   useEffect(() => {
     fetchClientSecret();
   }, [fetchClientSecret]);
 
-  const options = { clientSecret };
+  // Manejar eventos de la UI embebida de Stripe
+  const handleEvent = event => {
+    console.log("Stripe embed event:", event.type);
+    // Vaciar el carrito si el pago fue completado y venimos del carrito (no de "Comprar ahora")
+    if (
+      !single &&
+      (event.type === "checkout.session.completed" ||
+       event.type === "payment_intent.succeeded")
+    ) {
+      actions.clearCart();
+      navigate("/return");
+    }
+    // Si es single-item y pago ok, sólo redirigimos
+    if (
+      single &&
+      (event.type === "checkout.session.completed" ||
+       event.type === "payment_intent.succeeded")
+    ) {
+      navigate("/gracias");
+    }
+  };
 
   return (
-    <div id="checkout">
-      {error && <div style={{ color: "red", marginBottom: "10px" }}>{error}</div>}
-
-      <EmbeddedCheckoutProvider stripe={stripePromise} options={options}>
-        <EmbeddedCheckout />
-      </EmbeddedCheckoutProvider>
+    <div id="checkout" className="p-4">
+      {error && <div className="alert alert-danger">{error}</div>}
+      {clientSecret && (
+        <EmbeddedCheckoutProvider
+          stripe={stripePromise}
+          options={{ clientSecret }}
+        >
+          <EmbeddedCheckout onEvent={handleEvent} />
+        </EmbeddedCheckoutProvider>
+      )}
     </div>
   );
 };
 
 export default Checkout;
-
-

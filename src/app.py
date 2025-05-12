@@ -16,8 +16,8 @@ from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation,
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db
-from datetime import datetime
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from datetime import datetime, timedelta
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, verify_jwt_in_request
 from flask_bcrypt import Bcrypt
 from api.payment import payment_bp
 from flask_cors import CORS 
@@ -26,6 +26,13 @@ from sqlalchemy import or_, func
 import traceback
 from api.mail_service import MailService
 from datetime import timedelta
+from flask import Flask, request, jsonify
+from werkzeug.security import generate_password_hash
+from itsdangerous import URLSafeTimedSerializer
+from api.models import db, User, PasswordResetToken
+from api.mail_service import MailService
+from sqlalchemy import extract
+import json
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -182,44 +189,94 @@ def search_all_services():
 
 @app.route('/registro', methods=['POST'])
 def crear_usuario():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No se recibieron datos JSON"}), 400
+    try:
+        # Imprimir información de depuración detallada
+        print("\n==== DATOS DE LA SOLICITUD DE REGISTRO ====")
+        print(f"Método: {request.method}")
+        print(f"Content-Type: {request.headers.get('Content-Type')}")
+        
+        # Intentar obtener datos como JSON y mostrar versión segura (sin password)
+        try:
+            data = request.get_json(force=True)
+            datos_seguros = {k: v if k != 'password' else '*****' for k, v in data.items()}
+            print(f"Datos parseados como JSON: {datos_seguros}")
+        except Exception as e:
+            print(f"Error al parsear JSON: {e}")
+            return jsonify({"error": f"Error al procesar datos: {str(e)}"}), 400
+        
+        # Extraer y validar campos obligatorios
+        print("Procesando campos...")
+        
+        # Campos principales - validación exhaustiva
+        campos_obligatorios = ['nombre', 'apellido', 'correo', 'password']
+        for campo in campos_obligatorios:
+            valor = data.get(campo)
+            tipo = type(valor).__name__
+            valor_mostrado = '*****' if campo == 'password' and valor else valor
+            print(f"{campo}: '{valor_mostrado}' (tipo: {tipo})")
+            
+            if valor is None or valor == '':
+                print(f"ERROR: El campo '{campo}' está vacío o no fue enviado")
+                return jsonify({"error": f"El campo {campo} es obligatorio"}), 400
+        
+        nombre = data.get('nombre')
+        apellido = data.get('apellido')
+        correo = data.get('correo')
+        password = data.get('password')
+            
+        # Verificar si el usuario ya existe
+        usuario_existente = User.query.filter_by(correo=correo).first()
+        if usuario_existente:
+            print(f"Usuario ya existe: {correo}")
+            return jsonify({"error": "El usuario ya existe"}), 409
 
-    correo = data.get('correo')
-    password = data.get('password')
-    telefono = data.get('telefono', '')
-    direccion = data.get('direccion_line1', '')  # Asegúrate de usar direccion_line1
-    ciudad = data.get('ciudad', '')
-    role = data.get('role', 'cliente')
+        # Extraer campos opcionales con valores por defecto
+        telefono = data.get('telefono', '')
+        direccion = data.get('direccion_line1', data.get('direccion', ''))
+        ciudad = data.get('ciudad', '')
+        role = data.get('role', 'cliente')
 
-    if not correo or not password:
-        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+        print(f"Campos opcionales: telefono='{telefono}', direccion='{direccion}', ciudad='{ciudad}', role='{role}'")
 
-    usuario_existente = User.query.filter_by(correo=correo).first()
-    if usuario_existente:
-        return jsonify({"error": "El usuario ya existe"}), 409
-
-    pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-
-    nuevo_usuario = User(
-        correo=correo,
-        password=pw_hash,
-        telefono=telefono,
-        direccion_line1=direccion,  # Usar direccion_line1 aquí
-        ciudad=ciudad,
-        role=role,
-        is_active=True
-    )
-    
-    db.session.add(nuevo_usuario)
-    db.session.commit()
-
-    # Devuelve los datos del usuario creado
-    return jsonify({
-        "mensaje": "Usuario creado correctamente",
-        "user": nuevo_usuario.serialize()
-    }), 201
+        # Hash de contraseña
+        pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+        
+        print("Creando nuevo usuario...")
+        nuevo_usuario = User(
+            nombre=nombre,
+            apellido=apellido,
+            correo=correo,
+            password=pw_hash,
+            telefono=telefono,
+            direccion_line1=direccion,
+            ciudad=ciudad,
+            role=role,
+            is_active=True
+        )
+        
+        # Guardar en la base de datos
+        db.session.add(nuevo_usuario)
+        db.session.commit()
+        print(f"Usuario creado con éxito: ID={nuevo_usuario.id}, correo={correo}")
+        
+        # Respuesta exitosa
+        return jsonify({
+            "mensaje": "Usuario creado correctamente",
+            "user": {
+                "id": nuevo_usuario.id,
+                "nombre": nuevo_usuario.nombre,
+                "apellido": nuevo_usuario.apellido,
+                "correo": nuevo_usuario.correo,
+                "role": nuevo_usuario.role
+            }
+        }), 201
+        
+    except Exception as e:
+        print(f"ERROR CRÍTICO EN REGISTRO: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({"error": f"Error del servidor: {str(e)}"}), 500
 
 @app.route('/gastronomiapag', methods=['GET'])
 def paginated_gastronomia():
@@ -1049,19 +1106,56 @@ def actualizar_usuario(id):
 # Ruta para iniciar sesión
 @app.route('/login', methods=['POST'])
 def iniciar_sesion():
-    data = request.get_json()
-    correo = data.get('correo')
-    contraseña = data.get('password')
-
-    if not correo or not contraseña:
-        return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
-
-    usuario = User.query.filter_by(correo=correo).first()
-    if not usuario or not bcrypt.check_password_hash(usuario.password, contraseña):
-        return jsonify({"error": "Correo o contraseña incorrectos"}), 401
-
-    access_token = create_access_token(identity=usuario.correo)
-    return jsonify({"mensaje": f"Bienvenido, {correo}", "access_token": access_token, "user_id": usuario.id}), 200
+    try:
+        print("\n==== INTENTO DE LOGIN ====")
+        
+        # Validar formato de los datos
+        if not request.is_json:
+            print("ERROR: No es JSON")
+            return jsonify({"error": "Se esperaba formato JSON"}), 400
+            
+        data = request.get_json()
+        print(f"Datos recibidos: {data}")
+        
+        # Validar campos requeridos
+        correo = data.get('correo')
+        contraseña = data.get('password')
+        
+        if not correo or not contraseña:
+            print("ERROR: Faltan correo o contraseña")
+            return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+        
+        # Buscar usuario
+        print(f"Buscando usuario con correo: {correo}")
+        usuario = User.query.filter_by(correo=correo).first()
+        
+        if not usuario:
+            print(f"ERROR: Usuario no encontrado con correo {correo}")
+            return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+        
+        print(f"Usuario encontrado: ID={usuario.id}, Nombre={usuario.nombre}")
+        
+        # Verificar contraseña
+        if not bcrypt.check_password_hash(usuario.password, contraseña):
+            print("ERROR: Contraseña incorrecta")
+            return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+        
+        # Generar token
+        print("Inicio de sesión exitoso - Generando token")
+        access_token = create_access_token(identity=usuario.correo)
+        
+        print(f"Token generado para usuario {usuario.correo}")
+        return jsonify({
+            "mensaje": f"Bienvenido, {usuario.nombre} {usuario.apellido}",
+            "access_token": access_token,
+            "user_id": usuario.id
+        }), 200
+    
+    except Exception as e:
+        print(f"ERROR EN LOGIN: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Error del servidor: {str(e)}"}), 500
 
 @app.route('/api/verify-token', methods=['GET'])
 @jwt_required()
@@ -2250,7 +2344,7 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-YOUR_DOMAIN = "https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev"  # Cambia esta URL si es otro entorno
+YOUR_DOMAIN = "https://orange-space-engine-q7pjgx55q54qcx7qx-3000.app.github.dev"  # Cambia esta URL si es otro entorno
 
 """"@app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
@@ -2419,7 +2513,7 @@ def create_checkout_session():
             line_items=line_items,
             mode='payment',
             ui_mode='embedded',
-            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
+            return_url=f"https://orange-space-engine-q7pjgx55q54qcx7qx-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
         )
 
         # Crear el Payment
@@ -2483,28 +2577,118 @@ def session_status():
         return jsonify({'error': 'session_id faltante'}), 400
 
     try:
-        # Consultar a Stripe por el estado de la sesión
-        session = stripe.checkout.Session.retrieve(session_id)
+        # 1) Recuperar sesión de Stripe (con ítems implicados)
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=["line_items", "customer_details"]
+        )
 
-        # Buscar el pago en tu base de datos
+        # 2) Buscar tu Payment en BD
         payment = Payment.query.filter_by(paypal_payment_id=session_id).first()
         if not payment:
             return jsonify({'error': 'Pago no encontrado'}), 404
 
-        # Actualizar estado si fue pagado
+        # 3) Si acaba de pagarse, actualizar estado y enviar factura
         if session.payment_status == 'paid' and payment.estado != 'pagado':
             payment.estado = 'pagado'
             db.session.commit()
 
+            # 3.a) Recuperar datos del usuario
+            user = User.query.get(payment.user_id)
+            nombre_completo = f"{user.nombre or ''} {user.apellido or ''}".strip()
+            direccion = ", ".join(filter(None, [
+                user.direccion_line1,
+                user.direccion_line2,
+                user.ciudad,
+                user.codigo_postal,
+                user.pais
+            ]))
+            telefono = user.telefono or "No disponible"
+
+            # 3.b) Construir filas de la factura
+            total_cents = 0
+            rows_html = ""
+            for item in payment.items:
+                unit = item.unit_price
+                qty  = item.quantity
+                subtotal = unit * qty
+                total_cents += subtotal
+                rows_html += f"""
+                  <tr>
+                    <td>{item.title}</td>
+                    <td align="center">{qty}</td>
+                    <td align="right">€{unit/100:.2f}</td>
+                    <td align="right">€{subtotal/100:.2f}</td>
+                  </tr>
+                """
+
+            # 3.c) Cuerpo HTML de la factura
+            html_invoice = f"""
+              <div style="font-family: Arial, sans-serif; max-width: 800px; margin:auto; padding:20px;">
+                <!-- Logo -->
+                <div style="display:flex; align-items:center; margin-bottom:20px;">
+                  <i class="bi bi-house-fill" style="font-size:2rem; color:#dc3545; margin-right:8px;"></i>
+                  <h1 style="font-size:1.5rem; margin:0;">GroupOn</h1>
+                </div>
+
+                <h2 style="margin-bottom:0.5em;">Factura #{payment.id}</h2>
+                <p><strong>Fecha:</strong> {payment.payment_date.strftime('%Y-%m-%d %H:%M')}</p>
+
+                <!-- Datos del cliente -->
+                <h3 style="margin-top:1.5em;">Datos del Cliente</h3>
+                <p>
+                  <strong>Nombre:</strong> {nombre_completo}<br/>
+                  <strong>Email:</strong> {session.customer_details.email}<br/>
+                  <strong>Teléfono:</strong> {telefono}<br/>
+                  <strong>Dirección:</strong> {direccion}
+                </p>
+
+                <!-- Detalle de ítems -->
+                <table width="100%" border="1" cellspacing="0" cellpadding="5"
+                       style="border-collapse: collapse; margin-top:1em;">
+                  <thead style="background:#f8f9fa;">
+                    <tr>
+                      <th>Producto</th>
+                      <th>Cantidad</th>
+                      <th>Precio unitario</th>
+                      <th>Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows_html}
+                  </tbody>
+                </table>
+
+                <h2 style="text-align:right; margin-top:1em;">
+                  Total: €{total_cents/100:.2f}
+                </h2>
+
+                <!-- Pie de página -->
+                <hr style="margin:2em 0;" />
+                <p style="font-size:0.9em; color:#555;">
+                  Para cambios de dirección o cualquier consulta, contáctanos al
+                  <strong>+34 912 345 678</strong> antes de 24 horas.
+                </p>
+              </div>
+            """
+
+            # 3.d) Enviar el correo con la factura
+            mail_service.send_mail(
+                to_email     = session.customer_details.email,
+                subject      = f"Tu factura de Pedido #{payment.id}",
+                text_content = f"Gracias por tu compra. El total ha sido €{total_cents/100:.2f}.",
+                html_content = html_invoice
+            )
+
+        # 4) Responder al frontend
         return jsonify({
             'status': session.payment_status,
-            'customer_email': session.customer_email
+            'customer_email': session.customer_details.email
         }), 200
 
     except Exception as e:
-        print('Error en session-status:', e)
+        app.logger.error(f"Error en session-status: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
-
     
 @api.route('/change-password', methods=['PUT'])
 @jwt_required()
@@ -2573,7 +2757,159 @@ def crear_admin():
     # Respuesta exitosa
     return jsonify({"message": "Administrador creado exitosamente"}), 201
 
-    
+mail_service = MailService()
+serializer   = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json(force=True)
+    email = data.get('email')
+    if not email:
+        return jsonify({'message': 'Email requerido'}), 400
+
+    # Busca usuario por su correo
+    user = User.query.filter_by(correo=email).first()
+    # Siempre devolvemos HTTP 200 para no revelar si existe o no
+    if user:
+        # Genera token seguro basado en el correo
+        token = serializer.dumps(user.correo, salt='password-reset-salt')
+        # Guarda el token en BD
+        prt = PasswordResetToken(user_id=user.id, token=token)
+        db.session.add(prt)
+        db.session.commit()
+
+        # Construye el enlace de reset
+        frontend_url = os.getenv('FRONTEND_URL', 'https://orange-space-engine-q7pjgx55q54qcx7qx-3000.app.github.dev')
+        reset_link = f"{frontend_url}/reset-password?token={token}"
+
+        # Prepara y envía el email
+        subject = 'Restablece tu contraseña'
+        body = (
+            f"Hola,\n\n"
+            "Has solicitado cambiar tu contraseña. Haz clic en este enlace para hacerlo (válido 1 hora):\n\n"
+            f"{reset_link}\n\n"
+            "Si no solicitaste este cambio, puedes ignorar este mensaje."
+        )
+        mail_service.send_mail(
+            to_email=user.correo,
+            subject=subject,
+            text_content=body,
+            html_content=None
+        )
+
+    return jsonify({'message': 'Si existe esa cuenta, recibirás un email con instrucciones.'}), 200
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json(force=True)
+    token = data.get('token')
+    new_password = data.get('newPassword')
+    if not token or not new_password:
+        return jsonify({'message': 'Token y nueva contraseña requeridos'}), 400
+
+    # 1) Verifica y extrae el correo del token
+    try:
+        correo = serializer.loads(token, salt='password-reset-salt', max_age=3600)
+    except Exception:
+        return jsonify({'message': 'Token inválido o expirado'}), 400
+
+    # 2) Comprueba que el token exista
+    prt = PasswordResetToken.query.filter_by(token=token).first()
+    if not prt:
+        return jsonify({'message': 'Token no válido'}), 400
+
+    # 3) Actualiza la contraseña usando Bcrypt
+    user = User.query.get(prt.user_id)
+    hashed_pw = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    user.password = hashed_pw
+
+    # 4) Elimina el token y commitea
+    db.session.delete(prt)
+    db.session.commit()
+
+    return jsonify({'message': 'Contraseña restablecida correctamente.'}), 200
+
+online_users_last_seen = {}
+ONLINE_THRESHOLD = timedelta(minutes=5)
+
+@app.before_request
+def track_user_activity():
+    try:
+        verify_jwt_in_request(optional=True)
+        identity = get_jwt_identity()
+        if identity:
+            u = User.query.filter_by(correo=identity).first()
+            if u:
+                online_users_last_seen[u.id] = datetime.utcnow()
+    except Exception:
+        pass
+
+@app.route('/metrics/onlineUsers', methods=['GET'])
+def online_users():
+    cutoff = datetime.utcnow() - ONLINE_THRESHOLD
+    count = sum(1 for ts in online_users_last_seen.values() if ts > cutoff)
+    return jsonify({"id": "onlineUsers", "count": count}), 200
+
+@app.route('/orders', methods=['GET'])
+def list_payments():
+    """
+    Devuelve todos los pagos con estado 'pagado', opcionalmente filtrados por mes y día.
+    Cada pago incluye:
+      - id
+      - amount (en céntimos)
+      - payment_date
+      - estado
+      - customer_name (nombre + apellido)
+      - total_items (suma de quantity en PaymentItem)
+      - item_titles (lista de títulos de los PaymentItem)
+    Espera un query param `filter` con JSON: ?filter={"month":5,"day":14}
+    """
+    # 1) Leer filtro de la querystring
+    month = day = 0
+    filter_str = request.args.get('filter')
+    if filter_str:
+        try:
+            payload = json.loads(filter_str)
+            month = int(payload.get('month', 0))
+            day   = int(payload.get('day',   0))
+        except Exception:
+            month = day = 0
+
+    # 2) Solo pagos pagados
+    q = Payment.query.filter_by(estado='pagado')
+
+    # 3) Filtrar mes y día si procede
+    if 1 <= month <= 12:
+        q = q.filter(extract('month', Payment.payment_date) == month)
+    if 1 <= day <= 31:
+        q = q.filter(extract('day', Payment.payment_date) == day)
+
+    # 4) Ejecutar consulta y serializar
+    payments = q.order_by(Payment.payment_date.desc()).all()
+    serialized = []
+    for p in payments:
+        user = User.query.get(p.user_id)
+        customer_name = f"{user.nombre or ''} {user.apellido or ''}".strip()
+        total_items   = sum(item.quantity for item in p.items)
+        item_titles   = [item.title for item in p.items]
+
+        base = p.serialize()
+        base.update({
+            "customer_name": customer_name,
+            "total_items": total_items,
+            "item_titles": item_titles
+        })
+        serialized.append(base)
+
+    total = len(serialized)
+
+    # 5) Responder con cabeceras para React-Admin
+    resp = jsonify(serialized)
+    resp.headers['X-Total-Count'] = str(total)
+    resp.headers['Content-Range']   = f'orders 0-{total-1}/{total}'
+    resp.headers['Access-Control-Expose-Headers'] = 'Content-Range, X-Total-Count'
+    return resp, 200
+
     # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
 

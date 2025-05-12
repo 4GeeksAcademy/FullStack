@@ -7,8 +7,10 @@ class User(db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(120), nullable=True)
+    apellido = db.Column(db.String(120), nullable=True)
     correo = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(80), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
     telefono = db.Column(db.String(20))
     direccion_line1 = db.Column(db.String(120))
     direccion_line2 = db.Column(db.String(120), nullable=True)
@@ -33,10 +35,11 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.correo}>'
 
-    # Método para serializar el objeto User a un diccionario
     def serialize(self):
         return {
             "id": self.id,
+            "nombre": self.nombre,
+            "apellido": self.apellido,
             "correo": self.correo,
             "telefono": self.telefono,
             "direccion_line1": self.direccion_line1,
@@ -432,3 +435,14 @@ class Factura(db.Model):
             "fecha": self.fecha.isoformat(),
             "metodo_pago": self.metodo_pago
         }
+
+class PasswordResetToken(db.Model):
+    __tablename__ = 'password_reset_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    token = db.Column(db.String(255), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f"<PasswordResetToken user_id={self.user_id} token={self.token}>"

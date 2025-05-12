@@ -27,7 +27,7 @@ const PromoBanner = () => {
                   }}
                 >
                   <span className="text-white fw-medium">
-                    GrouponClone
+                    GroupOn
                   </span>
                 </div>
               </div>

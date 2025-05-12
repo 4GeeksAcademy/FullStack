@@ -171,54 +171,74 @@ const getState = ({ getStore, getActions, setStore }) => {
         getActions().loadUserFromStorage();
       },
 
-      registerUser: async ({
-        correo,
-        password,
-        telefono,
-        direccion,
-        ciudad,
-      }) => {
-        try {
-          const resp = await fetch(
-            process.env.BACKEND_URL + "/registro",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                correo,
-                password,
-                telefono,
-                direccion_line1: direccion, // Enviar como direccion_line1
-                ciudad,
-                role: "cliente",
-              }),
-            }
-          );
-
-          if (!resp.ok) {
-            const errorData = await resp.json();
-            console.error("Register error:", errorData);
-            return false;
-          }
-
-          const data = await resp.json();
-
-          // Guardar datos del usuario en localStorage y store
-          const userData = {
-            ...data.user, // Usar los datos devueltos por el backend
-            role: "cliente",
-          };
-
-          localStorage.setItem("user", JSON.stringify(userData));
-          setStore({ user: userData });
-
-          return true;
-        } catch (error) {
-          console.error("Register error:", error);
-          return false;
+      
+   registerUser: async ({ correo, password, telefono, direccion, ciudad, nombre, apellido }) => {
+    try {
+        console.log("Datos recibidos en registerUser:");
+        console.log("- nombre:", nombre);
+        console.log("- apellido:", apellido);
+        console.log("- correo:", correo);
+        console.log("- password:", password ? "***" : undefined);
+        console.log("- telefono:", telefono);
+        console.log("- direccion:", direccion);
+        console.log("- ciudad:", ciudad);
+        
+        // Verificar que los datos obligatorios estén presentes
+        if (!nombre || !apellido || !correo || !password) {
+            console.error("Faltan datos obligatorios");
+            throw new Error("Nombre, apellido, correo y contraseña son obligatorios");
         }
-      },
-
+        
+        // Crear objeto para enviar al backend - AQUÍ ESTÁ EL CAMBIO PRINCIPAL
+        const userData = {
+            nombre: nombre.trim(),
+            apellido: apellido.trim(),
+            correo: correo.trim(),
+            password: password,
+            telefono: telefono ? telefono.trim() : "",
+            direccion_line1: direccion ? direccion.trim() : "",
+            ciudad: ciudad ? ciudad.trim() : "",
+            role: "cliente"
+        };
+        
+        console.log("Datos que se enviarán al backend:", {
+            ...userData,
+            password: "******"
+        });
+        
+        const resp = await fetch(process.env.BACKEND_URL + '/registro', {
+            method: 'POST',
+            headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        const responseText = await resp.text();
+        console.log("Respuesta del servidor (texto):", responseText);
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error("Error al parsear la respuesta como JSON:", e);
+            throw new Error("Error inesperado en la respuesta del servidor");
+        }
+        
+        if (!resp.ok) {
+            console.error("Error de registro:", data);
+            throw new Error(data.error || "Error en el registro");
+        }
+        
+        console.log("Registro exitoso, datos del usuario:", data.user);
+        return data.user;
+        
+    } catch (error) {
+        console.error("Error en el registro:", error);
+        throw error;
+    }
+},
       // Obtener un mensaje del backend (puedes adaptarlo a tu necesidad)
       getMessage: async () => {
         try {
@@ -251,28 +271,30 @@ const getState = ({ getStore, getActions, setStore }) => {
       },
 
       // Agregar item al carrito
-      addToCart: (item) => {
-        const store = getStore();
-        // Comprobamos si el item ya está en el carrito
-        const existingItem = store.cartItems.find(
-          (cartItem) => cartItem.id === item.id
-        );
+       addToCart: (item) => {
+    const store = getStore();
+    // Buscamos si ya existía (mismo id **y** misma categoría)
+    const existing = store.cartItems.find(ci =>
+      ci.id === item.id && ci.category === item.category
+    );
 
-        if (existingItem) {
-          // Si ya existe, solo aumentamos la cantidad
-          const updatedCart = store.cartItems.map((cartItem) =>
-            cartItem.id === item.id
-              ? { ...cartItem, quantity: cartItem.quantity + 1 }
-              : cartItem
-          );
-          setStore({ cartItems: updatedCart });
-        } else {
-          // Si no existe, agregamos el item con cantidad 1
-          setStore({
-            cartItems: [...store.cartItems, { ...item, quantity: 1 }],
-          });
-        }
-      },
+    let updatedCart;
+    if (existing) {
+      updatedCart = store.cartItems.map(ci =>
+        ci.id === item.id && ci.category === item.category
+          ? { ...ci, quantity: ci.quantity + (item.quantity ?? 1) }
+          : ci
+      );
+    } else {
+      updatedCart = [
+        ...store.cartItems,
+        { ...item, quantity: item.quantity ?? 1 }
+      ];
+    }
+
+    setStore({ cartItems: updatedCart });
+    getActions().saveCartToLocalStorage();
+  },
 
       // Eliminar item del carrito
       removeItemFromCart: (id) => {
@@ -391,37 +413,48 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
-      registerUser: async ({
-        correo,
-        password,
-        telefono,
-        direccion,
-        ciudad,
-      }) => {
+        
+     registerUser: async (userData) => {
+        console.log("Iniciando registro de usuario con datos:", 
+          {...userData, password: "********"});
+        
         try {
-          const resp = await fetch(
-            process.env.BACKEND_URL + "/registro",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                correo,
-                password,
-                telefono,
-                direccion_line1: direccion,
-                ciudad,
-                role: "cliente",
-              }),
-            }
-          );
-          const data = await resp.json();
-          if (!resp.ok) {
-            console.error("Register error:", data);
+          // Asegurarse de que todos los campos necesarios estén presentes
+          if (!userData.nombre || !userData.apellido) {
+            console.error("Error: nombre y apellido son requeridos");
             return false;
           }
+          
+          const resp = await fetch(process.env.BACKEND_URL + '/registro', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nombre: userData.nombre,
+              apellido: userData.apellido,
+              correo: userData.correo,
+              password: userData.password,
+              telefono: userData.telefono,
+              direccion_line1: userData.direccion,
+              ciudad: userData.ciudad,
+              role: "cliente"
+            })
+          });
+          
+          if (!resp.ok) {
+            const data = await resp.json();
+            console.error("Error en registro:", data);
+            return false;
+          }
+          
+          const data = await resp.json();
+          console.log("Registro exitoso:", data);
+          
+          // Guardar el correo para autocompletarlo en el login
+          localStorage.setItem('correo_registrado', userData.correo);
+          
           return true;
         } catch (error) {
-          console.error("Register error:", error);
+          console.error("Error en registerUser:", error);
           return false;
         }
       },
@@ -497,6 +530,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           return true;
         } catch (error) {
           console.error('Error al enviar newsletters', error);
+
           return false;
         }
       }
@@ -700,32 +734,181 @@ const getState = ({ getStore, getActions, setStore }) => {
           );
           const data = await resp.json();
 
-          if (!resp.ok) {
-            console.error("Login error:", data);
-            return false; // Si la respuesta no es exitosa, retornamos false
-          }
 
-          // Guardamos el token en localStorage
-          localStorage.setItem("token", data.access_token);
+        console.log("Contraseña cambiada correctamente:", data.msg);
+        return true;
+    } catch (error) {
+        console.error("Error en fetch:", error);
+        return false;
+    }
+},
+// Función de login corregida
+loginUser: async ({ correo, password }) => {
+  console.log("Iniciando login con correo:", correo);
+  try {
+    // 1) Login
+    const resp = await fetch(
+      `${process.env.BACKEND_URL}/login`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo, password })
+      }
+    );
+    const data = await resp.json();
 
-          // Obtener datos completos del usuario (incluyendo el role)
-          const userResp = await fetch(
-            process.env.BACKEND_URL + "/usuarios/me",
-            {
-              headers: {
-                Authorization: `Bearer ${data.access_token}`,
-              },
-            }
-          );
+    if (!resp.ok || !data.access_token) {
+      console.error("Login fallido. Detalle:", data);
+      return false;
+    }
+    console.log("Login exitoso, token recibido");
 
-          if (userResp.ok) {
-            const userData = await userResp.json();
+    // Guardar token
+    localStorage.setItem('token', data.access_token);
 
-            // Guardamos directamente los datos del usuario (incluyendo el role) en localStorage
-            localStorage.setItem("user", JSON.stringify(userData));
+    // 2) Obtener datos del usuario
+    const userResp = await fetch(
+      `${process.env.BACKEND_URL}/usuarios/me`,
+      {
+        headers: { Authorization: `Bearer ${data.access_token}` }
+      }
+    );
 
-            // Actualiza el estado del store si lo necesitas
-            setStore({ user: userData });
+    let userObj;
+    if (userResp.ok) {
+      userObj = await userResp.json();
+      console.log("Datos de usuario obtenidos:", userObj);
+    } else {
+      console.warn("No se pudieron obtener los datos del usuario. Se usará rol por defecto.");
+      userObj = { correo, role: 'cliente' };
+    }
+
+    // 3) Guardar usuario sin pisar el resto del store
+    localStorage.setItem('user', JSON.stringify(userObj));
+    setStore(prev => ({
+      ...prev,
+      user: userObj
+    }));
+
+    return true;
+  } catch (error) {
+    console.error("Error en loginUser:", error);
+    return false;
+  }
+},
+
+setCartItems: (items) => {
+  setStore({ cartItems: items });
+},
+// Dentro de getState → actions:
+addToCart: (item) => {
+  const store = getStore();
+  const actions = getActions();
+
+  // ¿Ya existía ese producto en el carrito?
+  const existing = store.cartItems.find(ci => ci.id === item.id);
+
+  let updatedCart;
+  if (existing) {
+    // Si existía, sólo incrementamos su cantidad
+    const addQty = item.quantity ?? 1;
+    updatedCart = store.cartItems.map(ci =>
+      ci.id === item.id
+        ? { ...ci, quantity: ci.quantity + addQty }
+        : ci
+    );
+  } else {
+    // Si es nuevo, lo añadimos con cantidad inicial (o la que venga en item.quantity)
+    updatedCart = [
+      ...store.cartItems,
+      { ...item, quantity: item.quantity ?? 1 }
+    ];
+  }
+
+  setStore({ cartItems: updatedCart });
+  actions.saveCartToLocalStorage();  // persistimos siempre
+},
+
+ emptyCart: () => {
+    localStorage.removeItem("cartItems");
+    setStore({ cartItems: [] });
+    return true;
+},
+
+  // **Nueva acción** para vaciar todo el carrito
+    clearCart: () => {
+      setStore({ cartItems: [] });
+      getActions().saveCartToLocalStorage();
+    },
+
+   addToCart: (item) => {
+  const store = getStore();
+  // Buscamos si ya existía (mismo id, misma categoría y mismo título)
+  const existing = store.cartItems.find(ci =>
+    ci.id === item.id &&
+    ci.category === item.category &&
+    ci.title === item.title
+  );
+
+  let updatedCart;
+  if (existing) {
+    updatedCart = store.cartItems.map(ci =>
+      ci.id === item.id &&
+      ci.category === item.category &&
+      ci.title === item.title
+        ? { ...ci, quantity: ci.quantity + (item.quantity ?? 1) }
+        : ci
+    );
+  } else {
+    updatedCart = [
+      ...store.cartItems,
+      { ...item, quantity: item.quantity ?? 1 }
+    ];
+  }
+
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();
+},
+
+updateQuantity: (id, category, title, newQuantity) => {
+  if (newQuantity < 1) return false;
+  const store = getStore();
+  const updatedCart = store.cartItems.map(ci =>
+    ci.id === id &&
+    ci.category === category &&
+    ci.title === title
+      ? { ...ci, quantity: newQuantity }
+      : ci
+  );
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();
+  return true;
+},
+
+removeItemFromCart: (id, category, title) => {
+  const store = getStore();
+  const updatedCart = store.cartItems.filter(ci =>
+    !(ci.id === id && ci.category === category && ci.title === title)
+  );
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();
+  return true;
+},
+
+emptyCart: () => {
+  setStore({ cartItems: [] });
+  getActions().saveCartToLocalStorage();
+  return true;
+}, 
+
+  saveCartToLocalStorage: () => {
+    const store = getStore();
+    localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+  },
+  loadCartFromLocalStorage: () => {
+    const stored = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    setStore({ cartItems: stored });
+  },
 
             return true; // El login fue exitoso
           } else {

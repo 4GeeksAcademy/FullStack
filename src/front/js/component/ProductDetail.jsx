@@ -1,121 +1,74 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom"; 
-import { Button, Container, Row, Col, Card, Spinner } from "react-bootstrap";
+import { Button, Container, Row, Col, Card, Spinner, InputGroup, FormControl } from "react-bootstrap";
 import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
 
 const ProductDetail = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const location   = useLocation();
+  const navigate   = useNavigate();
+  const { id }     = useParams();
   const { offer: locationOffer, category: locationCategory } = location.state || {};
   const { store, actions } = useContext(Context);
+
   const [completeOffer, setCompleteOffer] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]             = useState(true);
   const [currentCategory, setCurrentCategory] = useState(locationCategory);
+  const [quantity, setQuantity]           = useState(1);
 
-  const defaultImage = "https://img.freepik.com/free-photo/beautiful-shot-green-forest-trees-with-wooden-path_181624-20615.jpg";
+  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg";
 
-  // Nueva función para determinar la categoría basada en el ID
   const determineCategory = (offerId) => {
-    if (typeof offerId === 'string' && offerId.startsWith('temp-')) {
-      const categoryPrefix = offerId.split('-')[1];
-      switch(categoryPrefix) {
-        case 'gast': return 'gastronomia';
-        case 'bell': return 'belleza';
-        case 'viaj': return 'viajes';
-        default: return '';
-      }
-    }
-    
-    if (store.serviciosGastronomia.some(o => o.id === offerId)) return 'gastronomia';
-    if (store.serviciosBelleza.some(o => o.id === offerId)) return 'belleza';
-    if (store.serviciosViajes.some(o => o.id === offerId)) return 'viajes';
-    
+    const numId = parseInt(offerId, 10);
+    if (store.serviciosViajes.some(o => o.id === numId)) return 'viajes';
+    if (store.serviciosBelleza.some(o => o.id === numId)) return 'belleza';
+    if (store.serviciosGastronomia.some(o => o.id === numId)) return 'gastronomia';
+    if (store.serviciosTop.some(o => o.id === numId)) return 'top';
+    if (store.serviciosOfertas.some(o => o.id === numId)) return 'ofertas';
     return '';
   };
 
+  // 1) Cargo datos según categoría
   useEffect(() => {
-    // Si viene de navegación directa (con ID en la URL)
-    if (id) {
-      const category = determineCategory(id);
-      setCurrentCategory(category);
-    }
-  }, [id, store]);
-
-  useEffect(() => {
-    const loadData = async () => {
+    (async () => {
       setLoading(true);
-      try {
-        if (currentCategory) {
-          switch(currentCategory) {
-            case 'belleza':
-              if (store.serviciosBelleza.length === 0) await actions.cargarServiciosBelleza();
-              break;
-            case 'gastronomia':
-              if (store.serviciosGastronomia.length === 0) await actions.cargarServiciosGastronomia();
-              break;
-            case 'viajes':
-              if (store.serviciosViajes.length === 0) await actions.cargarServiciosViajes();
-              break;
-            case 'ofertas':
-              if (store.serviciosOfertas.length === 0) await actions.cargarServiciosOfertas();
-              break;
-          }
-        }
-      } finally {
-        setLoading(false);
+      const cat = locationCategory || determineCategory(id);
+      setCurrentCategory(cat);
+
+      switch(cat) {
+        case 'viajes':
+          if (!store.serviciosViajes.length) await actions.cargarServiciosViajes();
+          break;
+        case 'belleza':
+          if (!store.serviciosBelleza.length) await actions.cargarServiciosBelleza();
+          break;
+        case 'gastronomia':
+          if (!store.serviciosGastronomia.length) await actions.cargarServiciosGastronomia();
+          break;
+        case 'top':
+          if (!store.serviciosTop.length) await actions.cargarServiciosTop();
+          break;
+        case 'ofertas':
+          if (!store.serviciosOfertas.length) await actions.cargarServiciosOfertas();
+          break;
       }
-    };
 
-    loadData();
-  }, [currentCategory]);
+      setLoading(false);
+    })();
+  }, [id, locationCategory, store, actions]);
 
+  // 2) Determino la oferta concreta
   useEffect(() => {
     if (loading) return;
-
-    const findProduct = () => {
-      // Si tenemos offer del location.state, usamos ese
-      if (locationOffer) return locationOffer;
-
-      // Si tenemos ID de la URL, buscamos en las categorías
-      if (id) {
-        // Para IDs temporales (de FeaturedDeals)
-        if (typeof id === 'string' && id.startsWith('temp-')) {
-          const title = id.split('-').slice(2).join(' ');
-          const allOffers = [
-            ...store.serviciosGastronomia,
-            ...store.serviciosBelleza,
-            ...store.serviciosViajes
-          ];
-          return allOffers.find(o => o.title === title);
-        }
-
-        // Para IDs numéricos
-        const numericId = parseInt(id);
-        const allOffers = [
-          ...store.serviciosGastronomia,
-          ...store.serviciosBelleza,
-          ...store.serviciosViajes
-        ];
-        return allOffers.find(o => o.id === numericId);
-      }
-
-      return null;
-    };
-
-    const foundProduct = findProduct();
-    setCompleteOffer(foundProduct);
-  }, [id, locationOffer, store, loading]);
-
-  if (!completeOffer && !loading) {
-    return (
-      <Container className="my-5">
-        <div className="alert alert-warning">No se encontraron detalles del producto</div>
-      </Container>
-    );
-  }
+    if (locationOffer) {
+      setCompleteOffer(locationOffer);
+      return;
+    }
+    const numId = parseInt(id, 10);
+    const list = store[`servicios${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}`] || [];
+    setCompleteOffer(list.find(o => o.id === numId) || null);
+  }, [loading, currentCategory, id, locationOffer, store]);
 
   if (loading) {
     return (
@@ -126,102 +79,136 @@ const ProductDetail = () => {
       </Container>
     );
   }
-
-  const displayData = completeOffer;
-  const displayTitle = displayData.title || displayData.nombre || "Sin título";
-  const displayImage = displayData.image || displayData.imagen || defaultImage;
-  const displayDescription = displayData.descripcion || displayData.description || "No hay descripción disponible.";
-
-  // Manejo de precios
-  let actualPrice = displayData.price || displayData.precio || displayData.originalPrice || 1000;
-  let actualDiscountPrice = displayData.discountPrice || Math.round(actualPrice * 0.7);
-  
-  if (actualDiscountPrice >= actualPrice) {
-    actualDiscountPrice = Math.round(actualPrice * 0.7);
+  if (!completeOffer) {
+    return (
+      <Container className="my-5">
+        <div className="alert alert-warning">
+          No se encontraron detalles del producto en “{currentCategory}”
+        </div>
+      </Container>
+    );
   }
 
-  const finalDiscount = Math.round(((actualPrice - actualDiscountPrice) / actualPrice) * 100);
-  
+  const display = completeOffer;
+  const title   = display.title || display.nombre || "Sin título";
+  const image   = display.image || display.imagen || defaultImage;
+  const desc    = display.descripcion || display.description || "No hay descripción disponible.";
+
+  const original      = display.originalPrice ?? display.price ?? 0;
+  let discountPrice  = display.discountPrice ?? Math.round(original * 0.7);
+  if (discountPrice >= original) discountPrice = Math.round(original * 0.7);
+  const pctOff       = original > 0 ? Math.round((original - discountPrice) / original * 100) : 0;
+
+  // 3) Agregar con distinción de categoría
   const addToCart = () => {
     actions.addToCart({
-      ...displayData,
-      discountPrice: actualDiscountPrice,
-      originalPrice: actualPrice
+      ...display,
+      discountPrice,
+      originalPrice: original,
+      quantity,
+      category: currentCategory
     });
   };
 
-  const renderStars = (rating) =>
+  // 4) Comprar ahora
+  const buyNow = () => {
+    navigate("/checkout", {
+      state: {
+        item: {
+          ...display,
+          originalPrice: original,
+          discountPrice,
+          quantity,
+          category: currentCategory
+        }
+      }
+    });
+  };
+
+  const renderStars = () =>
     Array.from({ length: 5 }, (_, i) => (
       <i
         key={i}
-        className={`bi ${i < rating ? "bi-star-fill text-warning" : "bi-star text-secondary"} me-1`}
-      ></i>
+        className={`bi ${i < (display.rating||0) ? "bi-star-fill text-warning" : "bi-star text-secondary"} me-1`}
+      />
     ));
 
   return (
     <>
       <LayoutHeader />
       <Container className="my-5">
+        {/* Botón Volver al inicio - AÑADIDO */}
+        <div className="d-flex justify-content-start mb-4">
+          <button 
+            className="btn btn-outline-secondary" 
+            onClick={() => navigate('/')}
+          >
+            <i className="bi bi-house-door me-2"></i>Volver al inicio
+          </button>
+        </div>
+        
         <Row>
-          <Col md={6} className="d-flex justify-content-center mb-4">
-            <Card style={{ width: "100%" }}>
+          <Col md={6} className="mb-4">
+            <Card>
               <Card.Img
                 variant="top"
-                src={displayImage}
-                alt={displayTitle}
-                className="img-fluid"
-                style={{ 
-                  height: "auto", 
-                  maxHeight: "500px", 
-                  objectFit: "cover",
-                  backgroundColor: "#f8f9fa"
-                }}
-                onError={(e) => {
-                  e.target.src = defaultImage;
-                }}
+                src={image}
+                style={{ objectFit: "cover", maxHeight: 500 }}
+                onError={e => { e.target.src = defaultImage; }}
               />
             </Card>
           </Col>
+
           <Col md={6}>
-            <div className="p-3">
-              <h2 className="mb-3">{displayTitle}</h2>
-              
-              <div className="d-flex align-items-center mb-3">
-                {renderStars(displayData.rating || 0)}
-                <span className="ms-2 text-muted">({displayData.reviews || 0} reseñas)</span>
-              </div>
-              
+            <h2 className="mb-3">{title}</h2>
+            <div className="mb-3 d-flex align-items-center">
+              {renderStars()}
+              <span className="ms-2 text-muted">({display.reviews||0} reseñas)</span>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="text-danger fw-bold mb-0">${discountPrice}</h3>
+              <span className="ms-3 text-muted text-decoration-line-through">${original}</span>
+              {pctOff > 0 && <span className="ms-3 badge bg-danger">{pctOff}% OFF</span>}
+            </div>
+            <p className="text-success mb-4">
+              {display.buyers||0} personas ya han comprado esta oferta
+            </p>
+
+            <h5>Descripción:</h5>
+            <p className="text-muted">{desc}</p>
+
+            {display.city && (
               <div className="mb-4">
-                <div className="d-flex align-items-center">
-                  <h3 className="text-danger fw-bold mb-0">${actualDiscountPrice}</h3>
-                  <span className="ms-3 text-muted text-decoration-line-through">${actualPrice}</span>
-                  <span className="ms-3 badge bg-danger">{finalDiscount}% OFF</span>
-                </div>
-                <p className="text-success mt-2 mb-0">{displayData.buyers || 0} personas ya han comprado esta oferta</p>
+                <h5 className="mb-2">Ubicación:</h5>
+                <p className="text-muted">{display.city}</p>
               </div>
-              
-              <div className="mb-4">
-                <h5 className="mb-2">Descripción:</h5>
-                <p className="text-muted">{displayDescription}</p>
-              </div>
-              
-              {displayData.city && (
-                <div className="mb-4">
-                  <h5 className="mb-2">Ubicación:</h5>
-                  <p className="text-muted">{displayData.city}</p>
-                </div>
-              )}
-              
-              <Button variant="danger" onClick={addToCart} className="btn-lg w-100 mb-3">
-                Agregar al carrito
+            )}
+
+            <div className="mb-4">
+              <h5>Cantidad:</h5>
+              <InputGroup style={{ maxWidth: 120 }}>
+                <Button variant="outline-secondary" onClick={() => setQuantity(q => Math.max(1, q - 1))}>−</Button>
+                <FormControl
+                  type="number"
+                  value={quantity}
+                  min={1}
+                  onChange={e => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v) && v > 0) setQuantity(v);
+                  }}
+                />
+                <Button variant="outline-secondary" onClick={() => setQuantity(q => q + 1)}>+</Button>
+              </InputGroup>
+            </div>
+
+            <div className="d-grid gap-2">
+              <Button variant="danger" size="lg" onClick={addToCart}>
+                <i className="bi bi-cart-plus me-2" /> Agregar al carrito
               </Button>
-              
-              <div className="alert alert-light border mt-4">
-                <small className="text-muted">
-                  <i className="bi bi-shield-check me-2"></i>
-                  Garantía de satisfacción: Si no estás conforme con el servicio, te devolvemos tu dinero.
-                </small>
-              </div>
+              <Button variant="success" size="lg" onClick={buyNow}>
+                Comprar ahora
+              </Button>
             </div>
           </Col>
         </Row>
@@ -232,3 +219,4 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
+

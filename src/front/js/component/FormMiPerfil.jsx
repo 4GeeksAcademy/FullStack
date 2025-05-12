@@ -7,6 +7,8 @@ const FormMiPerfil = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
+        nombre: '',
+        apellido: '',
         ciudad: '',
         direccion_line1: '',
         telefono: '',
@@ -28,6 +30,8 @@ const FormMiPerfil = () => {
 
             if (userData && !initialLoad) {
                 setFormData({
+                    nombre: userData.nombre || '',
+                    apellido: userData.apellido || '',
                     ciudad: userData.ciudad || '',
                     direccion_line1: userData.direccion_line1 || '',
                     telefono: userData.telefono || '',
@@ -142,11 +146,31 @@ const FormMiPerfil = () => {
                             {successMessage && (
                                 <div className="alert alert-success d-flex justify-content-between align-items-center">
                                     <span>{successMessage}</span>
-                                    <a href="/" className="btn btn-light btn-sm ms-3 fw-bold">Ir ahora</a>
+                                    <a href="/" className="btn btn-outline-secondary btn-sm ms-3 fw-bold">Ir ahora</a>
                                 </div>
                             )}
 
                             <form onSubmit={handleSubmit}>
+                                {/* Nombre y Apellido - Solo visualización */}
+                                <div className="mb-3">
+                                    <label className="form-label">Nombre</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={formData.nombre || ''}
+                                        disabled
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Apellido</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={formData.apellido || ''}
+                                        disabled
+                                    />
+                                </div>
+
                                 <div className="mb-3">
                                     <label className="form-label">Correo electrónico</label>
                                     <input
@@ -166,7 +190,7 @@ const FormMiPerfil = () => {
                                         value={formData.telefono || ''}
                                         onChange={handleChange}
                                         required
-                                        pattern="[0-9]+"  // Esto restringe a 10 dígitos numéricos (puedes ajustarlo a la cantidad que necesites)
+                                        pattern="[0-9]+"
                                         placeholder="Ingresa tu número de teléfono"
                                     />
                                 </div>

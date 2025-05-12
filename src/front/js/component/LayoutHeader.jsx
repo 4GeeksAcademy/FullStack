@@ -131,22 +131,21 @@ const LayoutHeader = () => {
                   <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
                   <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
                   <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
-                 <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
+                  <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
 
-{user?.role === 'Administrador' && (
-  <>
-    <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
-    <li>
-      <Link className="dropdown-item" to="/newsletter">
-        Newsletter
-      </Link>
-    </li>
-  </>
-)}
+                  {user?.role === 'Administrador' && (
+                    <>
+                      <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
+                      <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>
+                      <li><Link className="dropdown-item" to="/admin/users">Admin</Link></li>
+                    </>
+                  )}
 
-<li><hr className="dropdown-divider" /></li>
+                  <li><hr className="dropdown-divider" /></li>
                   <li>
-                    <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>Cerrar Sesión</button>
+                    <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>
+                      Cerrar Sesión
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -216,20 +215,16 @@ const LayoutHeader = () => {
                     <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
                     <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
                     <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
-                    {user?.role === 'Administrador' && (
-
-                      <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
-                    )}
-                    <li><hr className="dropdown-divider" /></li>
                     
-                      <li>
-                        <Link className="dropdown-item" to="/newsletter">
-                          Newsletter
-                        </Link>
-                      </li>
-                
-                  )}
-
+                    {user?.role === 'Administrador' && (
+                      <>
+                        <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
+                        <li><Link className="dropdown-item" to="/admin/users">Admin</Link></li>
+                      </>
+                    )}
+                    
+                    <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>
+                    <li><hr className="dropdown-divider" /></li>
                     <li>
                       <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>Cerrar Sesión</button>
                     </li>

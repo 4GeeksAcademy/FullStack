@@ -40,6 +40,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         },
       ],
       serviciosViajes: [],
+      newsletters: [],
       serviciosGastronomia: [],
       comboCategorias: [],
       serviciosBelleza: [],
@@ -51,18 +52,18 @@ const getState = ({ getStore, getActions, setStore }) => {
       ofertasDisponibles: 0, // Agregar este estado para el número de ofertas disponibles
       productDetails: {
         id: 1,
-          title: "Spa de Lujo Completo",
-          description:
-            "Día completo con acceso a todas las instalaciones y 2 tratamientos",
-          image:
-            "https://images.unsplash.com/photo-1559599101-f09722fb4948?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-          city: "Madrid",
-          category: "beauty",
-          discountPrice: 89,
-          originalPrice: 150,
-          rating: 4,
-          reviews: 120,
-          buyers: 250,
+        title: "Spa de Lujo Completo",
+        description:
+          "Día completo con acceso a todas las instalaciones y 2 tratamientos",
+        image:
+          "https://images.unsplash.com/photo-1559599101-f09722fb4948?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+        city: "Madrid",
+        category: "beauty",
+        discountPrice: 89,
+        originalPrice: 150,
+        rating: 4,
+        reviews: 120,
+        buyers: 250,
       },
       user: null, // Aquí almacenaremos los datos del usuario
     },
@@ -169,6 +170,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         getActions().loadCartFromLocalStorage();
         getActions().loadUserFromStorage();
       },
+
       
    registerUser: async ({ correo, password, telefono, direccion, ciudad, nombre, apellido }) => {
     try {
@@ -241,7 +243,9 @@ const getState = ({ getStore, getActions, setStore }) => {
       getMessage: async () => {
         try {
           // fetching data from the backend
-          const resp = await fetch(process.env.BACKEND_URL + "/api/hello");
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/api/hello"
+          );
           const data = await resp.json();
           setStore({ message: data.message });
           return data;
@@ -249,12 +253,8 @@ const getState = ({ getStore, getActions, setStore }) => {
           console.log("Error loading message from backend", error);
         }
       },
-      
-      addProductToCart: async () => {
-        
-      }
-      ,
 
+      addProductToCart: async () => {},
       // Cambiar color de un item en el demo
       changeColor: (index, color) => {
         const store = getStore();
@@ -341,7 +341,9 @@ const getState = ({ getStore, getActions, setStore }) => {
       // Cargar servicios (viajes, gastronomía, belleza, etc.)
       cargarServiciosViajes: async () => {
         try {
-          const resp = await fetch(process.env.BACKEND_URL + "/viajes");
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/viajes"
+          );
           const data = await resp.json();
           const viajes = data.viajes || [];
           setStore({ serviciosViajes: viajes });
@@ -354,7 +356,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       cargarServiciosGastronomia: async () => {
         try {
-          const resp = await fetch(process.env.BACKEND_URL + "/gastronomia");
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/gastronomia"
+          );
           const data = await resp.json();
           const gastronomia = data.gastronomia || [];
           setStore({ serviciosGastronomia: gastronomia });
@@ -367,11 +371,13 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       cargarServiciosBelleza: async () => {
         try {
-          const resp = await fetch(process.env.BACKEND_URL + "/belleza");
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/belleza"
+          );
           const data = await resp.json();
           const belleza = data.belleza || [];
           setStore({ serviciosBelleza: belleza });
-          console.log("SERVICOSSS BELLEZAAAAAAAA", belleza)
+          console.log("SERVICOSSS BELLEZAAAAAAAA", belleza);
           return belleza;
         } catch (e) {
           console.error("Error al cargar belleza:", e);
@@ -385,7 +391,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const data = await resp.json();
           const top = data.top || [];
           setStore({ serviciosTop: top });
-          console.log("SERVICOSSS TOOOOOPPPP", top)
+          console.log("SERVICOSSS TOOOOOPPPP", top);
           return top;
         } catch (e) {
           console.error("Error al cargar top:", e);
@@ -393,10 +399,11 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
       },
 
-
       cargarServiciosOfertas: async () => {
         try {
-          const resp = await fetch(process.env.BACKEND_URL + "/ofertas");
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/ofertas"
+          );
           const data = await resp.json();
           const ofertas = data.ofertas || [];
           setStore({ serviciosOfertas: ofertas });
@@ -406,6 +413,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
+        
      registerUser: async (userData) => {
         console.log("Iniciando registro de usuario con datos:", 
           {...userData, password: "********"});
@@ -450,122 +458,282 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       },
-    
-    createNewsLetter: async(services) => {
-      try {
-        const resp = await fetch(process.env.BACKEND_URL + '/newsletteradd', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            'services': services
-          })
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          console.error("Error al crear newsletter", data);
+
+      getNewsletters: async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/newsletter",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (!resp.ok) {
+            console.error("Error al obtener los newsletter");
+            return false;
+          }
+          const data = await resp.json();
+          setStore({ newsletters: data });
+          return true;
+        } catch (error) {
+          console.error("Error al obtener los newsletters", error);
           return false;
         }
-        return true;
-      } catch (error) {
-        console.error("Error al crear newsletter", error);
-        return false;
-      }
-    }
-    ,
-    getCategorias: async() => {
-      let categorias = []
-      await fetch(`${process.env.BACKEND_URL}categorias`)
-              .then(res => res.json())
-              .then(data => {
-                  // Asegurate de acceder a data.categorias
-                  data.categorias.forEach(categoria => {
-                      categorias.push({
-                          id: categoria.id,
-                          nombre: categoria.nombre
-                      });
-                  });
-                  setStore({ comboCategorias: categorias });
-              })
-              .catch(error => {
-                  console.log('Error al obtener categorias', error)
-              });
-    },
-    getUsersCombo: async() => {
-      let usuarios = []
-      await fetch(`${process.env.BACKEND_URL}usuarios`)
-      .then(res => res.json())
-      .then(data => {
-        data.usuarios.forEach(usuario => {
-          usuarios.push(usuario)
-        })
+      },
 
-        setStore({ usersCombo: usuarios });
-      })
-      .catch(error => {
-        console.log('Error al obtener usuarios para los combos', error);
-      })
-    },
-    updateUserProfile: async (userData) => {
-      try {
-          const token = localStorage.getItem('token');
-          const resp = await fetch(process.env.BACKEND_URL + '/usuarios/me', {
-              method: 'PUT',
+      deleteNewsletter: async (id) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            `${process.env.BACKEND_URL}/newsletter/${id}`,
+            {
+              method: "DELETE",
               headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!resp.ok) {
+            console.error("Error al eliminar newsletter");
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error("Error al eliminar newsletter", error);
+          return false;
+        }
+      },
+      sendNewsletter: async(id) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            `${process.env.BACKEND_URL}/newsletter/send`, {
+              method: 'POST',
+              headers : {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
               },
               body: JSON.stringify({
-                  telefono: userData.telefono,
-                  direccion_line1: userData.direccion_line1, // Cambiado a direccion_line1
-                  ciudad: userData.ciudad
-              }),
-          });
-  
-          if (resp.ok) {
-              const data = await resp.json();
-              const updatedUser = {
-                  ...JSON.parse(localStorage.getItem('user')),
-                  telefono: data.user.telefono,
-                  direccion_line1: data.user.direccion_line1, // Cambiado a direccion_line1
-                  ciudad: data.user.ciudad
-              };
-              localStorage.setItem('user', JSON.stringify(updatedUser));
-              setStore({ user: updatedUser });
-              return true;
+                'id': id
+              })
+            }
+          );
+          if (!resp.ok) {
+            console.error('Error al enviar newsletter')
+            return false;
           }
-          return false;
-      } catch (error) {
-          console.error("Error updating profile:", error);
-          return false;
-      }
-  },
-  
-  changePassword: async ({ currentPassword, newPassword }) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        console.error("Token no disponible");
-        return false;
-    }
+          return true;
+        } catch (error) {
+          console.error('Error al enviar newsletters', error);
 
-    try {
-        const response = await fetch(process.env.BACKEND_URL + "/api/change-password", {
-            method: "PUT",
+          return false;
+        }
+      }
+      ,
+      createNewsLetter: async (services, titulo, asunto) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/newsletteradd",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                services: services,
+                titulo: titulo,
+                asunto: asunto,
+              }),
+            }
+          );
+          const data = await resp.json();
+          if (!resp.ok) {
+            console.error("Error al crear newsletter", data);
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error("Error al crear newsletter", error);
+          return false;
+        }
+      },
+      editNewsletter: async(services, titulo, asunto, id) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(process.env.BACKEND_URL + '/newsletter/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({
+              "titulo": titulo,
+              "asunto": asunto,
+              "servicios": services
+            }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            }
+          });
+          const data = await resp.json();
+          if (!resp.ok) {
+            console.error("Error al editar newsletter", data);
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error("Error al editar newsletter", error);
+          return false;
+        }
+      }
+      ,
+      getOneNewsletter: async (id) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(process.env.BACKEND_URL + "/newsletter/" + id, {
+            method: 'GET',
             headers: {
                 "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            body: JSON.stringify({
+                Authorization: `Bearer ${token}`,
+              }
+          });
+          if (!resp.ok) {
+            console.error("Error al obtene newsletter")
+            return null;
+          }
+          const data = await resp.json();
+          return data;
+        } catch (error) {
+            console.error("Error al obtener newsletter", error);
+            return null
+        }
+      }
+      ,
+      getCategorias: async () => {
+        let categorias = [];
+        await fetch(`${process.env.BACKEND_URL}/categorias`)
+          .then((res) => res.json())
+          .then((data) => {
+            // Asegurate de acceder a data.categorias
+            data.categorias.forEach((categoria) => {
+              categorias.push({
+                id: categoria.id,
+                nombre: categoria.nombre,
+              });
+            });
+            setStore({ comboCategorias: categorias });
+          })
+          .catch((error) => {
+            console.log("Error al obtener categorias", error);
+          });
+      },
+      getUsersCombo: async () => {
+        let usuarios = [];
+        await fetch(`${process.env.BACKEND_URL}/usuarios`)
+          .then((res) => res.json())
+          .then((data) => {
+            data.usuarios.forEach((usuario) => {
+              usuarios.push(usuario);
+            });
+
+            setStore({ usersCombo: usuarios });
+          })
+          .catch((error) => {
+            console.log("Error al obtener usuarios para los combos", error);
+          });
+      },
+      updateUserProfile: async (userData) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/usuarios/me",
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                telefono: userData.telefono,
+                direccion_line1: userData.direccion_line1, // Cambiado a direccion_line1
+                ciudad: userData.ciudad,
+              }),
+            }
+          );
+
+          if (resp.ok) {
+            const data = await resp.json();
+            const updatedUser = {
+              ...JSON.parse(localStorage.getItem("user")),
+              telefono: data.user.telefono,
+              direccion_line1: data.user.direccion_line1, // Cambiado a direccion_line1
+              ciudad: data.user.ciudad,
+            };
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+            setStore({ user: updatedUser });
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error("Error updating profile:", error);
+          return false;
+        }
+      },
+
+      changePassword: async ({ currentPassword, newPassword }) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Token no disponible");
+          return false;
+        }
+
+        try {
+          const response = await fetch(
+            process.env.BACKEND_URL + "/api/change-password",
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({
                 currentPassword,
-                newPassword
-            })
-        });
+                newPassword,
+              }),
+            }
+          );
 
-        const data = await response.json();
+          const data = await response.json();
 
-        if (!response.ok) {
+          if (!response.ok) {
             console.error("Error al cambiar contraseña:", data.msg);
             return false;
+          }
+
+          console.log("Contraseña cambiada correctamente:", data.msg);
+          return true;
+        } catch (error) {
+          console.error("Error en fetch:", error);
+          return false;
         }
+      },
+      loginUser: async ({ correo, password }) => {
+        try {
+          // Enviar la solicitud de login al backend
+          const resp = await fetch(
+            process.env.BACKEND_URL + "/login",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ correo, password }),
+            }
+          );
+          const data = await resp.json();
+
 
         console.log("Contraseña cambiada correctamente:", data.msg);
         return true;
@@ -742,6 +910,23 @@ emptyCart: () => {
     setStore({ cartItems: stored });
   },
 
+            return true; // El login fue exitoso
+          } else {
+            // Si no conseguimos los datos del usuario, se guarda un objeto básico
+            localStorage.setItem(
+              "user",
+              JSON.stringify({
+                correo: correo,
+                role: "cliente",
+              })
+            );
+            return true;
+          }
+        } catch (error) {
+          console.error("Login error:", error);
+          return false; // Si ocurre un error, retornamos false
+        }
+      },
     },
   };
 };

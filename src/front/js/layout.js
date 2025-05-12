@@ -10,30 +10,31 @@ import injectContext from "./store/appContext";
 
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
-import CartPage from "./component/CartPage.jsx"; 
+import CartPage from "./component/CartPage.jsx";
 import { Product } from "./pages/Product.jsx";
 import LoginPage from "./component/LoginPage.jsx";
-import { TodasLasCategorias } from "./pages/TodasLasCategorias.jsx" 
-import { VistasTop } from "./pages/VistasTop.jsx"
+import { TodasLasCategorias } from "./pages/TodasLasCategorias.jsx";
+import { VistasTop } from "./pages/VistasTop.jsx";
 import { VistasViajes } from "./pages/VistasViajes.jsx";
 import { VistasBelleza } from "./pages/VistasBelleza.jsx";
 import { VistasGastronomia } from "./pages/VistasGastronomia.jsx";
-import VistaPoliticaDePrivacidad from "./pages/PoliticasDePrivacidad.jsx"
-import VistaCookies from "./pages/VistaCookies.jsx"
-import VistaSobreNosotros from "./pages/VistaSobreNosotros.jsx"
-import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx"
+import VistaPoliticaDePrivacidad from "./pages/PoliticasDePrivacidad.jsx";
+import VistaCookies from "./pages/VistaCookies.jsx";
+import VistaSobreNosotros from "./pages/VistaSobreNosotros.jsx";
+import VistaTerminosYCondiciones from "./pages/VistaTerminosYCondiciones.jsx";
 import VistaContacto from "./pages/VistaContacto.jsx";
 import ProductDetail from "./component/ProductDetail.jsx";
 import OfertasDestacadas from "./component/OfertasDestacadas.jsx";
 import CategoryPage from "./component/CategoryPage.jsx";
 import VistaCrearServicio from "./pages/VistaCrearServicio.jsx";
-import VistaMiPerFil from "./pages/VistaMiPerfil.jsx"
+import VistaMiPerFil from "./pages/VistaMiPerfil.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
-import VistaMisCompras from "./pages/VistaMisCompras.jsx"
+import VistaMisCompras from "./pages/VistaMisCompras.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import Return from "./pages/Return.jsx";
 import CreateNewsletter from "./pages/CreateNewsletter.jsx";
 import VistaReservas from "./component/VistaReservas.jsx";
+import AdminNewsletter from "./pages/AdminNewsletter.jsx";
 import SearchResults from "./component/SearchResults.jsx"
 import ProductDetailBusqueda from "./pages/ProductDetailBusqueda.jsx"
 
@@ -41,6 +42,8 @@ import ForgotPasswordModal from "./component/ForgotPasswordModal.jsx"
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 
 import VistaBusqueda from "./pages/VistaBusqueda.jsx";
+import EditNewsletter from "./pages/EditNewsletter.jsx";
+import ViewNewsletter from "./pages/ViewNewsletter.jsx";
 
 
 const Layout = () => {
@@ -60,12 +63,18 @@ const Layout = () => {
             <Route path="/single/:theid" element={<Single />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/todaslascategorias" element={<TodasLasCategorias />} />
+            <Route
+              path="/todaslascategorias"
+              element={<TodasLasCategorias />}
+            />
             <Route path="/top" element={<VistasTop />} />
             <Route path="/viajes" element={<VistasViajes />} />
             <Route path="/belleza" element={<VistasBelleza />} />
             <Route path="/gastronomia" element={<VistasGastronomia />} />
-            <Route path="/politica-privacidad" element={<VistaPoliticaDePrivacidad />} />
+            <Route
+              path="/politica-privacidad"
+              element={<VistaPoliticaDePrivacidad />}
+            />
             <Route path="/cookies" element={<VistaCookies />} />
             <Route path="/sobre-nosotros" element={<VistaSobreNosotros />} />
             <Route path="/terminos" element={<VistaTerminosYCondiciones />} />
@@ -76,7 +85,7 @@ const Layout = () => {
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
             <Route path="/admin/*" element={<AdminDashboard />} />
-            <Route path="/mis-compras" element={<VistaMisCompras />} /> 
+            <Route path="/mis-compras" element={<VistaMisCompras />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/return" element={<Return />} />
             <Route path="/search/:keyword" element={<VistaBusqueda />} />
@@ -86,6 +95,11 @@ const Layout = () => {
             <Route path="/newsletter" element={<CreateNewsletter />} />
             <Route path="/recuperar-contrasena" element={<ForgotPasswordModal />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/newsletter/create" element={<CreateNewsletter />} />
+            <Route path="/newsletter" element={<AdminNewsletter />} />
+            <Route path="/newsletter/edit-newsletter/:id" element={<EditNewsletter />}/>
+            <Route path="/newsletter/view-newsletter/:id" element={<ViewNewsletter />}/>
+              
           </Routes>
           <Footer />
         </ScrollToTop>

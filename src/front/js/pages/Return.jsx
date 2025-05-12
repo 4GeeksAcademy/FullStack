@@ -8,6 +8,7 @@ const Return = () => {
   const [customerEmail, setCustomerEmail] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { actions } = useContext(Context);
 
   // Estilos en línea
   const containerStyle = {
@@ -65,6 +66,11 @@ const Return = () => {
       .then(data => {
         setStatus(data.status);
         setCustomerEmail(data.customer_email);
+        
+        // AÑADIDO: Vaciar carrito cuando el pago es exitoso
+        if (data.status === "complete" || data.status === "paid") {
+          actions.clearCart();
+        }
       })
       .catch(err => {
         console.error("Error al obtener el estado del pago:", err);
@@ -123,4 +129,6 @@ const Return = () => {
   );
 };
 
+
 export default Return;
+

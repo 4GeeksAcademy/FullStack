@@ -17,7 +17,6 @@ class User(db.Model):
     pais = db.Column(db.String(50))
     role = db.Column(db.String(50), default='cliente')
     is_active = db.Column(db.Boolean(), default=True)
-    newsletter_subscription = db.Column(db.Boolean(), default=False)
 
     # Relación con los servicios
     viajes_list = db.relationship('Viajes', back_populates='user')
@@ -50,10 +49,19 @@ class User(db.Model):
         }
 
 
+class NewsletterSubscriptions(db.Model):
+    __tablename__ = 'newslettersubscription'
+
+    id = db.Column(db.Integer, primary_key=True)
+    correo = correo = db.Column(db.String(120), unique=True, nullable=False)
+
 class Newsletter(db.Model):
     __tablename__ = 'newsletter'
 
     id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(120), nullable=False)
+    asunto = db.Column(db.String(120), nullable=False)
+    enviado = db.Column(db.Boolean(), default=False)
     services = db.relationship('NewsletterServices', lazy='dynamic', cascade='all, delete-orphan')
 
     def serialize(self):

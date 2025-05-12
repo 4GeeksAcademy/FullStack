@@ -12,7 +12,7 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
-from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas, Payment, PaymentItem
+from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas, Payment, PaymentItem, NewsletterSubscriptions, NewsletterServices
 from api.services import inicializar_servicios
 from dotenv import load_dotenv
 from api.models import db
@@ -1091,13 +1091,199 @@ def editar_usuario():
     return jsonify({"mensaje": "Contraseña actualizada correctamente"}), 200
 
 @app.route('/newsletteradd', methods=['POST'])
+@jwt_required()
 def create_newsletter():
     data = request.get_json()
     services = data['services']
     if not services:
-        return jsonify({'Error al crear newsletter'}), 400
-    print(services)
+        return jsonify({'error': 'Error al crear newsletter'}), 400
+    newsletter = Newsletter(
+        titulo = data['titulo'],
+        asunto = data['asunto']
+    )
+    db.session.add(newsletter)
+    db.session.commit()
+
+    for service in services:
+        newsletter_service = NewsletterServices(
+            service_id=service['id'],
+            service_type=service['service_type'],
+            newsletter_id=newsletter.id
+        )
+        db.session.add(newsletter_service)
+    
+    db.session.commit()
     return jsonify({'message': 'newsletter creado con exito'}), 201
+
+@app.route('/newsletter/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_newsletter(id):
+    n_s = Newsletter.query.get(id);
+    if not n_s:
+        return jsonify({'message': 'Newsletter no encontrado'}), 404
+    db.session.delete(n_s)
+    db.session.commit()
+
+    return jsonify({'message': 'Newsletter eliminado con exito'}), 201
+
+@app.route('/newsletter/send', methods=['POST'])
+@jwt_required()
+def send_newsletter():
+    data = request.get_json()
+    
+    n_s = Newsletter.query.get(data['id'])
+    
+    if not n_s:
+        return jsonify({'message': 'Newsletter no encontrado'})
+    
+    subscriptors = NewsletterSubscriptions.query.all()
+
+    text_content = f"""\
+¡Newsletter ha llegado! 🎉
+
+Hola,
+
+Tu nuevo newsletter está disponible. Visita el siguiente enlace para verlo:
+
+{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}
+
+¿Problemas con el enlace? Copia y pega esta URL en tu navegador:
+{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}
+"""
+
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Tu Newsletter está listo!</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }}
+        .email-container {{
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }}
+        .header {{
+            background-color: #4CAF50;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }}
+        .content {{
+            padding: 30px;
+            text-align: center;
+        }}
+        .newsletter-link {{
+            display: inline-block;
+            margin: 25px 0;
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }}
+        .newsletter-link:hover {{
+            background-color: #45a049;
+        }}
+        .footer {{
+            background-color: #f4f4f4;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }}
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>¡Newsletter ha llegado! 🎉</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hola,</p>
+            <p>Tu nuevo newsletter está disponible. Visita el siguiente enlace para verlo:</p>
+        
+            <a href="{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}" class="newsletter-link">
+                Ver Newsletter
+            </a>
+
+            <p>¿Problemas con el enlace? Copia y pega esta URL en tu navegador:<br>
+            <span style="color: #4CAF50; word-break: break-all;">{os.getenv("FRONT_END_URL")}/newsletter/view-newsletter/{n_s.id}</span></p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+    mail_service = MailService()
+
+    for subcriptor in subscriptors:
+        mail_service.send_mail(
+            to_email=subcriptor.correo,
+            subject=n_s.asunto,
+            text_content=text_content,
+            html_content=html_content
+        )
+    n_s.enviado = True
+    db.session.commit()
+    return jsonify({'message': 'newsletter enviado exitoasmente'});
+
+@app.route('/newsletter/<int:id>', methods=['GET'])
+def get_newsletter(id):
+    n_s = Newsletter.query.get(id)
+    
+    services = [{
+        'service_id': s.service_id,
+        'service_type': s.service_type 
+    } for s in n_s.services.all()]
+    
+    data = {
+        'titulo': n_s.titulo,
+        'asunto': n_s.asunto,
+        'servicios': services
+    }
+    
+    return jsonify(data), 200
+
+@app.route('/newsletter/<int:id>', methods=['PUT'])
+@jwt_required()
+def editar_newsletter(id):
+    data = request.get_json()
+    new_services = data.get('servicios', [])
+    
+    newsletter = Newsletter.query.get(id)
+    
+    newsletter.services.delete()
+    
+    for s in new_services:
+        ns = NewsletterServices(
+            service_id=s['id'],
+            service_type=s['service_type'],
+            newsletter_id=id
+        )
+        db.session.add(ns)
+    
+    newsletter.titulo = data['titulo']
+    newsletter.asunto = data['asunto']
+    
+    db.session.commit()
+    return jsonify({'message': 'Newsletter editado'}), 200
 
 @app.route('/newsletter', methods=['POST'])
 def agregar_a_newsletter():
@@ -1107,17 +1293,16 @@ def agregar_a_newsletter():
     if not email:
         return jsonify({"error": "Correo es obligatorio"}), 400
 
-    user = User.query.filter_by(correo=email).first()
+    sub = NewsletterSubscriptions.query.filter_by(correo=email).first()
 
-    if not user:
-        return jsonify({"error": "El correo no está registrado"}), 404
+    if sub:
+        return jsonify({"mensaje": "Este correo ya está suscrito"}), 404
 
+    sub = NewsletterSubscriptions(
+        correo = email
+    )
 
-    if user and user.newsletter_subscription is True:
-        return jsonify({"mensaje": "Este correo ya está suscrito"}), 200
-
-    user.newsletter_subscription = True
-    db.session.add(user)
+    db.session.add(sub)
     db.session.commit()
 
     subject = "¡Gracias por suscribirte a Groupponclon!"
@@ -1216,8 +1401,15 @@ def agregar_a_newsletter():
 @app.route('/newsletter', methods=['GET'])
 @jwt_required()
 def obtener_newsletter():
-    subs = Newsletter.query.all()
-    return jsonify({"correos_suscritos": [s.correo for s in subs]}), 200
+    newsletters = Newsletter.query.all()
+    data = [{
+        'id': ns.id,
+        'titulo': ns.titulo,
+        'asunto': ns.asunto,
+        'enviado': ns.enviado
+    } for ns in newsletters]
+
+    return jsonify(data), 200
 
 
 # Ruta para categoria 

@@ -1,18 +1,20 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Context } from "../store/appContext"
+import React, { useContext, useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Context } from "../store/appContext";
 import CategoryCard from "../component/CategoryCard.jsx";
 import LayoutHeader from "../component/LayoutHeader.jsx";
 import "../../styles/newsletter.css"
 
-const CreateNewsletter = () => {
+const EditNewsletter = () => {
     const { store, actions } = useContext(Context);
     const [formData, setFormData] = useState({
         title: '',
         subject: '',
         published: false
     })
+    const { id } = useParams();
     const [selectedServices, setSelectedServices] = useState([]);
+    const [allServices, setAllServices] = useState([])
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('')
@@ -29,6 +31,44 @@ const CreateNewsletter = () => {
     }, []);
 
     useEffect(() => {
+        const getNewsletter = async () => {
+            try {
+                const newsletter = await actions.getOneNewsletter(id);
+                if (!newsletter) {
+                    console.error("error al obtener newsletter");
+                    alert('Error al obtener datos del newsletter');
+                    setLoading(false);
+                    navigate('/newsletter');
+                }
+                else {
+                    setFormData({
+                        title: newsletter.titulo,
+                        subject: newsletter.asunto,
+                        published: false
+                    });
+
+                    const serviciosSeleccionados = []
+
+                    getAllServices().forEach(service => {
+                        const match = newsletter.servicios.find(s =>
+                            s.service_id === service.id && s.service_type === service.service_type
+                        );
+                        if (match) {
+                            serviciosSeleccionados.push(service);
+                        }
+                    });
+
+                    setSelectedServices(serviciosSeleccionados);
+
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error("Error al cargar los datos del newsletter", error);
+                alert("Ocurrio un error al cargar los datos del newsletter");
+                navigate('/newsletter');
+            }
+        }
+
         const loadServices = async () => {
             try {
                 await Promise.all([
@@ -38,13 +78,12 @@ const CreateNewsletter = () => {
                     actions.cargarServiciosOfertas(),
                     actions.cargarServiciosTop()
                 ]);
-                setLoading(false);
             } catch (error) {
                 setError('Error cargando los servicios');
-                setLoading(false);
             }
         };
         loadServices();
+        getNewsletter();
     }, []);
 
     const getAllServices = () => {
@@ -68,15 +107,14 @@ const CreateNewsletter = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        console.log('Selected Services', selectedServices);
-        const success = await actions.createNewsLetter(selectedServices, formData.title, formData.subject);
+        const success = await actions.editNewsletter(selectedServices, formData.title, formData.subject, id);
         if (success) {
             setSelectedServices([])
-            alert("Newsletter creado con exito");
+            alert("Newsletter editado con exito");
             navigate('/newsletter');
         }
         else {
-            alert("ERROR AL CREAR NEWSLETTER");
+            alert("ERROR AL EDITAR NEWSLETTER");
         }
     }
 
@@ -230,4 +268,4 @@ const CreateNewsletter = () => {
     );
 }
 
-export default CreateNewsletter
+export default EditNewsletter

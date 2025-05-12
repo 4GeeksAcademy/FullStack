@@ -9,7 +9,7 @@ const Newsletter = () => {
     e.preventDefault();
 
     // Obtener la URL del backend desde el archivo .env
-    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+    const backendUrl = process.env.BACKEND_URL;
 
     // Verificar si la URL del backend está definida
     if (!backendUrl) {

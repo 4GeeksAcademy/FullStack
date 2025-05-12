@@ -2399,7 +2399,19 @@ def session_status():
             payment.estado = 'pagado'
             db.session.commit()
 
-            # Construir filas de la factura
+            # 3.a) Recuperar datos del usuario
+            user = User.query.get(payment.user_id)
+            nombre_completo = f"{user.nombre or ''} {user.apellido or ''}".strip()
+            direccion = ", ".join(filter(None, [
+                user.direccion_line1,
+                user.direccion_line2,
+                user.ciudad,
+                user.codigo_postal,
+                user.pais
+            ]))
+            telefono = user.telefono or "No disponible"
+
+            # 3.b) Construir filas de la factura
             total_cents = 0
             rows_html = ""
             for item in payment.items:
@@ -2416,26 +2428,57 @@ def session_status():
                   </tr>
                 """
 
-            # Cuerpo HTML de la factura
+            # 3.c) Cuerpo HTML de la factura
             html_invoice = f"""
-              <h1>Factura #{payment.id}</h1>
-              <p><strong>Fecha:</strong> {payment.payment_date.strftime('%Y-%m-%d %H:%M')}</p>
-              <p><strong>Cliente:</strong> {session.customer_details.email}</p>
-              <table width="100%" border="1" cellspacing="0" cellpadding="5"
-                     style="border-collapse: collapse; text-align: left;">
-                <thead>
-                  <tr>
-                    <th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows_html}
-                </tbody>
-              </table>
-              <h2>Total: €{total_cents/100:.2f}</h2>
+              <div style="font-family: Arial, sans-serif; max-width: 800px; margin:auto; padding:20px;">
+                <!-- Logo -->
+                <div style="display:flex; align-items:center; margin-bottom:20px;">
+                  <i class="bi bi-house-fill" style="font-size:2rem; color:#dc3545; margin-right:8px;"></i>
+                  <h1 style="font-size:1.5rem; margin:0;">GroupOn</h1>
+                </div>
+
+                <h2 style="margin-bottom:0.5em;">Factura #{payment.id}</h2>
+                <p><strong>Fecha:</strong> {payment.payment_date.strftime('%Y-%m-%d %H:%M')}</p>
+
+                <!-- Datos del cliente -->
+                <h3 style="margin-top:1.5em;">Datos del Cliente</h3>
+                <p>
+                  <strong>Nombre:</strong> {nombre_completo}<br/>
+                  <strong>Email:</strong> {session.customer_details.email}<br/>
+                  <strong>Teléfono:</strong> {telefono}<br/>
+                  <strong>Dirección:</strong> {direccion}
+                </p>
+
+                <!-- Detalle de ítems -->
+                <table width="100%" border="1" cellspacing="0" cellpadding="5"
+                       style="border-collapse: collapse; margin-top:1em;">
+                  <thead style="background:#f8f9fa;">
+                    <tr>
+                      <th>Producto</th>
+                      <th>Cantidad</th>
+                      <th>Precio unitario</th>
+                      <th>Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows_html}
+                  </tbody>
+                </table>
+
+                <h2 style="text-align:right; margin-top:1em;">
+                  Total: €{total_cents/100:.2f}
+                </h2>
+
+                <!-- Pie de página -->
+                <hr style="margin:2em 0;" />
+                <p style="font-size:0.9em; color:#555;">
+                  Para cambios de dirección o cualquier consulta, contáctanos al
+                  <strong>+34 912 345 678</strong> antes de 24 horas.
+                </p>
+              </div>
             """
 
-            # Enviar el correo
+            # 3.d) Enviar el correo con la factura
             mail_service.send_mail(
                 to_email     = session.customer_details.email,
                 subject      = f"Tu factura de Pedido #{payment.id}",

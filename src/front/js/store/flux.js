@@ -633,51 +633,30 @@ setCartItems: (items) => {
 // Dentro de getState → actions:
 addToCart: (item) => {
   const store = getStore();
-  // buscamos si ya existía
+  const actions = getActions();
+
+  // ¿Ya existía ese producto en el carrito?
   const existing = store.cartItems.find(ci => ci.id === item.id);
+
   let updatedCart;
   if (existing) {
+    // Si existía, sólo incrementamos su cantidad
+    const addQty = item.quantity ?? 1;
     updatedCart = store.cartItems.map(ci =>
       ci.id === item.id
-        ? { ...ci, quantity: ci.quantity + 1 }
+        ? { ...ci, quantity: ci.quantity + addQty }
         : ci
     );
   } else {
-    updatedCart = [...store.cartItems, { ...item, quantity: 1 }];
+    // Si es nuevo, lo añadimos con cantidad inicial (o la que venga en item.quantity)
+    updatedCart = [
+      ...store.cartItems,
+      { ...item, quantity: item.quantity ?? 1 }
+    ];
   }
-  setStore({ cartItems: updatedCart });
-  getActions().saveCartToLocalStorage();  // <— persistimos
-},
 
-removeItemFromCart: (id) => {
-  const store = getStore();
-  const updatedCart = store.cartItems.filter(ci => ci.id !== id);
   setStore({ cartItems: updatedCart });
-  getActions().saveCartToLocalStorage();  // <— persistimos
-},
-
-updateQuantity: (id, newQuantity) => {
-  if (newQuantity < 1) return;
-  const store = getStore();
-  const updatedCart = store.cartItems.map(ci =>
-    ci.id === id ? { ...ci, quantity: newQuantity } : ci
-  );
-  setStore({ cartItems: updatedCart });
-  getActions().saveCartToLocalStorage();  // <— persistimos
-},
-
-// y mantienes tu save/load tal como los tienes:
-saveCartToLocalStorage: () => {
-  const store = getStore();
-  try {
-    localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
-  } catch(e) { console.error(e) }
-},
-loadCartFromLocalStorage: () => {
-  try {
-    const data = JSON.parse(localStorage.getItem("cartItems") || "[]");
-    setStore({ cartItems: data });
-  } catch(e) { console.error(e) }
+  actions.saveCartToLocalStorage();  // persistimos siempre
 },
 
   // **Nueva acción** para vaciar todo el carrito

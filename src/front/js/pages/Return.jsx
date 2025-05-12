@@ -100,7 +100,7 @@ const Return = () => {
         {/* Cabecera con logo */}
         <div style={headerStyle}>
           <i className="bi bi-house-fill fs-2 text-danger me-2"></i>
-          <h1 style={titleStyle}>GrouponClone</h1>
+          <h1 style={titleStyle}>GroupOn</h1>
         </div>
         {/* Mensaje de éxito */}
         <div style={messageStyle}>

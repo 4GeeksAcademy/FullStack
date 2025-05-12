@@ -31,13 +31,13 @@ const ProductDetailBusqueda = () => {
   const [offer, setOffer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState(locCat);
+  const [quantity, setQuantity] = useState(1);
 
   const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg";
 
-  // Determina categoría según el id si viene de URL
+  // Inferir categoría si no viene por params
   useEffect(() => {
     if (!locCat && id) {
-      // intenta inferir de store
       if (store.serviciosViajes.some(o => o.id === +id)) setCurrentCategory("viajes");
       else if (store.serviciosBelleza.some(o => o.id === +id)) setCurrentCategory("belleza");
       else if (store.serviciosGastronomia.some(o => o.id === +id)) setCurrentCategory("gastronomia");
@@ -46,7 +46,7 @@ const ProductDetailBusqueda = () => {
     }
   }, [locCat, id, store]);
 
-  // Carga datos de la categoría
+  // Carga la lista de la categoría
   useEffect(() => {
     const loadCategory = async () => {
       setLoading(true);
@@ -60,7 +60,7 @@ const ProductDetailBusqueda = () => {
     loadCategory();
   }, [currentCategory, store, actions]);
 
-  // Busca el offer dentro de la lista cargada
+  // Busca el objeto offer
   useEffect(() => {
     if (loading) return;
     let found = null;
@@ -94,22 +94,25 @@ const ProductDetailBusqueda = () => {
     );
   }
 
-  // Normaliza precios y descuento
+  // Precios y descuento
   const original = offer.originalPrice ?? offer.price ?? offer.precio ?? 0;
   let discount = offer.discountPrice ?? Math.round(original * 0.7);
   if (discount >= original) discount = Math.round(original * 0.7);
   const pctOff = original > 0 ? Math.round((original - discount) / original * 100) : 0;
 
+  // Acciones
   const addToCart = () => {
     actions.addToCart({
       ...offer,
       discountPrice: discount,
-      originalPrice: original
+      originalPrice: original,
+      quantity      // ahora respetamos la cantidad elegida
     });
   };
-
   const handleBuyNow = () => {
-    navigate("/checkout", { state: { item: { ...offer, discountPrice: discount, originalPrice: original } } });
+    navigate("/checkout", {
+      state: { item: { ...offer, discountPrice: discount, originalPrice: original, quantity } }
+    });
   };
 
   return (
@@ -143,10 +146,32 @@ const ProductDetailBusqueda = () => {
                 <span className="ms-3 text-muted text-decoration-line-through">${original}</span>
                 {pctOff > 0 && <span className="ms-3 badge bg-danger">{pctOff}% OFF</span>}
               </div>
-              {/* Compradores */}
               <p className="text-success mt-2 mb-4">
                 {offer.buyers ?? 0} personas ya han comprado esta oferta
               </p>
+              {/* Selector de cantidad */}
+              <div className="mb-4">
+                <label className="form-label fw-semibold small text-uppercase text-muted mb-2">Cantidad</label>
+                <div className="d-flex align-items-center">
+                  <button
+                    className="btn btn-outline-secondary px-3 py-1 fs-5"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                  >−</button>
+                  <input
+                    type="number"
+                    className="form-control text-center mx-2"
+                    style={{ width: "60px" }}
+                    value={quantity}
+                    min={1}
+                    onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  />
+                  <button
+                    className="btn btn-outline-secondary px-3 py-1 fs-5"
+                    onClick={() => setQuantity(q => q + 1)}
+                  >+</button>
+                </div>
+              </div>
               {/* Descripción y ubicación */}
               <div className="mb-4">
                 <h5 className="mb-2">Descripción:</h5>

@@ -15,7 +15,7 @@ def create_admin_user():
     user = User(
         correo='admin@outlook.com',
         password=hashed_password,
-        role='Administrador'
+        role='admin'
     )
     db.session.add(user)
     db.session.commit()
@@ -323,7 +323,7 @@ def crear_servicios_top(user_id, top_category_id):
         Top(
             title="Crucero de lujo por el Mediterráneo",
             descripcion="Disfrutá 7 días de lujo en altamar visitando Italia, Grecia y España.",
-            image="https://source.unsplash.com/random/800x600/?mediterranean,cruise",
+            image="https://img.freepik.com/free-photo/luxury-cruise-ship-sailing-ocean-sunset_181624-24289.jpg",
             city="Mar Mediterráneo",
             price=3500,
             discountPrice=4200,
@@ -336,7 +336,7 @@ def crear_servicios_top(user_id, top_category_id):
         Top(
             title="Safari fotográfico en Kenia",
             descripcion="Capturá la vida salvaje en su hábitat natural con guías expertos.",
-            image="https://source.unsplash.com/random/800x600/?kenya,safari",
+            image="https://img.freepik.com/free-photo/elephants-savannah-africa-sunset_181624-24282.jpg",
             city="Reserva Masái Mara",
             price=2800,
             discountPrice=3500,
@@ -349,7 +349,7 @@ def crear_servicios_top(user_id, top_category_id):
         Top(
             title="Tour VIP por Disney World",
             descripcion="Acceso prioritario, guías personalizados y experiencias exclusivas.",
-            image="https://source.unsplash.com/random/800x600/?disneyworld,orlando",
+            image="https://img.freepik.com/free-photo/3d-background-children-with-castle_23-2150499382.jpg",
             city="Orlando, Florida",
             price=2000,
             discountPrice=2500,
@@ -362,7 +362,7 @@ def crear_servicios_top(user_id, top_category_id):
         Top(
             title="Glamping en los Alpes suizos",
             descripcion="Hospedaje de lujo en medio de la naturaleza alpina.",
-            image="https://source.unsplash.com/random/800x600/?swissalps,glamping",
+            image="https://img.freepik.com/free-photo/luxury-camping-tent-mountains_181624-24285.jpg",
             city="Alpes, Suiza",
             price=2200,
             discountPrice=2700,
@@ -375,7 +375,7 @@ def crear_servicios_top(user_id, top_category_id):
         Top(
             title="Travesía en globo aerostático por Capadocia",
             descripcion="Vuelos al amanecer con vistas impresionantes.",
-            image="https://source.unsplash.com/random/800x600/?cappadocia,balloon",
+            image="https://img.freepik.com/free-photo/hot-air-balloons-flying-over-cappadocia_181624-24288.jpg",
             city="Capadocia, Turquía",
             price=450,
             discountPrice=600,
@@ -388,7 +388,7 @@ def crear_servicios_top(user_id, top_category_id):
         Top(
             title="Expedición al Machu Picchu",
             descripcion="Trekking de 4 días con guía, todo incluido.",
-            image="https://source.unsplash.com/random/800x600/?machupicchu,peru",
+            image="https://img.freepik.com/free-photo/machu-picchu-peru-sunrise_181624-24284.jpg",
             city="Cusco, Perú",
             price=1800,
             discountPrice=2300,
@@ -401,7 +401,7 @@ def crear_servicios_top(user_id, top_category_id):
         Top(
             title="Tour por los parques nacionales de Canadá",
             descripcion="Recorrido en bus por Banff, Jasper y más.",
-            image="https://source.unsplash.com/random/800x600/?banff,canada",
+            image="https://img.freepik.com/free-photo/beautiful-shot-banff-national-park-canada_181624-24283.jpg",
             city="Alberta, Canadá",
             price=1600,
             discountPrice=2000,
@@ -414,7 +414,7 @@ def crear_servicios_top(user_id, top_category_id):
         Top(
             title="Semana en resort 5 estrellas en Maldivas",
             descripcion="Bungalow sobre el agua con experiencias gastronómicas y acuáticas.",
-            image="https://source.unsplash.com/random/800x600/?maldives,resort",
+            image="https://img.freepik.com/free-photo/luxury-beach-resort-maldives_181624-24287.jpg",
             city="Islas Maldivas",
             price=5000,
             discountPrice=6000,
@@ -425,6 +425,16 @@ def crear_servicios_top(user_id, top_category_id):
             category_id=top_category_id
         ),
     ]
+
+    # MODIFICACIÓN TEMPORAL PARA ACTUALIZAR IMÁGENES
+    # Comenta este bloque después de actualizar las imágenes
+    # for service in top_services:
+    #     existing_service = Top.query.filter_by(title=service.title).first()
+    #     if existing_service:
+    #         existing_service.image = service.image
+    #         db.session.commit()
+    #         print(f"Imagen actualizada para: {service.title}")
+    # FIN DE MODIFICACIÓN TEMPORAL
 
     # Filtrar solo los servicios que no existen
     new_services = [t for t in top_services if t.title not in existing_titles]

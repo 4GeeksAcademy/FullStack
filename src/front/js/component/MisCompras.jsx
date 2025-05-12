@@ -17,7 +17,6 @@ const MisCompras = () => {
       }
 
       try {
-        // Obtener el ID del usuario
         const userResp = await fetch(`${backendUrl}/usuarios/me`, {
           method: 'GET',
           headers: {
@@ -32,7 +31,6 @@ const MisCompras = () => {
         const usuario = await userResp.json();
         const userId = usuario.id;
 
-        // Obtener las compras del usuario
         const comprasResp = await fetch(`${backendUrl}/compras/${userId}`, {
           method: 'GET',
           headers: {
@@ -70,29 +68,54 @@ const MisCompras = () => {
       {compras.length === 0 ? (
         <p>No has realizado ninguna compra.</p>
       ) : (
-        <ul className="list-group">
-          {compras.map((compra) => (
-            <li key={compra.id} className="list-group-item">
-              <div>
-                <strong>{compra.nombre_articulo}</strong><br />
-                {compra.foto_articulo && (
-                  <img
-                    src={compra.foto_articulo}
-                    alt={compra.nombre_articulo}
-                    style={{ maxWidth: '150px', maxHeight: '150px' }}
-                  />
-                )}
-                <br />
-                <span>Precio: ${compra.monto}</span><br />
-                <span>Cantidad: {compra.cantidad_articulos}</span><br />
-                <span>Fecha: {new Date(compra.fecha).toLocaleDateString()}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <table className="table table-bordered table-hover align-middle">
+          <thead className="table-dark">
+            <tr>
+              <th>Imagen</th>
+              <th>Producto</th>
+              <th>Precio</th>
+              <th>Unidades</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {compras.flatMap((compra) =>
+              Array.isArray(compra.items)
+                ? compra.items.map((item, index) => (
+                    <tr key={`${compra.id}-${index}`}>
+                      <td>
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.title}
+                            style={{ width: '80px', height: '80px', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <span className="text-muted">Sin imagen</span>
+                        )}
+                      </td>
+                      <td>{item.title}</td>
+                      <td>${(item.unit_price / 100).toFixed(2)}</td>
+                      <td>{item.quantity}</td>
+                      <td>{new Date(compra.payment_date).toLocaleDateString()}</td>
+                      <td>
+                        <span className={`badge bg-${compra.estado === 'pagado' ? 'success' : 'warning'}`}>
+                          {compra.estado}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                : []
+            )}
+          </tbody>
+        </table>
       )}
     </div>
   );
 };
 
 export default MisCompras;
+
+
+

@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Context } from '../store/appContext';
-import { useContext } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -13,39 +12,89 @@ const LoginPage = () => {
     const [telefono, setTelefono] = useState('');
     const [direccion, setDireccion] = useState('');
     const [ciudad, setCiudad] = useState('');
+    const [nombre, setNombre] = useState('');
+    const [apellido, setApellido] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('correo_registrado');
+        if (isLogin && savedEmail) {
+            setCorreo(savedEmail);
+            localStorage.removeItem('correo_registrado');
+        }
+    }, [isLogin]);
+
+    const validarSoloLetras = (valor) => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/.test(valor);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
+
         try {
-            if (isLogin) {
+            if (!isLogin) {
+                // Validaciones para el registro
+                if (!validarSoloLetras(nombre) || !validarSoloLetras(apellido)) {
+                    setError('El nombre y el apellido solo pueden contener letras.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                if (!nombre || !apellido || !correo || !password) {
+                    setError('Nombre, apellido, correo y contraseña son obligatorios.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Datos para registro
+                const userData = {
+                    nombre: nombre.trim(),
+                    apellido: apellido.trim(),
+                    correo: correo.trim(),
+                    password: password,
+                    telefono: telefono.trim(),
+                    direccion: direccion.trim(),
+                    ciudad: ciudad.trim()
+                };
+
+                console.log("Enviando datos de registro:", {...userData, password: "********"});
+                
+                const registerSuccess = await actions.registerUser(userData);
+                
+                if (registerSuccess) {
+                    setError('¡Registro exitoso! Iniciando sesión automáticamente...');
+                    
+                    // Intentar iniciar sesión automáticamente después del registro
+                    const loginSuccess = await actions.loginUser({ 
+                        correo: correo.trim(), 
+                        password: password 
+                    });
+                    
+                    if (loginSuccess) {
+                        navigate('/');
+                    } else {
+                        setError('Registro exitoso. Por favor, inicia sesión con tus credenciales.');
+                        setIsLogin(true);
+                    }
+                } else {
+                    setError('Error al registrarse. Es posible que el correo ya esté en uso.');
+                }
+            } else {
+                // Login directo
+                console.log("Intentando iniciar sesión con:", correo);
                 const success = await actions.loginUser({ correo, password });
                 if (success) {
                     navigate('/');
                 } else {
-                    setError('Credenciales inválidas o error al iniciar sesión.');
-                }
-            } else {
-                const success = await actions.registerUser({ correo, password, telefono, direccion, ciudad });
-                if (success) {
-                    setError('¡Registro exitoso! Ahora puedes iniciar sesión.');
-                    setIsLogin(true);
-                    setCorreo('');
-                    setPassword('');
-                    setTelefono('');
-                    setDireccion('');
-                    setCiudad('');
-                } else {
-                    setError('Error al registrarse.');
+                    setError('Credenciales incorrectas. Intenta de nuevo.');
                 }
             }
         } catch (err) {
-            setError(err.message);
+            console.error("Error en operación:", err);
+            setError(err.message || 'Error en la operación. Por favor, inténtalo de nuevo.');
         } finally {
             setIsLoading(false);
         }
@@ -62,13 +111,39 @@ const LoginPage = () => {
                     </p>
                 </div>
                 {error && (
-                    <div className={`alert ${error.includes('éxito') ? 'alert-success' : 'alert-danger'}`}>
+                    <div className={`alert ${error.includes('éxito') || error.includes('exitoso') ? 'alert-success' : 'alert-danger'}`}>
                         {error}
                     </div>
                 )}
                 <form onSubmit={handleSubmit}>
                     {!isLogin && (
                         <>
+                            <div className="mb-3">
+                                <label className="form-label">Nombre</label>
+                                <div className="input-group">
+                                    <span className="input-group-text"><i className="bi bi-person"></i></span>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={nombre}
+                                        onChange={(e) => setNombre(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Apellido</label>
+                                <div className="input-group">
+                                    <span className="input-group-text"><i className="bi bi-person-vcard"></i></span>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={apellido}
+                                        onChange={(e) => setApellido(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
                             <div className="mb-3">
                                 <label className="form-label">Teléfono</label>
                                 <div className="input-group">
@@ -131,4 +206,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-

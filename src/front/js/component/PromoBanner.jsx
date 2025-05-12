@@ -13,10 +13,10 @@ const PromoBanner = () => {
           >
             <div className="container text-center py-5 px-3">
               <h3 className="fs-2 fw-bold text-white mb-3">
-                ¡Ofertas Exclusivas!
+                ¡Seguimos creciendo con vos!
               </h3>
               <p className="fs-5 text-light mb-4">
-                Descubre descuentos especiales solo para suscriptores
+                ¡Gracias por acompañarnos!
               </p>
               <div className="d-flex justify-content-center">
                 <div
@@ -27,7 +27,7 @@ const PromoBanner = () => {
                   }}
                 >
                   <span className="text-white fw-medium">
-                    Hasta 60% de descuento
+                    GroupOn
                   </span>
                 </div>
               </div>

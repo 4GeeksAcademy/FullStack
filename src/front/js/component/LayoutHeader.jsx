@@ -10,9 +10,10 @@ const LayoutHeader = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showLoggingOut, setShowLoggingOut] = useState(false);
   const navigate = useNavigate();
 
-  // Calcular cantidad total de artículos (sumando quantity)
   const cartItems = store.cartItems.reduce(
     (acc, item) => acc + (item.quantity || 1),
     0
@@ -21,12 +22,18 @@ const LayoutHeader = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
+    const storedCart = localStorage.getItem("cartItems");
+
     if (token && storedUser) {
       setIsLoggedIn(true);
-      setUser(JSON.parse(storedUser));  // Guarda el objeto de usuario con el campo role
+      setUser(JSON.parse(storedUser));
+      if (storedCart) {
+        actions.setCartItems(JSON.parse(storedCart));
+      }
     } else {
       setIsLoggedIn(false);
       setUser(null);
+      actions.setCartItems([]);
     }
   }, []);
 
@@ -62,11 +69,22 @@ const LayoutHeader = () => {
   };
 
   const handleLogout = () => {
+    localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    actions.setCartItems([]);
     setIsLoggedIn(false);
     setUser(null);
+    setShowLoggingOut(false);
     navigate("/");
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    setShowLoggingOut(true);
+    setTimeout(() => {
+      handleLogout();
+    }, 1500);
   };
 
   const handleSearchSubmit = (e) => {
@@ -80,17 +98,15 @@ const LayoutHeader = () => {
     <>
       <header className="sticky-top bg-white shadow-sm">
         <div className="container d-flex align-items-center py-3 flex-wrap">
-          {/* Logo */}
           <div
             className="d-flex align-items-center me-auto me-md-4"
             role="button"
             onClick={() => navigate("/")}
           >
             <i className="bi bi-house-fill fs-2 text-danger me-2"></i>
-            <h1 className="fs-4 fw-bold mb-0">GrouponClone</h1>
+            <h1 className="fs-4 fw-bold mb-0">GroupOn</h1>
           </div>
 
-          {/* Iconos móviles */}
           <div className="d-flex d-md-none align-items-center gap-3 order-md-last">
             <Link to="/cart" className="position-relative" role="button">
               <i className="bi bi-cart fs-4 text-dark"></i>
@@ -111,47 +127,17 @@ const LayoutHeader = () => {
                 >
                   <i className="bi bi-person-circle fs-4 text-dark"></i>
                 </button>
-                <ul
-                  className="dropdown-menu dropdown-menu-end"
-                  aria-labelledby="userDropdownMobile"
-                >
-                  <li>
-                    <Link className="dropdown-item" to="/perfil">
-                      Mi Perfil
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/crear-servicio">
-                      Crear Servicio
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/mis-compras">
-                      Mis Compras
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/mis-reservas">
-                      Reservas de mi Servicio
-                    </Link>
-                  </li>
-
-                  {/* Mostrar el panel admin solo si el rol es "Administrador" */}
+                <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdownMobile">
+                  <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
+                  <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
+                  <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
+                  <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
                   {user?.role === 'Administrador' && (
-                    <li>
-                      <Link className="dropdown-item" to="/admin/users">
-                        Panel Admin
-                      </Link>
-                    </li>
+                    <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
                   )}
-
+                  <li><hr className="dropdown-divider" /></li>
                   <li>
-                    <hr className="dropdown-divider" />
-                  </li>
-                  <li>
-                    <button className="dropdown-item" onClick={handleLogout}>
-                      Cerrar Sesión
-                    </button>
+                    <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>Cerrar Sesión</button>
                   </li>
                 </ul>
               </div>
@@ -174,7 +160,6 @@ const LayoutHeader = () => {
             </button>
           </div>
 
-          {/* Buscador */}
           <div className="d-flex flex-column flex-md-row flex-grow-1 align-items-md-center mt-3 mt-md-0">
             <form
               className="d-flex flex-grow-1 align-items-center me-md-4"
@@ -217,47 +202,17 @@ const LayoutHeader = () => {
                   >
                     <i className="bi bi-person-circle fs-4 text-dark"></i>
                   </button>
-                  <ul
-                    className="dropdown-menu dropdown-menu-end"
-                    aria-labelledby="userDropdownDesktop"
-                  >
-                    <li>
-                      <Link className="dropdown-item" to="/perfil">
-                        Mi Perfil
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="dropdown-item" to="/crear-servicio">
-                        Crear Servicio
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="dropdown-item" to="/mis-compras">
-                        Mis Compras
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="dropdown-item" to="/mis-reservas">
-                        Reservas de mi Servicio
-                      </Link>
-                    </li>
-
-                    {/* Mostrar el panel admin solo si el rol es "Administrador" */}
+                  <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdownDesktop">
+                    <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
+                    <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
+                    <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
+                    <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
                     {user?.role === 'Administrador' && (
-                      <li>
-                        <Link className="dropdown-item" to="/admin/users">
-                          Panel Admin
-                        </Link>
-                      </li>
+                      <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
                     )}
-
+                    <li><hr className="dropdown-divider" /></li>
                     <li>
-                      <hr className="dropdown-divider" />
-                    </li>
-                    <li>
-                      <button className="dropdown-item" onClick={handleLogout}>
-                        Cerrar Sesión
-                      </button>
+                      <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>Cerrar Sesión</button>
                     </li>
                   </ul>
                 </div>
@@ -272,47 +227,70 @@ const LayoutHeader = () => {
 
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav p-3 border-top">
-            <li className="nav-item py-2">
-              <Link
-                className="nav-link"
-                to="/top"
-                onClick={() => actions.setCategory("top")}
-              >
-                Ofertas del día
-              </Link>
-            </li>
-            <li className="nav-item py-2">
-              <Link
-                className="nav-link"
-                to="/gastronomia"
-                onClick={() => actions.setCategory("food")}
-              >
-                Restaurantes
-              </Link>
-            </li>
-            <li className="nav-item py-2">
-              <Link
-                className="nav-link"
-                to="/belleza"
-                onClick={() => actions.setCategory("beauty")}
-              >
-                Belleza y spa
-              </Link>
-            </li>
-            <li className="nav-item py-2">
-              <Link
-                className="nav-link"
-                to="/viajes"
-                onClick={() => actions.setCategory("travel")}
-              >
-                Viajes
-              </Link>
-            </li>
+            <li className="nav-item py-2"><Link className="nav-link" to="/top" onClick={() => actions.setCategory("top")}>Ofertas del día</Link></li>
+            <li className="nav-item py-2"><Link className="nav-link" to="/gastronomia" onClick={() => actions.setCategory("food")}>Restaurantes</Link></li>
+            <li className="nav-item py-2"><Link className="nav-link" to="/belleza" onClick={() => actions.setCategory("beauty")}>Belleza y spa</Link></li>
+            <li className="nav-item py-2"><Link className="nav-link" to="/viajes" onClick={() => actions.setCategory("travel")}>Viajes</Link></li>
           </ul>
         </div>
       </header>
+
+      {showLogoutModal && (
+        <div style={styles.overlay}>
+          <div style={styles.modal}>
+            <h5>¿Cerrar sesión?</h5>
+            <p>¿Estás seguro de que deseas cerrar sesión?</p>
+            <div className="d-flex justify-content-end gap-2">
+              <button className="btn btn-secondary" onClick={() => setShowLogoutModal(false)}>Cancelar</button>
+              <button className="btn btn-danger" onClick={confirmLogout}>Cerrar sesión</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLoggingOut && (
+        <div style={styles.loggingOut}>
+          <div className="spinner-border text-light me-2" role="status"></div>
+          <span>Cerrando sesión...</span>
+        </div>
+      )}
     </>
   );
 };
 
+const styles = {
+  overlay: {
+    position: "fixed",
+    top: 0, left: 0, width: "100%", height: "100%",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    zIndex: 1050,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  modal: {
+    backgroundColor: "#fff",
+    padding: "2rem",
+    borderRadius: "12px",
+    boxShadow: "0 0 20px rgba(0,0,0,0.2)",
+    width: "90%",
+    maxWidth: "400px"
+  },
+  loggingOut: {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    zIndex: 1051,
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    color: "white",
+    padding: "1rem 2rem",
+    borderRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    fontSize: "1rem"
+  }
+};
+
 export default LayoutHeader;
+

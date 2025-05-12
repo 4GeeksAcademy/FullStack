@@ -630,6 +630,61 @@ loginUser: async ({ correo, password }) => {
 setCartItems: (items) => {
   setStore({ cartItems: items });
 },
+// Dentro de getState → actions:
+addToCart: (item) => {
+  const store = getStore();
+  // buscamos si ya existía
+  const existing = store.cartItems.find(ci => ci.id === item.id);
+  let updatedCart;
+  if (existing) {
+    updatedCart = store.cartItems.map(ci =>
+      ci.id === item.id
+        ? { ...ci, quantity: ci.quantity + 1 }
+        : ci
+    );
+  } else {
+    updatedCart = [...store.cartItems, { ...item, quantity: 1 }];
+  }
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();  // <— persistimos
+},
+
+removeItemFromCart: (id) => {
+  const store = getStore();
+  const updatedCart = store.cartItems.filter(ci => ci.id !== id);
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();  // <— persistimos
+},
+
+updateQuantity: (id, newQuantity) => {
+  if (newQuantity < 1) return;
+  const store = getStore();
+  const updatedCart = store.cartItems.map(ci =>
+    ci.id === id ? { ...ci, quantity: newQuantity } : ci
+  );
+  setStore({ cartItems: updatedCart });
+  getActions().saveCartToLocalStorage();  // <— persistimos
+},
+
+// y mantienes tu save/load tal como los tienes:
+saveCartToLocalStorage: () => {
+  const store = getStore();
+  try {
+    localStorage.setItem("cartItems", JSON.stringify(store.cartItems));
+  } catch(e) { console.error(e) }
+},
+loadCartFromLocalStorage: () => {
+  try {
+    const data = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    setStore({ cartItems: data });
+  } catch(e) { console.error(e) }
+},
+
+  // **Nueva acción** para vaciar todo el carrito
+    clearCart: () => {
+      setStore({ cartItems: [] });
+      getActions().saveCartToLocalStorage();
+    },
 
     },
   };

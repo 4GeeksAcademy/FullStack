@@ -104,7 +104,7 @@ const LayoutHeader = () => {
             onClick={() => navigate("/")}
           >
             <i className="bi bi-house-fill fs-2 text-danger me-2"></i>
-            <h1 className="fs-4 fw-bold mb-0">GrouponClone</h1>
+            <h1 className="fs-4 fw-bold mb-0">GroupOn</h1>
           </div>
 
           <div className="d-flex d-md-none align-items-center gap-3 order-md-last">

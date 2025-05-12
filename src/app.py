@@ -2383,28 +2383,75 @@ def session_status():
         return jsonify({'error': 'session_id faltante'}), 400
 
     try:
-        # Consultar a Stripe por el estado de la sesión
-        session = stripe.checkout.Session.retrieve(session_id)
+        # 1) Recuperar sesión de Stripe (con ítems implicados)
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=["line_items", "customer_details"]
+        )
 
-        # Buscar el pago en tu base de datos
+        # 2) Buscar tu Payment en BD
         payment = Payment.query.filter_by(paypal_payment_id=session_id).first()
         if not payment:
             return jsonify({'error': 'Pago no encontrado'}), 404
 
-        # Actualizar estado si fue pagado
+        # 3) Si acaba de pagarse, actualizar estado y enviar factura
         if session.payment_status == 'paid' and payment.estado != 'pagado':
             payment.estado = 'pagado'
             db.session.commit()
 
+            # Construir filas de la factura
+            total_cents = 0
+            rows_html = ""
+            for item in payment.items:
+                unit = item.unit_price
+                qty  = item.quantity
+                subtotal = unit * qty
+                total_cents += subtotal
+                rows_html += f"""
+                  <tr>
+                    <td>{item.title}</td>
+                    <td align="center">{qty}</td>
+                    <td align="right">€{unit/100:.2f}</td>
+                    <td align="right">€{subtotal/100:.2f}</td>
+                  </tr>
+                """
+
+            # Cuerpo HTML de la factura
+            html_invoice = f"""
+              <h1>Factura #{payment.id}</h1>
+              <p><strong>Fecha:</strong> {payment.payment_date.strftime('%Y-%m-%d %H:%M')}</p>
+              <p><strong>Cliente:</strong> {session.customer_details.email}</p>
+              <table width="100%" border="1" cellspacing="0" cellpadding="5"
+                     style="border-collapse: collapse; text-align: left;">
+                <thead>
+                  <tr>
+                    <th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows_html}
+                </tbody>
+              </table>
+              <h2>Total: €{total_cents/100:.2f}</h2>
+            """
+
+            # Enviar el correo
+            mail_service.send_mail(
+                to_email     = session.customer_details.email,
+                subject      = f"Tu factura de Pedido #{payment.id}",
+                text_content = f"Gracias por tu compra. El total ha sido €{total_cents/100:.2f}.",
+                html_content = html_invoice
+            )
+
+        # 4) Responder al frontend
         return jsonify({
             'status': session.payment_status,
-            'customer_email': session.customer_email
+            'customer_email': session.customer_details.email
         }), 200
 
     except Exception as e:
-        print('Error en session-status:', e)
+        app.logger.error(f"Error en session-status: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
-
     
 @api.route('/change-password', methods=['PUT'])
 @jwt_required()

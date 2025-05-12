@@ -62,7 +62,7 @@ const FormMiPerfil = () => {
 
         if (changePassword && (name === 'password' || name === 'confirmPassword')) {
             if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
-                setPasswordError('Las contraseñas no coinciden');
+                setPasswordError('');
             } else {
                 setPasswordError('');
             }

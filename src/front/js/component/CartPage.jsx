@@ -3,6 +3,7 @@ import { Context } from '../store/appContext';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import LayoutHeader from '../component/LayoutHeader.jsx'
 
 const CartPage = () => {
     const { store, actions } = useContext(Context);
@@ -15,86 +16,76 @@ const CartPage = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastProgress, setToastProgress] = useState(100);
 
-    // Cargar carrito al iniciar
+    // Carga inicial del carrito desde localStorage
     useEffect(() => {
         actions.loadCartFromLocalStorage();
     }, []);
 
+    // Cada vez que cartItems cambie, lo guardamos de nuevo
+    useEffect(() => {
+        actions.saveCartToLocalStorage();
+    }, [cartItems]);
+
     const handleUpdateQuantity = (id, change) => {
         const item = cartItems.find(item => item.id === id);
         if (!item) return;
-
         const newQuantity = item.quantity + change;
         if (newQuantity < 1) return;
-
         actions.updateQuantity(id, newQuantity);
     };
 
     const handleRemoveItem = (id) => {
-        const selectedItem = cartItems.find(item => item.id === id);
-        if (selectedItem) {
-            setItemToRemove(selectedItem);
+        const selected = cartItems.find(i => i.id === id);
+        if (selected) {
+            setItemToRemove(selected);
             setShowModal(true);
         }
     };
 
     const confirmRemoveItem = () => {
-        if (itemToRemove) {
-            actions.removeItemFromCart(itemToRemove.id);
-            setShowModal(false);
-            setToastMessage(`Producto eliminado: ${itemToRemove.title}`);
-            setToastVisible(true);
-            setToastProgress(100);
-
-            let progress = 100;
-            const interval = setInterval(() => {
-                progress -= 2;
-                setToastProgress(progress);
-                if (progress <= 0) {
-                    clearInterval(interval);
-                    setToastVisible(false);
-                }
-            }, 50);
-        }
+        if (!itemToRemove) return;
+        actions.removeItemFromCart(itemToRemove.id);
+        setShowModal(false);
+        setToastMessage(`Producto eliminado: ${itemToRemove.title}`);
+        setToastVisible(true);
+        setToastProgress(100);
+        let prog = 100;
+        const iv = setInterval(() => {
+            prog -= 2;
+            setToastProgress(prog);
+            if (prog <= 0) {
+                clearInterval(iv);
+                setToastVisible(false);
+            }
+        }, 50);
     };
 
     const subtotal = cartItems.reduce(
-        (sum, item) => sum + (item.discountPrice * item.quantity),
+        (sum, item) => sum + item.discountPrice * item.quantity,
         0
     );
 
-    const checkLoginStatus = () => {
-        const token = localStorage.getItem("token");
-        return !!token;
-    };
+    const isLogged = () => !!localStorage.getItem("token");
 
     const handleProceedToPayment = () => {
-        // Agregar imagen junto con los demás datos del carrito
-        const cartWithImages = cartItems.map(item => ({
-            id: item.id,
-            title: item.title,
-            quantity: item.quantity,
-            price: item.discountPrice,
-            image: item.image, // Añadimos la imagen del producto
-            user_id: item.user_id // Aseguramos que el user_id esté presente
-        }));
-
-        // Mostrar los datos antes de proceder al pago (solo para pruebas)
-        console.log("Carrito con imágenes:", cartWithImages);
-    
-        // Verificar el estado de login
-        if (checkLoginStatus()) {
-            // Enviar estos datos al backend para procesar el pago
-            // Aquí iría la lógica para enviar los datos al backend con la imagen
-            navigate('/checkout'); // Redirigir a la página de checkout
-        } else {
-            navigate('/login'); // Redirigir a login si no está logueado
-        }
+        if (isLogged()) navigate('/checkout');
+        else navigate('/login');
     };
 
     return (
-        <div className="container py-5 position-relative">
-            <h2 className="mb-4">My Cart</h2>
+        <div>
+            <LayoutHeader />
+            <div className="container py-5 position-relative">
+        {/* Encabezado con título a la izquierda y botón a la derecha */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2 className="mb-0">My Cart</h2>
+            <button
+                className="btn btn-primary"
+                onClick={() => navigate('/')}
+            >
+             <i className="bi bi-house-door me-2"></i>Volver al inicio
+            </button>
+        </div>
 
             {cartItems.length === 0 ? (
                 <div className="text-center py-5">
@@ -107,7 +98,6 @@ const CartPage = () => {
                 <>
                     <div className="list-group mb-4">
                         {cartItems.map(item => (
-                            console.log(item), // Verificar el contenido del item
                             <div key={item.id} className="list-group-item d-flex align-items-center">
                                 <img
                                     src={item.image}
@@ -124,20 +114,18 @@ const CartPage = () => {
                                                 className={`btn btn-outline-secondary ${item.quantity <= 1 ? 'disabled' : ''}`}
                                                 onClick={() => handleUpdateQuantity(item.id, -1)}
                                                 disabled={item.quantity <= 1}
-                                            >
-                                                -
-                                            </button>
+                                            >−</button>
                                             <span className="btn btn-outline-light border text-dark px-3">
                                                 {item.quantity}
                                             </span>
                                             <button
                                                 className="btn btn-outline-secondary"
                                                 onClick={() => handleUpdateQuantity(item.id, 1)}
-                                            >
-                                                +
-                                            </button>
+                                            >+</button>
                                         </div>
-                                        <span className="fw-medium">€{(item.discountPrice * item.quantity).toFixed(2)}</span>
+                                        <span className="fw-medium">
+                                            €{(item.discountPrice * item.quantity).toFixed(2)}
+                                        </span>
                                     </div>
                                 </div>
                                 <button
@@ -157,8 +145,7 @@ const CartPage = () => {
                             <span>€{subtotal.toFixed(2)}</span>
                         </div>
                         <div className="d-flex justify-content-between mb-2">
-                            <span>Shipping</span>
-                            <span>Free</span>
+                            <span>Shipping</span><span>Free</span>
                         </div>
                         <div className="d-flex justify-content-between fw-bold fs-5 mb-4">
                             <span>Total</span>
@@ -174,56 +161,55 @@ const CartPage = () => {
                 </>
             )}
 
-            {/* Modal de Confirmación */}
+            {/* Modal Confirmación */}
             {showModal && (
-                <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered" role="document">
+                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Confirmar eliminación</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
+                                <button type="button" className="btn-close" onClick={() => setShowModal(false)} />
                             </div>
                             <div className="modal-body">
                                 <p>
-                                    ¿Estás seguro que deseas eliminar {
-                                        itemToRemove?.quantity > 1 
-                                            ? `los ${itemToRemove.quantity} productos` 
-                                            : `el producto "${itemToRemove?.title}"`
+                                    ¿Eliminar {
+                                        itemToRemove.quantity > 1 
+                                        ? `los ${itemToRemove.quantity} productos` 
+                                        : `"${itemToRemove.title}"`
                                     } del carrito?
                                 </p>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                                <button type="button" className="btn btn-danger" onClick={confirmRemoveItem}>Eliminar</button>
+                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                                <button className="btn btn-danger" onClick={confirmRemoveItem}>Eliminar</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Toast de eliminación */}
+            {/* Toast */}
             {toastVisible && (
                 <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 1055 }}>
                     <div className="toast show align-items-center text-white bg-danger border-0">
                         <div className="d-flex">
-                            <div className="toast-body">
-                                {toastMessage}
-                            </div>
-                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setToastVisible(false)}></button>
+                            <div className="toast-body">{toastMessage}</div>
+                            <button className="btn-close btn-close-white me-2 m-auto" onClick={() => setToastVisible(false)} />
                         </div>
-                        <div 
-                            style={{
-                                height: '5px',
-                                width: `${toastProgress}%`,
-                                backgroundColor: 'white',
-                                transition: 'width 0.05s linear'
-                            }}
-                        />
+                        <div style={{
+                            height: '5px',
+                            width: `${toastProgress}%`,
+                            backgroundColor: 'white',
+                            transition: 'width 0.05s linear'
+                        }} />
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 };
 
-export default CartPage; 
+export default CartPage;
+
+

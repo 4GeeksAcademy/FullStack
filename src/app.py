@@ -2041,44 +2041,6 @@ def registrar_compra():
 
     return jsonify({"mensaje": "Compra registrada correctamente", "compra": nueva_compra.serialize()}), 201
 
-
-
-""""@app.route('/pagos/proveedor', methods=['GET'])
-@jwt_required()
-def pagos_proveedor():
-    # 1. Obtener el correo del proveedor autenticado desde el token
-    correo_usuario = get_jwt_identity()
-    if not correo_usuario:
-        return jsonify({'mensaje': 'Token inválido o no proporcionado'}), 401
-
-    # 2. Buscar al usuario por correo
-    usuario = User.query.filter_by(correo=correo_usuario).first()
-    if not usuario:
-        return jsonify({'mensaje': 'Usuario no encontrado'}), 404
-
-    id_proveedor = usuario.id
-
-    # 3. Buscar los pagos asociados a ese proveedor
-    pagos = PaymentItem.query.join(Payment)\
-               .filter(PaymentItem.servicio_id == id_proveedor,
-                       Payment.estado == 'pagado')\
-               .all()
-    if not pagos:
-        return jsonify({'mensaje': 'No se encontraron pagos para este proveedor'}), 404
-
-    # 4. Serializar los resultados
-    resultado = []
-    for item in pagos:
-        resultado.append({
-            'id': item.id,
-            'servicio_id': item.servicio_id,
-            'monto': item.monto,
-            'fecha': item.fecha.isoformat(),
-            # agrega más campos si quieres
-        })
-
-    return jsonify(resultado), 200"""
-
 @app.route('/pagos', methods=['GET'])
 @jwt_required()
 def pagos_proveedor():
@@ -2346,133 +2308,6 @@ def limpiar_tablas_api():
 
 YOUR_DOMAIN = "https://ominous-disco-q7pjgx55qrp9f95x4-3000.app.github.dev"  # Cambia esta URL si es otro entorno
 
-""""@app.route('/create-checkout-session', methods=['POST'])
-def create_checkout_session():
-    try:
-        if not request.is_json:
-            return jsonify({'error': 'Missing or invalid JSON'}), 400
-
-        data = request.get_json()
-        cart_items = data.get("items", [])
-        total_price = data.get("total", 0)
-
-
-        if not cart_items:
-            return jsonify({'error': 'No items in cart'}), 400
-
-        line_items = []
-        for item in cart_items:
-            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
-                return jsonify({'error': 'Invalid item data'}), 400
-
-            line_items.append({
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': {
-                        'name': item['title'],
-                    },
-                    'unit_amount': int(item['discountPrice'] * 100),
-                },
-                'quantity': item['quantity'],
-            })
-
-
-        session = stripe.checkout.Session.create(
-            line_items=line_items,
-            mode='payment',
-            ui_mode='embedded',
-            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
-        )
-
-          # Guardar el pago en la base de datos con estado inicial 'pendiente'
-        new_payment = Payment(
-            currency='usd',
-            amount=int(total_price * 100),  # Guardar el monto en centavos
-            payment_date=datetime.utcnow(),
-            paypal_payment_id=session.id,  # Usar el ID de sesión de Stripe
-            user_id=user_id,
-            estado='pendiente',  # Estado inicial como pendiente
-        )
-
-        db.session.add(new_payment)
-        db.session.commit()
-
-        return jsonify({
-            'sessionId': session.id,
-            'clientSecret': session.client_secret
-        })
-
-    except Exception as e:
-        print("Error creating session:", e)
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500"""
-
-
-""""@app.route('/create-checkout-session', methods=['POST'])
-@jwt_required()
-def create_checkout_session():
-    try:
-        if not request.is_json:
-            return jsonify({'error': 'Missing or invalid JSON'}), 400
-
-        data = request.get_json()
-        cart_items = data.get("items", [])
-        total_price = data.get("total", 0)
-
-        if not cart_items:
-            return jsonify({'error': 'No items in cart'}), 400
-
-        # Obtener el usuario desde el token
-        correo_usuario = get_jwt_identity()
-        usuario = User.query.filter_by(correo=correo_usuario).first()
-        if not usuario:
-            return jsonify({'error': 'Usuario no encontrado'}), 404
-
-        line_items = []
-        for item in cart_items:
-            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
-                return jsonify({'error': 'Invalid item data'}), 400
-
-            line_items.append({
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': {
-                        'name': item['title'],
-                    },
-                    'unit_amount': int(item['discountPrice'] * 100),
-                },
-                'quantity': item['quantity'],
-            })
-
-        session = stripe.checkout.Session.create(
-            line_items=line_items,
-            mode='payment',
-            ui_mode='embedded',
-            return_url=f"https://vigilant-space-fishstick-g4jxxqgp94w3w659-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
-        )
-
-        new_payment = Payment(
-            currency='usd',
-            amount=int(total_price * 100),
-            payment_date=datetime.utcnow(),
-            paypal_payment_id=session.id,
-            user_id=usuario.id,
-            estado='pendiente',
-        )
-
-        db.session.add(new_payment)
-        db.session.commit()
-
-        return jsonify({
-            'sessionId': session.id,
-            'clientSecret': session.client_secret
-        })
-
-    except Exception as e:
-        print("Error creating session:", e)
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500"""
-
 @app.route('/create-checkout-session', methods=['POST'])
 @jwt_required()
 def create_checkout_session():
@@ -2554,21 +2389,6 @@ def create_checkout_session():
 
 
 
-""""@app.route('/session-status', methods=['GET'])
-def session_status():
-    session_id = request.args.get('session_id')
-
-    # Aquí obtienes el estado de la sesión de Stripe o lo que sea necesario
-    # Supón que obtienes el estado desde Stripe:
-    session = stripe.checkout.Session.retrieve(session_id)
-
-    if session:
-        return jsonify({
-            "status": session["payment_status"],  # O lo que sea relevante
-            "customer_email": session.get("customer_email", "unknown")
-        })
-    else:
-        return jsonify({"error": "Session not found"}), 404"""
 
 @app.route('/session-status', methods=['GET'])
 def session_status():
@@ -2577,7 +2397,7 @@ def session_status():
         return jsonify({'error': 'session_id faltante'}), 400
 
     try:
-        # 1) Recuperar sesión de Stripe (con ítems implicados)
+        # 1) Recuperar sesión de Stripe (con line_items y customer_details)
         session = stripe.checkout.Session.retrieve(
             session_id,
             expand=["line_items", "customer_details"]
@@ -2588,99 +2408,95 @@ def session_status():
         if not payment:
             return jsonify({'error': 'Pago no encontrado'}), 404
 
-        # 3) Si acaba de pagarse, actualizar estado y enviar factura
-        if session.payment_status == 'paid' and payment.estado != 'pagado':
-            payment.estado = 'pagado'
-            db.session.commit()
+        # 3) Si Stripe marca como 'paid'
+        if session.payment_status == 'paid':
+            if payment.estado != 'pagado':
+                payment.estado = 'pagado'
+                db.session.commit()
 
-            # 3.a) Recuperar datos del usuario
-            user = User.query.get(payment.user_id)
-            nombre_completo = f"{user.nombre or ''} {user.apellido or ''}".strip()
-            direccion = ", ".join(filter(None, [
-                user.direccion_line1,
-                user.direccion_line2,
-                user.ciudad,
-                user.codigo_postal,
-                user.pais
-            ]))
-            telefono = user.telefono or "No disponible"
+                # Envío de factura (mismo código que ya tienes)
+                user = User.query.get(payment.user_id)
+                nombre_completo = f"{user.nombre or ''} {user.apellido or ''}".strip()
+                direccion = ", ".join(filter(None, [
+                    user.direccion_line1,
+                    getattr(user, 'direccion_line2', ''),
+                    user.ciudad,
+                    getattr(user, 'codigo_postal', ''),
+                    getattr(user, 'pais', '')
+                ]))
+                telefono = user.telefono or "No disponible"
 
-            # 3.b) Construir filas de la factura
-            total_cents = 0
-            rows_html = ""
-            for item in payment.items:
-                unit = item.unit_price
-                qty  = item.quantity
-                subtotal = unit * qty
-                total_cents += subtotal
-                rows_html += f"""
-                  <tr>
-                    <td>{item.title}</td>
-                    <td align="center">{qty}</td>
-                    <td align="right">€{unit/100:.2f}</td>
-                    <td align="right">€{subtotal/100:.2f}</td>
-                  </tr>
+                total_cents = 0
+                rows_html = ""
+                for item in payment.items:
+                    unit = item.unit_price
+                    qty  = item.quantity
+                    subtotal = unit * qty
+                    total_cents += subtotal
+                    rows_html += f"""
+                      <tr>
+                        <td>{item.title}</td>
+                        <td align="center">{qty}</td>
+                        <td align="right">€{unit/100:.2f}</td>
+                        <td align="right">€{subtotal/100:.2f}</td>
+                      </tr>
+                    """
+
+                html_invoice = f"""
+                  <div style="font-family: Arial, sans-serif; max-width: 800px; margin:auto; padding:20px;">
+                    <div style="display:flex; align-items:center; margin-bottom:20px;">
+                      <i class="bi bi-house-fill" style="font-size:2rem; color:#dc3545; margin-right:8px;"></i>
+                      <h1 style="font-size:1.5rem; margin:0;">GroupOn</h1>
+                    </div>
+                    <h2 style="margin-bottom:0.5em;">Factura #{payment.id}</h2>
+                    <p><strong>Fecha:</strong> {payment.payment_date.strftime('%Y-%m-%d %H:%M')}</p>
+                    <h3 style="margin-top:1.5em;">Datos del Cliente</h3>
+                    <p>
+                      <strong>Nombre:</strong> {nombre_completo}<br/>
+                      <strong>Email:</strong> {session.customer_details.email}<br/>
+                      <strong>Teléfono:</strong> {telefono}<br/>
+                      <strong>Dirección:</strong> {direccion}
+                    </p>
+                    <table width="100%" border="1" cellspacing="0" cellpadding="5"
+                           style="border-collapse: collapse; margin-top:1em;">
+                      <thead style="background:#f8f9fa;">
+                        <tr>
+                          <th>Producto</th>
+                          <th>Cantidad</th>
+                          <th>Precio unitario</th>
+                          <th>Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows_html}
+                      </tbody>
+                    </table>
+                    <h2 style="text-align:right; margin-top:1em;">
+                      Total: €{total_cents/100:.2f}
+                    </h2>
+                    <hr style="margin:2em 0;" />
+                    <p style="font-size:0.9em; color:#555;">
+                      Para cambios de dirección o cualquier consulta, contáctanos al
+                      <strong>+34 912 345 678</strong> antes de 24 horas.
+                    </p>
+                  </div>
                 """
 
-            # 3.c) Cuerpo HTML de la factura
-            html_invoice = f"""
-              <div style="font-family: Arial, sans-serif; max-width: 800px; margin:auto; padding:20px;">
-                <!-- Logo -->
-                <div style="display:flex; align-items:center; margin-bottom:20px;">
-                  <i class="bi bi-house-fill" style="font-size:2rem; color:#dc3545; margin-right:8px;"></i>
-                  <h1 style="font-size:1.5rem; margin:0;">GroupOn</h1>
-                </div>
+                mail_service.send_mail(
+                    to_email     = session.customer_details.email,
+                    subject      = f"Tu factura de Pedido #{payment.id}",
+                    text_content = f"Gracias por tu compra. El total ha sido €{total_cents/100:.2f}.",
+                    html_content = html_invoice
+                )
 
-                <h2 style="margin-bottom:0.5em;">Factura #{payment.id}</h2>
-                <p><strong>Fecha:</strong> {payment.payment_date.strftime('%Y-%m-%d %H:%M')}</p>
+        else:
+            # 4) Si NO está pagado y sigue 'pendiente', lo eliminamos
+            if payment.estado == 'pendiente':
+                db.session.delete(payment)
+                db.session.commit()
+                payment = None
 
-                <!-- Datos del cliente -->
-                <h3 style="margin-top:1.5em;">Datos del Cliente</h3>
-                <p>
-                  <strong>Nombre:</strong> {nombre_completo}<br/>
-                  <strong>Email:</strong> {session.customer_details.email}<br/>
-                  <strong>Teléfono:</strong> {telefono}<br/>
-                  <strong>Dirección:</strong> {direccion}
-                </p>
-
-                <!-- Detalle de ítems -->
-                <table width="100%" border="1" cellspacing="0" cellpadding="5"
-                       style="border-collapse: collapse; margin-top:1em;">
-                  <thead style="background:#f8f9fa;">
-                    <tr>
-                      <th>Producto</th>
-                      <th>Cantidad</th>
-                      <th>Precio unitario</th>
-                      <th>Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows_html}
-                  </tbody>
-                </table>
-
-                <h2 style="text-align:right; margin-top:1em;">
-                  Total: €{total_cents/100:.2f}
-                </h2>
-
-                <!-- Pie de página -->
-                <hr style="margin:2em 0;" />
-                <p style="font-size:0.9em; color:#555;">
-                  Para cambios de dirección o cualquier consulta, contáctanos al
-                  <strong>+34 912 345 678</strong> antes de 24 horas.
-                </p>
-              </div>
-            """
-
-            # 3.d) Enviar el correo con la factura
-            mail_service.send_mail(
-                to_email     = session.customer_details.email,
-                subject      = f"Tu factura de Pedido #{payment.id}",
-                text_content = f"Gracias por tu compra. El total ha sido €{total_cents/100:.2f}.",
-                html_content = html_invoice
-            )
-
-        # 4) Responder al frontend
+        # 5) Responder al frontend con el estado real de Stripe
         return jsonify({
             'status': session.payment_status,
             'customer_email': session.customer_details.email

@@ -3,6 +3,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { Context } from "../store/appContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Spinner } from "react-bootstrap";
 
 const stripePromise = loadStripe(
   "pk_test_51RHkEqFNyrX4spGdBv11uJQXp9SbJRaSxzsolRbEeZVVYuzxZqtdF4uBytcTV0BkfQRgMemgaA2DnGI4lriZZpWb00g736yfzD"
@@ -13,7 +14,6 @@ const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Si viene un item por "Comprar ahora", lo procesamos solo a él.
   const single = location.state?.item;
   const cartItems = single ? [single] : store.cartItems || [];
   const subtotal = cartItems.reduce(
@@ -22,53 +22,59 @@ const Checkout = () => {
   );
 
   const [clientSecret, setClientSecret] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Pedir el clientSecret al backend
-  const fetchClientSecret = useCallback(() => {
+  const startPayment = useCallback(async () => {
+    if (clientSecret || loading) return; // evita duplicados
     setError(null);
+    setLoading(true);
     const token = localStorage.getItem("token");
     if (!token) {
       setError("No estás autenticado. Inicia sesión.");
+      setLoading(false);
       return;
     }
 
-    fetch(`${process.env.BACKEND_URL}/create-checkout-session`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        items: cartItems.map(it => ({
-          title: it.title,
-          discountPrice: it.discountPrice,
-          quantity: it.quantity || 1,
-          image: it.image || "",
-          user_id: it.user_id || null
-        })),
-        total: subtotal
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.clientSecret) {
-          setClientSecret(data.clientSecret);
-        } else {
-          setError("No se pudo obtener clientSecret");
-        }
-      })
-      .catch(err => setError(err.message));
-  }, [cartItems, subtotal]);
+    try {
+      const resp = await fetch(`${process.env.BACKEND_URL}/create-checkout-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          items: cartItems.map(it => ({
+            title: it.title,
+            discountPrice: it.discountPrice,
+            quantity: it.quantity || 1,
+            image: it.image || "",
+            user_id: it.user_id || null
+          })),
+          total: subtotal
+        })
+      });
+      const data = await resp.json();
+      if (resp.ok && data.clientSecret) {
+        setClientSecret(data.clientSecret);
+        setSessionId(data.sessionId);
+      } else {
+        setError(data.error || "No se pudo obtener clientSecret");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [cartItems, subtotal, clientSecret, loading]);
 
+  // Auto-arranca la sesión al montar
   useEffect(() => {
-    fetchClientSecret();
-  }, [fetchClientSecret]);
+    startPayment();
+  }, [startPayment]);
 
-  // Manejar eventos de la UI embebida de Stripe
   const handleEvent = event => {
-    console.log("Stripe embed event:", event.type);
-    // Vaciar el carrito si el pago fue completado y venimos del carrito (no de "Comprar ahora")
     if (
       !single &&
       (event.type === "checkout.session.completed" ||
@@ -77,7 +83,6 @@ const Checkout = () => {
       actions.clearCart();
       navigate("/return");
     }
-    // Si es single-item y pago ok, sólo redirigimos
     if (
       single &&
       (event.type === "checkout.session.completed" ||
@@ -87,17 +92,27 @@ const Checkout = () => {
     }
   };
 
+  if (error) {
+    return <div className="alert alert-danger p-4">{error}</div>;
+  }
+
+  // Mientras carga el clientSecret, spinner
+  if (!clientSecret) {
+    return (
+      <div className="d-flex justify-content-center align-items-center p-5">
+        <Spinner animation="border" role="status" />
+      </div>
+    );
+  }
+
   return (
     <div id="checkout" className="p-4">
-      {error && <div className="alert alert-danger">{error}</div>}
-      {clientSecret && (
-        <EmbeddedCheckoutProvider
-          stripe={stripePromise}
-          options={{ clientSecret }}
-        >
-          <EmbeddedCheckout onEvent={handleEvent} />
-        </EmbeddedCheckoutProvider>
-      )}
+      <EmbeddedCheckoutProvider
+        stripe={stripePromise}
+        options={{ clientSecret }}
+      >
+        <EmbeddedCheckout options={{ clientSecret, sessionId }} onEvent={handleEvent} />
+      </EmbeddedCheckoutProvider>
     </div>
   );
 };

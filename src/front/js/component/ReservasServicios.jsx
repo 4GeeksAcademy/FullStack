@@ -19,45 +19,30 @@ const ReservasServicios = () => {
 
       try {
         const response = await fetch(`${backendUrl}/pagos`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` }
         });
 
         if (!response.ok) {
           if (response.status === 401) {
-            console.warn("Token inválido");
-            navigate("/login"); // Redirigir a login si el token es inválido
-          } else {
-            console.error("Error al obtener los pagos");
+            navigate("/login");
           }
           setLoading(false);
           return;
         }
 
-        const contentType = response.headers.get("Content-Type");
-        if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("Respuesta del servidor no es JSON");
-        }
-
         const data = await response.json();
-        console.log("Datos recibidos:", data);
-
-        if (data.pagos && Array.isArray(data.pagos)) {
+        if (Array.isArray(data.pagos)) {
           setPagos(data.pagos);
-        } else {
-          console.error("Respuesta no contiene la estructura esperada");
         }
-
-      } catch (error) {
-        console.error("Error al cargar pagos:", error);
+      } catch (err) {
+        console.error("Error al cargar pagos:", err);
       } finally {
         setLoading(false);
       }
     };
 
     cargarPagos();
-  }, [navigate]);
+  }, [backendUrl, navigate]);
 
   if (loading) {
     return (
@@ -86,36 +71,58 @@ const ReservasServicios = () => {
               <table className="table table-hover align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Cliente</th>
-                    <th scope="col">Fecha</th>
-                    <th scope="col">Monto</th>
-                    <th scope="col">Estado</th>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Cliente (email)</th>
+                    <th>Servicio</th>
+                    <th>Cantidad</th>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Imagen</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pagos.map((pago) => (
-                    <tr key={pago.id}>
-                      <th scope="row">{pago.id}</th>
-                      <td>{pago.user_email || "N/A"}</td>
+                  {pagos.map(p => (
+                    <tr key={`${p.id}-${p.title}`}>
+                      <td>{p.id}</td>
+                      <td>{p.nombre ?? "-"}</td>
+                      <td>{p.apellido ?? "-"}</td>
+                      <td>{p.user_email}</td>
+                      <td>{p.title}</td>
+                      <td>{p.quantity}</td>
                       <td>
-                        {pago.payment_date
-                          ? new Date(pago.payment_date).toLocaleDateString()
-                          : "Sin fecha"}
+                        {p.payment_date
+                          ? new Date(p.payment_date).toLocaleDateString()
+                          : "—"}
                       </td>
                       <td>
-                        {pago.amount !== undefined && pago.amount !== null
-                          ? `$ ${pago.amount.toLocaleString()}`
-                          : "Sin monto"}
+                        {typeof p.amount === "number"
+                          ? `$ ${p.amount.toLocaleString()}`
+                          : "—"}
                       </td>
                       <td>
                         <span
                           className={`badge ${
-                            pago.estado === "pagado" ? "bg-success" : "bg-warning"
+                            p.estado === "pagado"
+                              ? "bg-success"
+                              : "bg-warning"
                           }`}
                         >
-                          {pago.estado}
+                          {p.estado}
                         </span>
+                      </td>
+                      <td>
+                        {p.image_url ? (
+                          <img
+                            src={p.image_url}
+                            alt={p.title}
+                            style={{ width: 60, height: 60, objectFit: "cover" }}
+                          />
+                        ) : (
+                          "-"
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -134,4 +141,5 @@ const ReservasServicios = () => {
 };
 
 export default ReservasServicios;
+
 

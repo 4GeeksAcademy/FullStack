@@ -5,7 +5,7 @@ import ModalExito from './ModalExito.jsx';
 const FormCrearServicio = () => {
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [precio, setPrecio] = useState('');
+  const [precioOriginal, setPrecioOriginal] = useState(''); // Cambiado de precio a precioOriginal
   const [descuento, setDescuento] = useState('');
   const [ciudad, setCiudad] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -108,32 +108,35 @@ const FormCrearServicio = () => {
       return;
     }
 
-    const precioNumerico = parseFloat(precio);
-    if (isNaN(precioNumerico)) {
+    const precioOriginalNumerico = parseFloat(precioOriginal);
+    if (isNaN(precioOriginalNumerico)) {
       alert('Por favor ingresa un precio válido.');
       return;
     }
 
-    let porcentajeDescuento = 5;
-    if (descuento && !isNaN(parseFloat(descuento))) {
-      porcentajeDescuento = parseFloat(descuento);
-    }
+    // Usar el porcentaje ingresado por el usuario o 5% por defecto
+    let porcentajeDescuento = descuento !== '' && !isNaN(parseFloat(descuento)) ? 
+      parseFloat(descuento) : 5;
+    
+    // Asegurarse que el porcentaje esté en un rango válido
+    porcentajeDescuento = Math.max(5, Math.min(80, porcentajeDescuento));
 
-    const discountPrice = Math.round(precioNumerico * (1 - porcentajeDescuento / 100) * 100) / 100;
+    // Calcular el precio con descuento (price será el precio final)
+    const precioConDescuento = Math.round(precioOriginalNumerico * (1 - porcentajeDescuento / 100) * 100) / 100;
 
     const data = {
       buyers: null,
       category_id: categoriaSeleccionada.id,
       city: ciudad,
       descripcion,
-      discountPrice: discountPrice,
-      id: null,
-      image: imagen || "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=",
-      price: precioNumerico,
+      discountPrice: precioOriginalNumerico, // El precio original va en discountPrice
+      originalPrice: precioOriginalNumerico, // Mantenemos el original también
+      price: precioConDescuento, // El precio con descuento va en price
       rating: null,
       reviews: null,
       title: titulo,
       user_id: userId,
+      imagen: imagen || null,
     };
 
     try {
@@ -150,9 +153,11 @@ const FormCrearServicio = () => {
         setRedirectInfo({
           path: `/category/${categoriaSeleccionada.path}`,
           categoryName: categoriaSeleccionada.nombre,
-          serviceData: { // Agrega estos nuevos campos
+          serviceData: {
             titulo: titulo,
-            precio: precio,
+            precioOriginal: precioOriginalNumerico,
+            descuento: porcentajeDescuento,
+            precioConDescuento: precioConDescuento,
             categoria: categoriaSeleccionada.nombre,
             ciudad: ciudad
           }
@@ -160,7 +165,7 @@ const FormCrearServicio = () => {
         setMostrarModalExito(true);
         setTitulo('');
         setDescripcion('');
-        setPrecio('');
+        setPrecioOriginal('');
         setDescuento('');
         setCiudad('');
         setCategoryId('');
@@ -178,6 +183,13 @@ const FormCrearServicio = () => {
 
   if (loading) return <div>Cargando...</div>;
   if (error) return <div>Error: {error}</div>;
+
+  // Calcular el precio con descuento en tiempo real para mostrarlo
+  const precioOriginalNumerico = parseFloat(precioOriginal);
+  const porcentajeDescuento = descuento !== '' && !isNaN(parseFloat(descuento)) ? 
+    Math.max(5, Math.min(80, parseFloat(descuento))) : 5;
+  const precioConDescuento = !isNaN(precioOriginalNumerico) ? 
+    (precioOriginalNumerico * (1 - porcentajeDescuento / 100)).toFixed(2) : '';
 
   return (
     <>
@@ -212,39 +224,54 @@ const FormCrearServicio = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Precio (USD)</label>
+              <label className="form-label">Precio Original (USD)</label>
               <input
                 type="number"
                 className="form-control"
-                value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
+                value={precioOriginal}
+                onChange={(e) => setPrecioOriginal(e.target.value)}
                 min="0"
                 step="0.01"
                 required
               />
-              {precio && !isNaN(precio) && (
-                <div className="text-muted mt-1"> ${formatearPrecio(precio)}</div>
+              {precioOriginal && !isNaN(precioOriginalNumerico) && (
+                <div className="text-muted mt-1"> ${formatearPrecio(precioOriginalNumerico)}</div>
               )}
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Porcentaje de descuento (opcional)</label>
+              <label className="form-label">Porcentaje de descuento</label>
               <div className="input-group">
                 <input
                   type="number"
                   className="form-control"
                   value={descuento}
                   onChange={(e) => setDescuento(e.target.value)}
-                  min="0"
-                  max="100"
+                  min="5"
+                  max="80"
                   step="1"
                   placeholder="Ej: 20"
                 />
                 <span className="input-group-text">%</span>
               </div>
               <small className="text-muted">
-                Si no completás este campo, aplicaremos un descuento automático del 5%.
+                El descuento mínimo es 5% y máximo 80%. Si no completás, aplicaremos 5%.
               </small>
+              
+              {/* Vista previa del precio con descuento */}
+              {precioOriginal && !isNaN(precioOriginalNumerico) && (
+                <div className="mt-2">
+                  <div className="text-success fw-bold">
+                    Precio con descuento: ${formatearPrecio(precioConDescuento)}
+                  </div>
+                  <div className="text-muted">
+                    Descuento aplicado: {porcentajeDescuento}%
+                  </div>
+                  <div className="text-muted text-decoration-line-through">
+                    Precio original: ${formatearPrecio(precioOriginalNumerico)}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mb-3">
@@ -290,11 +317,9 @@ const FormCrearServicio = () => {
               Crear Servicio
             </button>
           </form>
-
-
         </div>
-
       </div>
+      
       <ModalExito
         show={mostrarModalExito}
         onClose={() => setMostrarModalExito(false)}
@@ -311,7 +336,9 @@ const FormCrearServicio = () => {
             <p>¡Servicio creado con éxito!</p>
             <div className="mt-3">
               <p><strong>Título:</strong> {redirectInfo.serviceData?.titulo}</p>
-              <p><strong>Precio:</strong> ${formatearPrecio(redirectInfo.serviceData?.precio)}</p>
+              <p><strong>Precio original:</strong> ${formatearPrecio(redirectInfo.serviceData?.precioOriginal)}</p>
+              <p><strong>Descuento aplicado:</strong> {redirectInfo.serviceData?.descuento}%</p>
+              <p className="text-success fw-bold"><strong>Precio final:</strong> ${formatearPrecio(redirectInfo.serviceData?.precioConDescuento)}</p>
               <p><strong>Categoría:</strong> {redirectInfo.serviceData?.categoria}</p>
               <p><strong>Locación:</strong> {redirectInfo.serviceData?.ciudad}</p>
             </div>

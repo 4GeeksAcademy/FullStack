@@ -6,18 +6,18 @@ import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
 
 const ProductDetail = () => {
-  const location   = useLocation();
-  const navigate   = useNavigate();
-  const { id }     = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { id } = useParams();
   const { offer: locationOffer, category: locationCategory } = location.state || {};
   const { store, actions } = useContext(Context);
 
   const [completeOffer, setCompleteOffer] = useState(null);
-  const [loading, setLoading]             = useState(true);
+  const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState(locationCategory);
-  const [quantity, setQuantity]           = useState(1);
+  const [quantity, setQuantity] = useState(1);
 
-  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg";
+  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
 
   const determineCategory = (offerId) => {
     const numId = parseInt(offerId, 10);
@@ -29,7 +29,6 @@ const ProductDetail = () => {
     return '';
   };
 
-  // 1) Cargo datos según categoría
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -58,17 +57,96 @@ const ProductDetail = () => {
     })();
   }, [id, locationCategory, store, actions]);
 
-  // 2) Determino la oferta concreta
   useEffect(() => {
     if (loading) return;
+    
     if (locationOffer) {
-      setCompleteOffer(locationOffer);
+      // Aseguramos que la imagen tenga un valor
+      const offerWithImage = {
+        ...locationOffer,
+        image: locationOffer.image || locationOffer.imagen || defaultImage
+      };
+      // Procesamos los precios igual que en CategoryCard
+      const processedOffer = processOfferPrices(JSON.parse(JSON.stringify(offerWithImage)));
+      setCompleteOffer(processedOffer);
       return;
     }
+    
     const numId = parseInt(id, 10);
     const list = store[`servicios${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}`] || [];
-    setCompleteOffer(list.find(o => o.id === numId) || null);
+    const foundOffer = list.find(o => o.id === numId) || null;
+    
+    if (foundOffer) {
+      // Procesamos la oferta con la misma lógica que en CategoryCard
+      const processedOffer = processOfferPrices(JSON.parse(JSON.stringify(foundOffer)));
+      processedOffer.image = processedOffer.image || processedOffer.imagen || defaultImage;
+      setCompleteOffer(processedOffer);
+    } else {
+      setCompleteOffer(null);
+    }
   }, [loading, currentCategory, id, locationOffer, store]);
+
+  // Función idéntica a la usada en CategoryCard para procesar precios
+  const processOfferPrices = (offerCopy) => {
+    const {
+      price,
+      precio,
+      discountPrice,
+      originalPrice,
+      category_id,
+    } = offerCopy;
+
+    const isBackendService = category_id !== undefined || 
+                          (price !== undefined && discountPrice !== undefined && 
+                           Number(price) < Number(discountPrice));
+
+    let actualPrice = 0;
+    let actualDiscountPrice = 0;
+
+    if (isBackendService) {
+      // Para servicios del backend, donde price y discountPrice están invertidos
+      actualPrice = Number(discountPrice) || 0;
+      actualDiscountPrice = Number(price) || 0;
+    } else {
+      // Para servicios creados por usuarios
+      if (price !== undefined && discountPrice !== undefined) {
+        actualPrice = Number(price) || 0;
+        actualDiscountPrice = Number(discountPrice) || 0;
+      } else if (originalPrice !== undefined && discountPrice !== undefined) {
+        actualPrice = Number(originalPrice) || 0;
+        actualDiscountPrice = Number(discountPrice) || 0;
+      } else if (price !== undefined) {
+        actualPrice = Number(price) || 0;
+        actualDiscountPrice = Math.round(actualPrice * 0.7); // 30% de descuento
+      } else if (precio !== undefined) {
+        actualPrice = Number(precio) || 0;
+        actualDiscountPrice = Math.round(actualPrice * 0.7);
+      }
+    }
+
+    // Valores por defecto si no hay precios válidos
+    if (actualPrice <= 0) actualPrice = 1000;
+    if (actualDiscountPrice <= 0) actualDiscountPrice = Math.round(actualPrice * 0.7);
+
+    // Asegurar que el precio con descuento sea menor que el original
+    if (actualDiscountPrice >= actualPrice && !isBackendService) {
+      actualDiscountPrice = Math.round(actualPrice * 0.7);
+    }
+
+    // Calcular el porcentaje de descuento
+    let finalDiscount = Math.round(((actualPrice - actualDiscountPrice) / actualPrice) * 100);
+    if (finalDiscount < 5) finalDiscount = 5;
+    if (finalDiscount > 80) finalDiscount = 80;
+
+    // Actualizar el objeto offer con los precios procesados
+    return {
+      ...offerCopy,
+      originalPrice: actualPrice,
+      discountPrice: actualDiscountPrice,
+      price: actualDiscountPrice, // Para consistencia
+      pctOff: finalDiscount
+    };
+  };
 
   if (loading) {
     return (
@@ -79,45 +157,40 @@ const ProductDetail = () => {
       </Container>
     );
   }
+  
   if (!completeOffer) {
     return (
       <Container className="my-5">
         <div className="alert alert-warning">
-          No se encontraron detalles del producto en “{currentCategory}”
+          No se encontraron detalles del producto en "{currentCategory}"
         </div>
       </Container>
     );
   }
 
   const display = completeOffer;
-  const title   = display.title || display.nombre || "Sin título";
-  const image   = display.image || display.imagen || defaultImage;
-  const desc    = display.descripcion || display.description || "No hay descripción disponible.";
+  const title = display.title || display.nombre || "Sin título";
+  const image = display.image || display.imagen || defaultImage;
+  const desc = display.descripcion || display.description || "No hay descripción disponible.";
 
-  const original      = display.originalPrice ?? display.price ?? 0;
-  let discountPrice  = display.discountPrice ?? Math.round(original * 0.7);
-  if (discountPrice >= original) discountPrice = Math.round(original * 0.7);
-  const pctOff       = original > 0 ? Math.round((original - discountPrice) / original * 100) : 0;
+  // Precios procesados (aseguramos que no sean cero)
+  const original = display.originalPrice > 0 ? display.originalPrice : 1000;
+  const discountPrice = display.discountPrice > 0 ? display.discountPrice : Math.round(original * 0.7);
+  const pctOff = display.pctOff || Math.round(((original - discountPrice) / original) * 100);
 
-  // 3) Agregar con distinción de categoría
   const addToCart = () => {
     actions.addToCart({
       ...display,
-      discountPrice,
-      originalPrice: original,
       quantity,
       category: currentCategory
     });
   };
 
-  // 4) Comprar ahora
   const buyNow = () => {
     navigate("/checkout", {
       state: {
         item: {
           ...display,
-          originalPrice: original,
-          discountPrice,
           quantity,
           category: currentCategory
         }
@@ -137,7 +210,6 @@ const ProductDetail = () => {
     <>
       <LayoutHeader />
       <Container className="my-5">
-        {/* Botón Volver al inicio - AÑADIDO */}
         <div className="d-flex justify-content-start mb-4">
           <button 
             className="btn btn-outline-secondary" 
@@ -166,11 +238,23 @@ const ProductDetail = () => {
               <span className="ms-2 text-muted">({display.reviews||0} reseñas)</span>
             </div>
 
-            <div className="mb-4">
-              <h3 className="text-danger fw-bold mb-0">${discountPrice}</h3>
-              <span className="ms-3 text-muted text-decoration-line-through">${original}</span>
-              {pctOff > 0 && <span className="ms-3 badge bg-danger">{pctOff}% OFF</span>}
+            <div className="mb-4 d-flex align-items-center">
+              {/* Precio con descuento (rojo) - igual que en CategoryCard */}
+              <h3 className="text-danger fw-bold mb-0">${discountPrice.toFixed(2)}</h3>
+              
+              {/* Precio original tachado - solo si hay descuento */}
+              {discountPrice < original && (
+                <span className="ms-3 text-muted text-decoration-line-through fs-5">
+                  ${original.toFixed(2)}
+                </span>
+              )}
+              
+              {/* Badge de descuento - solo si hay descuento */}
+              {discountPrice < original && (
+                <span className="ms-3 badge bg-danger">{pctOff}% OFF</span>
+              )}
             </div>
+            
             <p className="text-success mb-4">
               {display.buyers||0} personas ya han comprado esta oferta
             </p>
@@ -219,4 +303,3 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
-

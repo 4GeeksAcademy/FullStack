@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import ScrollToTop from "./component/scrollToTop";
 import { BackendURL } from "./component/backendURL";
 
@@ -84,6 +84,7 @@ const Layout = () => {
             <Route path="/product-detail" element={<ProductDetail />} />
             <Route path="/ofertas-destacadas" element={<OfertasDestacadas />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/*" element={<AdminDashboard />} />
             <Route path="/mis-compras" element={<VistaMisCompras />} />
             <Route path="/checkout" element={<Checkout />} />

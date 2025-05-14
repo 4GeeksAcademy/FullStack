@@ -220,7 +220,7 @@ const LayoutHeader = () => {
                     <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
 
                     {user.isAdmin && (
-                      <li><Link className="dropdown-item" to="/admin/users">Panel Admin</Link></li>
+                      <li><Link className="dropdown-item" to="/admin">Panel Admin</Link></li>
                     )}
                     {user.isAdmin && (
                       <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>

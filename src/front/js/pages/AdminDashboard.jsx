@@ -1,6 +1,7 @@
 import React from "react";
-import { Admin, Resource } from "react-admin";
+import { Admin, Resource, CustomRoutes } from "react-admin";
 import Dashboard from '../pages/Dashboard.jsx'
+import { Route } from "react-router-dom";
 
 // Asegurate que esta ruta es correcta respecto a donde esté AdminDashboard.jsx
 import dataProvider from "../dp/dataProvider";
@@ -39,6 +40,11 @@ import GastronomiaCreate from "../component/GastronomiaCreate.jsx";
 const AdminDashboard = () => {
   return (
     <Admin basename="/admin" dataProvider={dataProvider} dashboard={Dashboard}>
+       <CustomRoutes>
+        {/* Esta ruta personalizada redirige a Dashboard cuando se accede a '/admin' */}
+        <Route path="/dashboard" element={<Dashboard />} />
+      </CustomRoutes>
+
       <Resource name="users" list={UserList} show={UserShow} edit={UserEdit} create={CreateUser} />
       <Resource name="oferta" list={OfertList} show={OfertShow} edit={OfertEdit} create={OfertCreate}/>
       <Resource name="viajes" list={ViajeList} show={ViajeShow} edit={ViajeEdit} create={ViajeCreate}/>

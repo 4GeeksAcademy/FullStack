@@ -232,7 +232,7 @@ const ProductDetail = () => {
           </Col>
 
           <Col md={6}>
-            <h2 className="mb-3">{title}</h2>
+            <h2 className="mb-3" style={{ wordWrap: 'break-word' }}>{title}</h2>
             <div className="mb-3 d-flex align-items-center">
               {renderStars()}
               <span className="ms-2 text-muted">({display.reviews||0} reseñas)</span>
@@ -260,7 +260,7 @@ const ProductDetail = () => {
             </p>
 
             <h5>Descripción:</h5>
-            <p className="text-muted">{desc}</p>
+            <p className="text-muted" style={{ wordWrap: 'break-word' }}>{desc}</p>
 
             {display.city && (
               <div className="mb-4">

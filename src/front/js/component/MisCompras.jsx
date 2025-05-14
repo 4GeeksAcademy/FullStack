@@ -6,6 +6,9 @@ const MisCompras = () => {
   const [error, setError] = useState(null);
 
   const backendUrl = process.env.BACKEND_URL;
+  
+  // Imagen por defecto
+  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
 
   useEffect(() => {
     const obtenerCompras = async () => {
@@ -69,7 +72,7 @@ const MisCompras = () => {
         <p>No has realizado ninguna compra.</p>
       ) : (
         <table className="table table-bordered table-hover align-middle">
-          <thead className="table-dark">
+          <thead className="table-dark text-center align-middle">
             <tr>
               <th>Imagen</th>
               <th>Producto</th>
@@ -79,21 +82,20 @@ const MisCompras = () => {
               <th>Estado</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-center align-middle">
             {compras.flatMap((compra) =>
               Array.isArray(compra.items)
                 ? compra.items.map((item, index) => (
                     <tr key={`${compra.id}-${index}`}>
                       <td>
-                        {item.image_url ? (
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            style={{ width: '80px', height: '80px', objectFit: 'cover' }}
-                          />
-                        ) : (
-                          <span className="text-muted">Sin imagen</span>
-                        )}
+                        <img
+                          src={item.image_url || defaultImage}
+                          alt={item.title}
+                          style={{ width: '80px', height: '80px', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.src = defaultImage;
+                          }}
+                        />
                       </td>
                       <td>{item.title}</td>
                       <td>${(item.unit_price / 100).toFixed(2)}</td>
@@ -116,6 +118,3 @@ const MisCompras = () => {
 };
 
 export default MisCompras;
-
-
-

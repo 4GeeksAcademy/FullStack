@@ -5,7 +5,7 @@ import ModalExito from './ModalExito.jsx';
 const FormCrearServicio = () => {
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [precioOriginal, setPrecioOriginal] = useState(''); // Cambiado de precio a precioOriginal
+  const [precioOriginal, setPrecioOriginal] = useState('');
   const [descuento, setDescuento] = useState('');
   const [ciudad, setCiudad] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -19,6 +19,9 @@ const FormCrearServicio = () => {
   const MAX_TITULO = 100;
   const MAX_DESCRIPCION = 500;
   const MAX_CIUDAD = 50;
+
+  // Imagen por defecto genérica (la misma que usas en otros componentes)
+  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
 
   const navigate = useNavigate();
   const backendUrl = process.env.BACKEND_URL;
@@ -124,19 +127,21 @@ const FormCrearServicio = () => {
     // Calcular el precio con descuento (price será el precio final)
     const precioConDescuento = Math.round(precioOriginalNumerico * (1 - porcentajeDescuento / 100) * 100) / 100;
 
+    // Preparamos los datos a enviar
     const data = {
       buyers: null,
       category_id: categoriaSeleccionada.id,
       city: ciudad,
       descripcion,
-      discountPrice: precioOriginalNumerico, // El precio original va en discountPrice
-      originalPrice: precioOriginalNumerico, // Mantenemos el original también
-      price: precioConDescuento, // El precio con descuento va en price
+      discountPrice: precioOriginalNumerico,
+      originalPrice: precioOriginalNumerico,
+      price: precioConDescuento,
       rating: null,
       reviews: null,
       title: titulo,
       user_id: userId,
-      imagen: imagen || null,
+      // Aquí está el cambio importante: enviamos la imagen del usuario o la imagen por defecto
+      image: imagen.trim() || defaultImage, // Si imagen está vacía, usa defaultImage
     };
 
     try {
@@ -159,7 +164,8 @@ const FormCrearServicio = () => {
             descuento: porcentajeDescuento,
             precioConDescuento: precioConDescuento,
             categoria: categoriaSeleccionada.nombre,
-            ciudad: ciudad
+            ciudad: ciudad,
+            imagen: data.imagen // Incluimos la imagen en los datos del servicio creado
           }
         });
         setMostrarModalExito(true);
@@ -309,8 +315,36 @@ const FormCrearServicio = () => {
                 className="form-control"
                 value={imagen}
                 onChange={(e) => setImagen(e.target.value)}
-                placeholder='Ingresa la URL de tu imagen aquí'
+                placeholder='Ingresa la URL de tu imagen aquí (opcional)'
               />
+              <small className="text-muted">
+                Si no proporcionas una imagen, se usará una imagen por defecto.
+              </small>
+              {/* Vista previa de la imagen */}
+              {imagen ? (
+                <div className="mt-2">
+                  <small className="text-muted">Vista previa:</small>
+                  <img 
+                    src={imagen} 
+                    alt="Vista previa" 
+                    className="img-thumbnail mt-1" 
+                    style={{ maxHeight: '100px' }}
+                    onError={(e) => {
+                      e.target.src = defaultImage;
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <small className="text-muted">Se usará esta imagen por defecto:</small>
+                  <img 
+                    src={defaultImage} 
+                    alt="Imagen por defecto" 
+                    className="img-thumbnail mt-1" 
+                    style={{ maxHeight: '100px' }}
+                  />
+                </div>
+              )}
             </div>
 
             <button type="submit" className="btn btn-primary w-100">
@@ -341,6 +375,20 @@ const FormCrearServicio = () => {
               <p className="text-success fw-bold"><strong>Precio final:</strong> ${formatearPrecio(redirectInfo.serviceData?.precioConDescuento)}</p>
               <p><strong>Categoría:</strong> {redirectInfo.serviceData?.categoria}</p>
               <p><strong>Locación:</strong> {redirectInfo.serviceData?.ciudad}</p>
+              {redirectInfo.serviceData?.imagen && (
+                <div className="mt-2">
+                  <p><strong>Imagen:</strong></p>
+                  <img 
+                    src={redirectInfo.serviceData.imagen} 
+                    alt="Imagen del servicio" 
+                    className="img-thumbnail" 
+                    style={{ maxHeight: '100px' }}
+                    onError={(e) => {
+                      e.target.src = defaultImage;
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </>
         }

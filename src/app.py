@@ -1749,7 +1749,7 @@ def crear_top():
             descripcion=data['descripcion'],
             price=data['price'],
             city=data.get('city', ''),
-            image=data.get('image', 'https://img.freepik.com/free-photo/beautiful-shot-u-s-route-66-arizona-usa-with-clear-blue-sky-background_181624-53248.jpg'),
+            image=data.get('image', 'https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774='),
             discountPrice=data.get('discountPrice'),
             rating=data.get('rating', 4.5),
             reviews=data.get('reviews', 0),

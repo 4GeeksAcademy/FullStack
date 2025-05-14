@@ -97,6 +97,9 @@ const CartPage = () => {
     isLogged() ? navigate('/checkout') : navigate('/login');
   };
 
+  // Imagen por defecto para casos donde no haya imagen
+  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
+
   return (
     <div>
       <LayoutHeader />
@@ -126,10 +129,13 @@ const CartPage = () => {
                   className="list-group-item d-flex align-items-center"
                 >
                   <img
-                    src={item.image}
+                    src={item.image || item.imagen || defaultImage}
                     alt={item.title}
                     className="rounded me-3"
                     style={{ width:100, height:100, objectFit:'cover' }}
+                    onError={(e) => {
+                      e.target.src = defaultImage;
+                    }}
                   />
                   <div className="flex-grow-1">
                     <h5 className="mb-1">{item.title}</h5>
@@ -272,10 +278,3 @@ const CartPage = () => {
 };
 
 export default CartPage;
-
-
-
-
-
-
-

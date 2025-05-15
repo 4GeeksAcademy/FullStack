@@ -963,11 +963,11 @@ def create_user_dashboard():
             correo = data['correo'],
             password = pw_hash,
             telefono = data['telefono'],
-            direccion_line1 = data['direccion 1'],
-            direccion_line2 = data['direccion 2'],
+            direccion_line1 = data['direccion1'],
+            direccion_line2 = data['direccion2'],
             ciudad = data['ciudad'],
             pais = data['pais'],
-            codigo_postal = data['codigo postal'],
+            codigo_postal = data['codigoPostal'],
             role = data['rol'],
             is_active = data['activo']
         )

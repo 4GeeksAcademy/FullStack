@@ -96,6 +96,11 @@ class Payment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     servicio_id = db.Column(db.Integer, nullable=True)
 
+     # ✨ Nuevos campos de entrega
+    delivery_name = db.Column(db.String(255), nullable=True)
+    delivery_address = db.Column(db.String(500), nullable=True)
+    delivery_email = db.Column(db.String(255), nullable=True)
+
     # Relación con los items
     items = db.relationship('PaymentItem', backref='payment', cascade="all, delete-orphan")
     reservation = db.relationship('Reservation', back_populates='payment', uselist=False)
@@ -111,6 +116,9 @@ class Payment(db.Model):
             "user_id": self.user_id,
             "servicio_id": self.servicio_id,
             "estado": self.estado,
+            "delivery_name": self.delivery_name,
+            "delivery_address": self.delivery_address,
+            "delivery_email": self.delivery_email,
             "items": [item.serialize() for item in self.items]
         }
 

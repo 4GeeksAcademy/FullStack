@@ -13,6 +13,15 @@ const AdminNewsletter = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
+    useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+
+    if (!token || !storedUser || String(storedUser?.role).toLowerCase() !== 'admin') {
+      navigate('/')
+    }
+  }, [])
+
     const fetchNewsletters = async () => {
         try {
             const success = await actions.getNewsletters();

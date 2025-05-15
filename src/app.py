@@ -1390,7 +1390,7 @@ def agregar_a_newsletter():
     sub = NewsletterSubscriptions.query.filter_by(correo=email).first()
 
     if sub:
-        return jsonify({"mensaje": "Este correo ya está suscrito"}), 404
+        return jsonify({"error": "Usted ya esta suscrito a nuestro newsletter"}), 404
 
     sub = NewsletterSubscriptions(
         correo = email

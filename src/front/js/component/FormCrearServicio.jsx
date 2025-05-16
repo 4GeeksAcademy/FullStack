@@ -20,7 +20,6 @@ const FormCrearServicio = () => {
   const MAX_DESCRIPCION = 500;
   const MAX_CIUDAD = 50;
 
-  // Imagen por defecto genérica (la misma que usas en otros componentes)
   const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
 
   const navigate = useNavigate();
@@ -37,7 +36,6 @@ const FormCrearServicio = () => {
     const obtenerUsuario = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('No estás logueado.');
         setLoading(false);
         return;
       }
@@ -54,11 +52,9 @@ const FormCrearServicio = () => {
         } else {
           const errorText = await response.text();
           console.error('Respuesta del backend:', errorText);
-          setError('Error al obtener los datos del usuario.');
         }
       } catch (error) {
         console.error('Error en la petición de usuario:', error);
-        setError('Error inesperado al obtener los datos del usuario.');
       } finally {
         setLoading(false);
       }
@@ -117,17 +113,13 @@ const FormCrearServicio = () => {
       return;
     }
 
-    // Usar el porcentaje ingresado por el usuario o 5% por defecto
     let porcentajeDescuento = descuento !== '' && !isNaN(parseFloat(descuento)) ? 
       parseFloat(descuento) : 5;
     
-    // Asegurarse que el porcentaje esté en un rango válido
     porcentajeDescuento = Math.max(5, Math.min(80, porcentajeDescuento));
 
-    // Calcular el precio con descuento (price será el precio final)
     const precioConDescuento = Math.round(precioOriginalNumerico * (1 - porcentajeDescuento / 100) * 100) / 100;
 
-    // Preparamos los datos a enviar
     const data = {
       buyers: null,
       category_id: categoriaSeleccionada.id,
@@ -140,8 +132,7 @@ const FormCrearServicio = () => {
       reviews: null,
       title: titulo,
       user_id: userId,
-      // Aquí está el cambio importante: enviamos la imagen del usuario o la imagen por defecto
-      image: imagen.trim() || defaultImage, // Si imagen está vacía, usa defaultImage
+      image: imagen.trim() || defaultImage,
     };
 
     try {
@@ -165,7 +156,7 @@ const FormCrearServicio = () => {
             precioConDescuento: precioConDescuento,
             categoria: categoriaSeleccionada.nombre,
             ciudad: ciudad,
-            imagen: data.imagen // Incluimos la imagen en los datos del servicio creado
+            imagen: data.imagen
           }
         });
         setMostrarModalExito(true);
@@ -188,9 +179,7 @@ const FormCrearServicio = () => {
   };
 
   if (loading) return <div>Cargando...</div>;
-  if (error) return <div>Error: {error}</div>;
 
-  // Calcular el precio con descuento en tiempo real para mostrarlo
   const precioOriginalNumerico = parseFloat(precioOriginal);
   const porcentajeDescuento = descuento !== '' && !isNaN(parseFloat(descuento)) ? 
     Math.max(5, Math.min(80, parseFloat(descuento))) : 5;
@@ -264,7 +253,6 @@ const FormCrearServicio = () => {
                 El descuento mínimo es 5% y máximo 80%. Si no completás, aplicaremos 5%.
               </small>
               
-              {/* Vista previa del precio con descuento */}
               {precioOriginal && !isNaN(precioOriginalNumerico) && (
                 <div className="mt-2">
                   <div className="text-success fw-bold">
@@ -320,7 +308,6 @@ const FormCrearServicio = () => {
               <small className="text-muted">
                 Si no proporcionas una imagen, se usará una imagen por defecto.
               </small>
-              {/* Vista previa de la imagen */}
               {imagen ? (
                 <div className="mt-2">
                   <small className="text-muted">Vista previa:</small>

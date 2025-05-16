@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import ScrollToTop from "./component/scrollToTop";
 import { BackendURL } from "./component/backendURL";
+import ScrollToTop from "./component/ScrollToTop.jsx";
 
 import { Home } from "./pages/Home.jsx";
 import { Demo } from "./pages/demo";
@@ -55,7 +55,7 @@ const Layout = () => {
   return (
     <div>
       <BrowserRouter basename={basename}>
-        <ScrollToTop>
+          <ScrollToTop />
           <Navbar />
           <Routes>
             <Route path="/" element={<Home />} />
@@ -103,7 +103,6 @@ const Layout = () => {
               
           </Routes>
           <Footer />
-        </ScrollToTop>
       </BrowserRouter>
     </div>
   );

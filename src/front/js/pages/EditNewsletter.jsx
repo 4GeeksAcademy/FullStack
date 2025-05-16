@@ -21,6 +21,15 @@ const EditNewsletter = () => {
     const [showPreview, setShowPreview] = useState(false);
     const navigate = useNavigate();
 
+    useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+
+    if (!token || !storedUser || String(storedUser?.role).toLowerCase() !== 'admin') {
+      navigate('/')
+    }
+    }, [])
+
 
     useEffect(() => {
         const token = localStorage.getItem("token");

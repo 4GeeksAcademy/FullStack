@@ -1,17 +1,29 @@
 import React from "react";
-import { Create, SimpleForm, TextInput, BooleanInput, SelectInput, PasswordInput, NumberInput } from "react-admin";
+import { 
+    Create, 
+    SimpleForm, 
+    TextInput, 
+    BooleanInput, 
+    SelectInput, 
+    PasswordInput, 
+    NumberInput
+} from "react-admin";
+import { required } from "react-admin";
 
 const CreateUser = () => (
-    <Create title="Crear Usuario">
-        <SimpleForm>
+    <Create 
+        title="Crear Usuario"
+        record={{ activo: false }} // ✅ Initial values aquí
+    >
+        <SimpleForm> {/* 🚫 Quita initialValues de aquí */}
             <TextInput source="correo" label="Correo" />
             <PasswordInput source="password" label="Contraseña"/>
             <TextInput source="telefono" label="Teléfono" />
-            <TextInput source="direccion 1" label="Dirección 1" />
-            <TextInput source="direccion 2" label="Dirección 2" />
+            <TextInput source="direccion1" label="Dirección 1" />
+            <TextInput source="direccion2" label="Dirección 2" />
             <TextInput source="ciudad" label="Ciudad" />
             <TextInput source="pais" label="País" />
-            <NumberInput source="codigo postal" label="Codigo Postal"/>
+            <NumberInput source="codigoPostal" label="Código Postal"/>
             <SelectInput
                 source="rol"
                 label="Rol"
@@ -20,7 +32,16 @@ const CreateUser = () => (
                     { id: 'Cliente', name: 'Cliente' },
                 ]}
             />
-            <BooleanInput source="activo" label="Activo" />
+            <SelectInput
+                source="activo"
+                label="Activo"
+                choices={[
+                    { id: true, name: 'Si' },
+                    { id: false, name: 'No' },
+                ]}
+                validate={[required()]}
+                emptyText={false}
+            />
         </SimpleForm>
     </Create>
 );

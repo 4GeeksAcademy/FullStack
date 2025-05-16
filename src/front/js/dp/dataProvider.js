@@ -11,42 +11,42 @@ const customRoutes = {
         one: 'usuario',
         update: 'usuario',
         delete: 'usuario',
-        create: 'usuario'
+        create: 'dashboard/usuario'
     },
     oferta: {
         list: 'ofertaspag',
         one: 'oferta',
         update: 'oferta',
-        delete: 'oferta',
-        create: 'oferta'
+        delete: 'dashboard/oferta',
+        create: 'dashboard/oferta'
     },
     viajes: {
         list: 'viajespag',
         one: 'viajes',
         update: 'viajes',
-        delete: 'viajes',
-        create: 'viajes'
+        delete: 'dashboard/viajes',
+        create: 'dashboard/viajes'
     },
     tops: {
         list: 'toppag',
         one: 'top',
         update: 'top',
-        delete: 'top',
-        create: 'top'
+        delete: 'dashboard/top',
+        create: 'dashboard/top'
     },
     bellezas: {
         list: 'bellezapag',
         one: 'belleza',
         update: 'belleza',
-        delete: 'belleza',
-        create: 'belleza'
+        delete: 'dashboard/belleza',
+        create: 'dashboard/belleza'
     },
     gastronomias: {
         list: 'gastronomiapag',
         one: 'gastronomia',
         update: 'gastronomia',
-        delete: 'gastronomia',
-        create: 'gastronomia'
+        delete: 'dashboard/gastronomia',
+        create: 'dashboard/gastronomia'
     }
 };
 

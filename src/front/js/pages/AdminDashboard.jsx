@@ -1,6 +1,8 @@
-import React from "react";
-import { Admin, Resource } from "react-admin";
+import React , { useEffect } from "react";
+import { Admin, Resource, CustomRoutes } from "react-admin";
 import Dashboard from '../pages/Dashboard.jsx'
+import { Route } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // Asegurate que esta ruta es correcta respecto a donde esté AdminDashboard.jsx
 import dataProvider from "../dp/dataProvider";
@@ -37,8 +39,22 @@ import GastronomiaEdit from "../component/GastronomiaEdit.jsx";
 import GastronomiaCreate from "../component/GastronomiaCreate.jsx";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+
+    if (!token || !storedUser || String(storedUser?.role).toLowerCase() !== 'admin') {
+      navigate('/')
+    }
+  }, [])
+
   return (
     <Admin basename="/admin" dataProvider={dataProvider} dashboard={Dashboard}>
+       <CustomRoutes>
+        <Route path="/dashboard" element={<Dashboard />} />
+      </CustomRoutes>
+
       <Resource name="users" list={UserList} show={UserShow} edit={UserEdit} create={CreateUser} />
       <Resource name="oferta" list={OfertList} show={OfertShow} edit={OfertEdit} create={OfertCreate}/>
       <Resource name="viajes" list={ViajeList} show={ViajeShow} edit={ViajeEdit} create={ViajeCreate}/>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, SimpleForm, TextInput, BooleanInput } from 'react-admin';
+import { Edit, SimpleForm, TextInput, SelectInput, required } from 'react-admin';
 
 const UserEdit = (props) => (
   <Edit {...props}>
@@ -12,7 +12,15 @@ const UserEdit = (props) => (
       <TextInput source="ciudad" />
       <TextInput source="pais" />
       <TextInput source="rol" />
-      <BooleanInput source="activo" />
+      <SelectInput
+                      source="activo"
+                      choices={[
+                          { id: true, name: 'Si' },
+                          { id: false, name: 'No' },
+                      ]}
+                      validate={[required()]}
+                      emptyText={false}
+                  />
     </SimpleForm>
   </Edit>
 );

@@ -35,6 +35,7 @@ const Newsletter = () => {
         setTimeout(() => setSubscribed(false), 3000); // Mostrar el mensaje de éxito por 3 segundos
       } else {
         // Manejar errores si el correo ya está suscrito
+        console.log('Error ' + data.error)
         setError(data.error || "Hubo un problema al procesar tu solicitud.");
         setTimeout(() => setError(""), 3000); // Eliminar el mensaje de error después de 3 segundos
       }

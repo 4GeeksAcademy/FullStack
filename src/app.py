@@ -87,22 +87,32 @@ app.register_blueprint(payment_bp)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
-_db_initialized = False
-
 @app.before_request
-def inicializar_db_once():
-    global _db_initialized
-    if _db_initialized:
-        return
+def inicializar_db():
+    categorias = [
+        {"id": 1, "nombre": "Viajes"},
+        {"id": 2, "nombre": "Belleza"},
+        {"id": 3, "nombre": "Top"},
+        {"id": 4, "nombre": "Gastronomía"},
+        {"id": 5, "nombre": "Ofertas"},
+    ]
 
-    # --- tu código de inicialización original ---
-    user_id = 1              # Reemplaza con un ID de usuario válido
-    viajes_category_id = 1   # ID para 'Viajes'
-    top_category_id = 3      # ID para 'Top'
-    belleza_category_id = 2  # ID para 'Belleza'
-    gastronomia_category_id = 4  # ID para 'Gastronomía'
-    ofertas_category_id = 5  # ID para 'Ofertas'
+    for cat in categorias:
+        if not Category.query.get(cat["id"]):
+            db.session.add(Category(id=cat["id"], nombre=cat["nombre"]))
+    db.session.commit()
 
+    # ID de usuario (ajusta si no existe)
+    user_id = 1
+
+    # IDs de categoría ya asegurados arriba
+    viajes_category_id = 1
+    belleza_category_id = 2
+    top_category_id = 3
+    gastronomia_category_id = 4
+    ofertas_category_id = 5
+
+    # Inicializar servicios si no existen
     inicializar_servicios(
         user_id,
         viajes_category_id,
@@ -111,9 +121,7 @@ def inicializar_db_once():
         gastronomia_category_id,
         ofertas_category_id
     )
-    # -----------------------------------------------
 
-    _db_initialized = True
 
 # generate sitemap with all your endpoints
 @app.route('/')
@@ -2313,7 +2321,7 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-YOUR_DOMAIN = "https://ominous-disco-q7pjgx55qrp9f95x4-3000.app.github.dev"
+YOUR_DOMAIN = "https://obscure-space-spoon-g47jwpvvq9qxhvwr5-3000.app.github.dev"
 
 @app.route('/create-checkout-session', methods=['POST'])
 @jwt_required(optional=True)
@@ -2622,7 +2630,7 @@ def forgot_password():
         db.session.commit()
 
         # Construye el enlace de reset
-        frontend_url = os.getenv('FRONTEND_URL', 'https://ominous-disco-q7pjgx55qrp9f95x4-3000.app.github.dev')
+        frontend_url = os.getenv('FRONTEND_URL', 'https://obscure-space-spoon-g47jwpvvq9qxhvwr5-3000.app.github.dev')
         reset_link = f"{frontend_url}/reset-password?token={token}"
 
         # Prepara y envía el email

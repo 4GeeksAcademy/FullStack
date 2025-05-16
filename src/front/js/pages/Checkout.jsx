@@ -3,7 +3,9 @@ import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { Context } from "../store/appContext";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Spinner } from "react-bootstrap";
+import { Spinner, Container, Form, Button, Alert, InputGroup } from "react-bootstrap";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const stripePromise = loadStripe(
   "pk_test_51RHkEqFNyrX4spGdBv11uJQXp9SbJRaSxzsolRbEeZVVYuzxZqtdF4uBytcTV0BkfQRgMemgaA2DnGI4lriZZpWb00g736yfzD"
@@ -21,29 +23,33 @@ const Checkout = () => {
     0
   );
 
+  // Datos de entrega + correo prellenado
+  const initialEmail = store.user?.email || store.user?.correo || "";
+  const [deliveryEmail, setDeliveryEmail] = useState(initialEmail);
+  const [deliveryName, setDeliveryName] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [formSubmitted, setFormSubmitted] = useState(false);
+
+  // Stripe
   const [clientSecret, setClientSecret] = useState(null);
   const [sessionId, setSessionId] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const startPayment = useCallback(async () => {
-    if (clientSecret || loading) return; // evita duplicados
+    if (clientSecret || loading) return;
     setError(null);
     setLoading(true);
+
+    // Permitir guest o usuario autenticado
     const token = localStorage.getItem("token");
-    if (!token) {
-      setError("No estás autenticado. Inicia sesión.");
-      setLoading(false);
-      return;
-    }
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
 
     try {
       const resp = await fetch(`${process.env.BACKEND_URL}/create-checkout-session`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           items: cartItems.map(it => ({
             title: it.title,
@@ -52,69 +58,138 @@ const Checkout = () => {
             image: it.image || "",
             user_id: it.user_id || null
           })),
-          total: subtotal
+          total: subtotal,
+          deliveryEmail,
+          deliveryName,
+          deliveryAddress
         })
       });
+
       const data = await resp.json();
       if (resp.ok && data.clientSecret) {
         setClientSecret(data.clientSecret);
         setSessionId(data.sessionId);
       } else {
-        setError(data.error || "No se pudo obtener clientSecret");
+        setError(data.error || "Error al iniciar pago");
       }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [cartItems, subtotal, clientSecret, loading]);
+  }, [cartItems, subtotal, deliveryEmail, deliveryName, deliveryAddress, clientSecret, loading]);
 
-  // Auto-arranca la sesión al montar
   useEffect(() => {
-    startPayment();
-  }, [startPayment]);
+    if (formSubmitted) startPayment();
+  }, [formSubmitted, startPayment]);
 
+  // Stripe events
   const handleEvent = event => {
-    if (
-      !single &&
-      (event.type === "checkout.session.completed" ||
-       event.type === "payment_intent.succeeded")
-    ) {
+    const done =
+      event.type === "checkout.session.completed" ||
+      event.type === "payment_intent.succeeded";
+    if (!done) return;
+    if (!single) {
       actions.clearCart();
       navigate("/return");
-    }
-    if (
-      single &&
-      (event.type === "checkout.session.completed" ||
-       event.type === "payment_intent.succeeded")
-    ) {
+    } else {
       navigate("/gracias");
     }
   };
 
   if (error) {
-    return <div className="alert alert-danger p-4">{error}</div>;
-  }
-
-  // Mientras carga el clientSecret, spinner
-  if (!clientSecret) {
     return (
-      <div className="d-flex justify-content-center align-items-center p-5">
-        <Spinner animation="border" role="status" />
-      </div>
+      <Container className="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+        <div className="card shadow-lg p-4" style={{ maxWidth: 500, width: '100%' }}>
+          <Alert variant="danger">{error}</Alert>
+        </div>
+      </Container>
     );
   }
 
+  // Formulario de entrega styled
+  if (!formSubmitted) {
+    return (
+      <Container className="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+        <div className="card shadow-lg p-4" style={{ maxWidth: 500, width: '100%' }}>
+          <div className="text-center mb-4">
+            <i className="bi bi-truck text-danger" style={{ fontSize: '3rem' }}></i>
+            <h4 className="mt-2 fw-bold">Datos de entrega</h4>
+            <p className="text-muted">Completa la información antes de pagar</p>
+          </div>
+          <Form onSubmit={e => { e.preventDefault(); setFormSubmitted(true); }}>
+            <Form.Group className="mb-3" controlId="deliveryEmail">
+              <Form.Label>Correo electrónico</Form.Label>
+              <InputGroup>
+                <InputGroup.Text><i className="bi bi-envelope-at"></i></InputGroup.Text>
+                <Form.Control
+                  type="email"
+                  value={deliveryEmail}
+                  onChange={e => setDeliveryEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </InputGroup>
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="deliveryName">
+              <Form.Label>Nombre completo</Form.Label>
+              <InputGroup>
+                <InputGroup.Text><i className="bi bi-person"></i></InputGroup.Text>
+                <Form.Control
+                  type="text"
+                  value={deliveryName}
+                  onChange={e => setDeliveryName(e.target.value)}
+                  required
+                />
+              </InputGroup>
+            </Form.Group>
+
+            <Form.Group className="mb-4" controlId="deliveryAddress">
+              <Form.Label>Dirección de entrega</Form.Label>
+              <InputGroup>
+                <InputGroup.Text><i className="bi bi-geo-alt"></i></InputGroup.Text>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={deliveryAddress}
+                  onChange={e => setDeliveryAddress(e.target.value)}
+                  required
+                />
+              </InputGroup>
+            </Form.Group>
+
+            <Button variant="danger" type="submit" className="w-100" disabled={loading}>
+              {loading ? 'Procesando...' : 'Continuar al pago'}
+            </Button>
+          </Form>
+        </div>
+      </Container>
+    );
+  }
+
+  // Spinner mientras carga clientSecret
+  if (!clientSecret) {
+    return (
+      <Container className="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+        <div className="card shadow-lg p-4 text-center" style={{ width: 200, height: 200 }}>
+          <Spinner animation="border" />
+        </div>
+      </Container>
+    );
+  }
+
+  // Checkout embebido de Stripe (mantener centrado)
   return (
-    <div id="checkout" className="p-4">
-      <EmbeddedCheckoutProvider
-        stripe={stripePromise}
-        options={{ clientSecret }}
-      >
-        <EmbeddedCheckout options={{ clientSecret, sessionId }} onEvent={handleEvent} />
-      </EmbeddedCheckoutProvider>
-    </div>
+    <Container className="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+      <div className="card shadow-lg p-4" style={{ maxWidth: 600, width: '100%' }}>
+        <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
+          <EmbeddedCheckout options={{ clientSecret, sessionId }} onEvent={handleEvent} />
+        </EmbeddedCheckoutProvider>
+      </div>
+    </Container>
   );
 };
 
 export default Checkout;
+

@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
+// src/front/js/component/LayoutHeader.jsx
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { Context } from "../store/appContext.js";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { jwtDecode } from "jwt-decode";
+
 
 const LayoutHeader = () => {
   const { store, actions } = useContext(Context);
@@ -13,62 +16,35 @@ const LayoutHeader = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLoggingOut, setShowLoggingOut] = useState(false);
   const navigate = useNavigate();
+  const toggleRef = useRef(null);
 
-  const cartItems = store.cartItems.reduce(
-    (acc, item) => acc + (item.quantity || 1),
-    0
-  );
-
-  useEffect(() => {
+  const isTokenValid = () => {
     const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-    const storedCart = localStorage.getItem("cartItems");
-
-    if (token && storedUser) {
-      setIsLoggedIn(true);
-      const parsed = JSON.parse(storedUser);
-      setUser(parsed);
-      // detect admin role (normalize to lowercase)
-      const role = (parsed.role || "").toString().toLowerCase();
-      setUser({ ...parsed, isAdmin: role === "administrador" || role === "admin" });
-      if (storedCart) {
-        actions.setCartItems(JSON.parse(storedCart));
-      }
-    } else {
-      setIsLoggedIn(false);
-      setUser(null);
-      actions.setCartItems([]);
+    if (!token) return false;
+    try {
+      const { exp } = jwtDecode(token);
+      if (typeof exp !== "number") return true;
+      return Date.now() < exp * 1000;
+    } catch {
+      return false;
     }
-  }, []);
+  };
 
-  const handleGetLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-            );
-            const data = await response.json();
-            const city =
-              data.address.city ||
-              data.address.town ||
-              data.address.village ||
-              "Desconocido";
-            setLocation(city);
-          } catch (error) {
-            console.error("Error obteniendo la ubicación:", error);
-            alert("No se pudo obtener la ubicación");
-          }
-        },
-        (error) => {
-          console.error("Error de geolocalización:", error);
-          alert("Error al obtener su ubicación");
-        }
-      );
+  const handleProtectedNav = (path) => {
+    // cierra dropdown
+    const dropdown = toggleRef.current?.closest(".dropdown");
+    if (dropdown) {
+      const btn = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+      const inst =
+        window.bootstrap.Dropdown.getInstance(btn) ||
+        new window.bootstrap.Dropdown(btn);
+      inst.hide();
+    }
+    if (!isTokenValid()) {
+      localStorage.clear();
+      navigate("/");
     } else {
-      alert("La geolocalización no es soportada por este navegador.");
+      navigate(path);
     }
   };
 
@@ -82,80 +58,183 @@ const LayoutHeader = () => {
     setShowLoggingOut(false);
     navigate("/");
   };
-
   const confirmLogout = () => {
     setShowLogoutModal(false);
     setShowLoggingOut(true);
-    setTimeout(() => {
-      handleLogout();
-    }, 1500);
+    setTimeout(handleLogout, 1500);
   };
+
+  useEffect(() => {
+    document
+      .querySelectorAll('[data-bs-toggle="dropdown"]')
+      .forEach((btn) => new window.bootstrap.Dropdown(btn));
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+    const storedCart = localStorage.getItem("cartItems");
+    if (token && storedUser) {
+      setIsLoggedIn(true);
+      const parsed = JSON.parse(storedUser);
+      const role = (parsed.role || "").toLowerCase();
+      setUser({
+        ...parsed,
+        isAdmin: role === "administrador" || role === "admin",
+      });
+      if (storedCart) actions.setCartItems(JSON.parse(storedCart));
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
+      actions.setCartItems([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchTerm.trim() !== "") {
+    if (searchTerm.trim()) {
       navigate(`/search/${encodeURIComponent(searchTerm.trim())}`);
     }
   };
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) return alert("Geolocalización no soportada");
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`
+          );
+          const data = await res.json();
+          setLocation(
+            data.address.city ||
+              data.address.town ||
+              data.address.village ||
+              "Desconocido"
+          );
+        } catch {
+          alert("No se pudo obtener la ubicación");
+        }
+      },
+      () => alert("Error al obtener ubicación")
+    );
+  };
+
+  const cartCount = store.cartItems.reduce(
+    (sum, i) => sum + (i.quantity || 1),
+    0
+  );
 
   return (
     <>
       <header className="sticky-top bg-white shadow-sm">
         <div className="container d-flex align-items-center py-3 flex-wrap">
+
+          {/* LOGO */}
           <div
             className="d-flex align-items-center me-auto me-md-4"
             role="button"
             onClick={() => navigate("/")}
           >
-            <i className="bi bi-house-fill fs-2 text-danger me-2"></i>
+            <i className="bi bi-house-fill fs-2 text-danger me-2" />
             <h1 className="fs-4 fw-bold mb-0">GroupOn</h1>
           </div>
 
+          {/* MOBILE CART + USER */}
           <div className="d-flex d-md-none align-items-center gap-3 order-md-last">
-            <Link to="/cart" className="position-relative" role="button">
-              <i className="bi bi-cart fs-4 text-dark"></i>
-              {cartItems > 0 && (
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                  {cartItems}
+            <button
+              className="position-relative btn btn-link p-0"
+              onClick={() => navigate("/cart")}
+            >
+              <i className="bi bi-cart fs-4 text-dark" />
+              {cartCount > 0 && (
+                <span className="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle">
+                  {cartCount}
                 </span>
               )}
-            </Link>
+            </button>
 
             {isLoggedIn ? (
-              <div className="dropdown">
+              <div className="dropdown" data-bs-auto-close="outside">
                 <button
+                  ref={toggleRef}
                   className="btn btn-link dropdown-toggle p-0 border-0"
-                  id="userDropdownMobile"
                   data-bs-toggle="dropdown"
-                  aria-expanded="false"
                 >
-                  <i className="bi bi-person-circle fs-4 text-dark"></i>
+                  <i className="bi bi-person-circle fs-4 text-dark" />
                 </button>
-                <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdownMobile">
-                  <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
-                  <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
-                  <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
-                  <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
-
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => handleProtectedNav("/perfil")}
+                    >
+                      Mi Perfil
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => handleProtectedNav("/crear-servicio")}
+                    >
+                      Crear Servicio
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => handleProtectedNav("/mis-compras")}
+                    >
+                      Mis Compras
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => handleProtectedNav("/mis-reservas")}
+                    >
+                      Mis Reservas
+                    </button>
+                  </li>
                   {user.isAdmin && (
-                    <li><Link className="dropdown-item" to="/admin">Panel Admin</Link></li>
+                    <>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => handleProtectedNav("/admin")}
+                        >
+                          Panel Admin
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => handleProtectedNav("/newsletter")}
+                        >
+                          Newsletter
+                        </button>
+                      </li>
+                    </>
                   )}
-                  {user.isAdmin && (
-                    <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>
-                  )}
-
                   <li><hr className="dropdown-divider" /></li>
                   <li>
-                    <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => setShowLogoutModal(true)}
+                    >
                       Cerrar Sesión
                     </button>
                   </li>
                 </ul>
               </div>
             ) : (
-              <Link to="/login" role="button">
-                <i className="bi bi-person-circle fs-4 text-dark"></i>
-              </Link>
+              <button
+                className="btn btn-link p-0"
+                onClick={() => navigate("/login")}
+              >
+                <i className="bi bi-person-circle fs-4 text-dark" />
+              </button>
             )}
 
             <button
@@ -163,14 +242,12 @@ const LayoutHeader = () => {
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#navbarNav"
-              aria-controls="navbarNav"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
             >
-              <i className="bi bi-list fs-3"></i>
+              <i className="bi bi-list fs-3" />
             </button>
           </div>
 
+          {/* DESKTOP SEARCH + CART + USER */}
           <div className="d-flex flex-column flex-md-row flex-grow-1 align-items-md-center mt-3 mt-md-0">
             <form
               className="d-flex flex-grow-1 align-items-center me-md-4"
@@ -188,54 +265,104 @@ const LayoutHeader = () => {
                 style={{ cursor: "pointer" }}
                 onClick={handleGetLocation}
               >
-                <i className="bi bi-geo-alt-fill me-2 text-secondary"></i>
+                <i className="bi bi-geo-alt-fill me-2 text-secondary" />
                 <span className="text-muted small">{location}</span>
               </div>
             </form>
 
             <div className="d-none d-md-flex align-items-center gap-3 ms-auto">
-              <Link to="/cart" className="position-relative" role="button">
-                <i className="bi bi-cart fs-4 text-dark"></i>
-                {cartItems > 0 && (
-                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                    {cartItems}
+              <button
+                className="position-relative btn btn-link p-0"
+                onClick={() => navigate("/cart")}
+              >
+                <i className="bi bi-cart fs-4 text-dark" />
+                {cartCount > 0 && (
+                  <span className="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle">
+                    {cartCount}
                   </span>
                 )}
-              </Link>
+              </button>
 
               {isLoggedIn ? (
-                <div className="dropdown">
+                <div className="dropdown" data-bs-auto-close="outside">
                   <button
+                    ref={toggleRef}
                     className="btn btn-link dropdown-toggle p-0 border-0"
-                    id="userDropdownDesktop"
                     data-bs-toggle="dropdown"
-                    aria-expanded="false"
                   >
-                    <i className="bi bi-person-circle fs-4 text-dark"></i>
+                    <i className="bi bi-person-circle fs-4 text-dark" />
                   </button>
-                  <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdownDesktop">
-                    <li><Link className="dropdown-item" to="/perfil">Mi Perfil</Link></li>
-                    <li><Link className="dropdown-item" to="/crear-servicio">Crear Servicio</Link></li>
-                    <li><Link className="dropdown-item" to="/mis-compras">Mis Compras</Link></li>
-                    <li><Link className="dropdown-item" to="/mis-reservas">Reservas de mi Servicio</Link></li>
-
+                  <ul className="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => handleProtectedNav("/perfil")}
+                      >
+                        Mi Perfil
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => handleProtectedNav("/crear-servicio")}
+                      >
+                        Crear Servicio
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => handleProtectedNav("/mis-compras")}
+                      >
+                        Mis Compras
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => handleProtectedNav("/mis-reservas")}
+                      >
+                        Mis Reservas
+                      </button>
+                    </li>
                     {user.isAdmin && (
-                      <li><Link className="dropdown-item" to="/admin">Panel Admin</Link></li>
+                      <>
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => handleProtectedNav("/admin/users")}
+                          >
+                            Panel Admin
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => handleProtectedNav("/newsletter")}
+                          >
+                            Newsletter
+                          </button>
+                        </li>
+                      </>
                     )}
-                    {user.isAdmin && (
-                      <li><Link className="dropdown-item" to="/newsletter">Newsletter</Link></li>
-                    )}
-
                     <li><hr className="dropdown-divider" /></li>
                     <li>
-                      <button className="dropdown-item" onClick={() => setShowLogoutModal(true)}>Cerrar Sesión</button>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => setShowLogoutModal(true)}
+                      >
+                        Cerrar Sesión
+                      </button>
                     </li>
                   </ul>
                 </div>
               ) : (
-                <Link to="/login" role="button">
-                  <i className="bi bi-person-circle fs-4 text-dark"></i>
-                </Link>
+                <button
+                  className="btn btn-link p-0"
+                  onClick={() => navigate("/login")}
+                >
+                  <i className="bi bi-person-circle fs-4 text-dark" />
+                </button>
               )}
             </div>
           </div>
@@ -244,24 +371,36 @@ const LayoutHeader = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav p-3 border-top">
             <li className="nav-item py-2">
-              <Link className="nav-link" to="/top" onClick={() => actions.setCategory("top")}>
+              <button
+                className="nav-link btn btn-link"
+                onClick={() => actions.setCategory("top")}
+              >
                 Ofertas del día
-              </Link>
+              </button>
             </li>
             <li className="nav-item py-2">
-              <Link className="nav-link" to="/gastronomia" onClick={() => actions.setCategory("food")}>
+              <button
+                className="nav-link btn btn-link"
+                onClick={() => actions.setCategory("food")}
+              >
                 Restaurantes
-              </Link>
+              </button>
             </li>
             <li className="nav-item py-2">
-              <Link className="nav-link" to="/belleza" onClick={() => actions.setCategory("beauty")}>
+              <button
+                className="nav-link btn btn-link"
+                onClick={() => actions.setCategory("beauty")}
+              >
                 Belleza y spa
-              </Link>
+              </button>
             </li>
             <li className="nav-item py-2">
-              <Link className="nav-link" to="/viajes" onClick={() => actions.setCategory("travel")}>
+              <button
+                className="nav-link btn btn-link"
+                onClick={() => actions.setCategory("travel")}
+              >
                 Viajes
-              </Link>
+              </button>
             </li>
           </ul>
         </div>
@@ -271,10 +410,17 @@ const LayoutHeader = () => {
         <div style={styles.overlay}>
           <div style={styles.modal}>
             <h5>¿Cerrar sesión?</h5>
-            <p>¿Estás seguro de que deseas cerrar sesión?</p>
+            <p>¿Estás seguro?</p>
             <div className="d-flex justify-content-end gap-2">
-              <button className="btn btn-secondary" onClick={() => setShowLogoutModal(false)}>Cancelar</button>
-              <button className="btn btn-danger" onClick={confirmLogout}>Cerrar sesión</button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Cancelar
+              </button>
+              <button className="btn btn-danger" onClick={confirmLogout}>
+                Cerrar sesión
+              </button>
             </div>
           </div>
         </div>
@@ -282,7 +428,7 @@ const LayoutHeader = () => {
 
       {showLoggingOut && (
         <div style={styles.loggingOut}>
-          <div className="spinner-border text-light me-2" role="status"></div>
+          <div className="spinner-border text-light me-2" role="status" />
           <span>Cerrando sesión...</span>
         </div>
       )}
@@ -293,36 +439,47 @@ const LayoutHeader = () => {
 const styles = {
   overlay: {
     position: "fixed",
-    top: 0, left: 0, width: "100%", height: "100%",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    zIndex: 1050,
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.5)",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    zIndex: 1050,
   },
   modal: {
-    backgroundColor: "#fff",
+    background: "#fff",
     padding: "2rem",
     borderRadius: "12px",
     boxShadow: "0 0 20px rgba(0,0,0,0.2)",
     width: "90%",
-    maxWidth: "400px"
+    maxWidth: "400px",
   },
   loggingOut: {
     position: "fixed",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    zIndex: 1051,
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    background: "rgba(0,0,0,0.85)",
     color: "white",
     padding: "1rem 2rem",
     borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    fontSize: "1rem"
-  }
+    display: "flex", alignItems: "center",
+    zIndex: 1051,
+  },
 };
 
 export default LayoutHeader;
+
+
+
+
+
+
+
+
+
+
 

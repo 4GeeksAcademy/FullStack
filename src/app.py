@@ -87,6 +87,34 @@ app.register_blueprint(payment_bp)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
+_db_initialized = False
+
+@app.before_request
+def inicializar_db_once():
+    global _db_initialized
+    if _db_initialized:
+        return
+
+    # --- tu código de inicialización original ---
+    user_id = 1              # Reemplaza con un ID de usuario válido
+    viajes_category_id = 1   # ID para 'Viajes'
+    top_category_id = 3      # ID para 'Top'
+    belleza_category_id = 2  # ID para 'Belleza'
+    gastronomia_category_id = 4  # ID para 'Gastronomía'
+    ofertas_category_id = 5  # ID para 'Ofertas'
+
+    inicializar_servicios(
+        user_id,
+        viajes_category_id,
+        top_category_id,
+        belleza_category_id,
+        gastronomia_category_id,
+        ofertas_category_id
+    )
+    # -----------------------------------------------
+
+    _db_initialized = True
+
 # generate sitemap with all your endpoints
 @app.route('/')
 def sitemap():
@@ -1600,27 +1628,6 @@ def obtener_politica_por_id(id):
 
     return jsonify(politica.serialize()), 200
 
-@app.before_request
-def inicializar_db():
-    # Aquí debes usar un ID de usuario válido y los IDs de las categorías correspondientes.
-    user_id = 1  # Debes reemplazar con un ID de usuario válido
-    viajes_category_id = 1  # Reemplaza con el ID válido para la categoría 'Viajes'
-    top_category_id = 3     # Reemplaza con el ID válido para la categoría 'Top'
-    belleza_category_id = 2 # Reemplaza con el ID válido para la categoría 'Belleza'
-    gastronomia_category_id = 4  # Reemplaza con el ID válido para la categoría 'Gastronomía'
-    ofertas_category_id = 5  # ID asignado a la nueva categoría 'Ofertas'
-
-    # Inicializa los servicios en la base de datos (ahora incluyendo Ofertas)
-    inicializar_servicios(
-        user_id,
-        viajes_category_id,
-        top_category_id,
-        belleza_category_id,
-        gastronomia_category_id,
-        ofertas_category_id
-    )
-
-
 
 # Ruta para obtener todas las categorías
 @app.route('/categorias', methods=['GET'])
@@ -2306,52 +2313,73 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-YOUR_DOMAIN = "https://effective-journey-r9646p9677v3pvrg-3000.app.github.dev"  # Cambia esta URL si es otro entorno
+YOUR_DOMAIN = "https://ominous-disco-q7pjgx55qrp9f95x4-3000.app.github.dev"
 
 @app.route('/create-checkout-session', methods=['POST'])
-@jwt_required()
+@jwt_required(optional=True)
 def create_checkout_session():
     try:
-        if not request.is_json:
-            return jsonify({'error': 'Missing or invalid JSON'}), 400
+        data             = request.get_json(force=True)
+        cart_items       = data.get("items", [])
+        total_price      = data.get("total", 0)
+        delivery_email   = data.get("deliveryEmail")
+        delivery_name    = data.get("deliveryName")
+        delivery_address = data.get("deliveryAddress")
 
-        data = request.get_json()
-        cart_items = data.get("items", [])
-        total_price = data.get("total", 0)
-
+        # Validaciones
         if not cart_items:
             return jsonify({'error': 'No items in cart'}), 400
+        if not (delivery_email and delivery_name and delivery_address):
+            return jsonify({'error': 'Faltan datos de entrega'}), 400
 
-        # Obtener el usuario desde el token
+        # 1) Obtener usuario autenticado (si lo hay)
         correo_usuario = get_jwt_identity()
-        usuario = User.query.filter_by(correo=correo_usuario).first()
-        if not usuario:
-            return jsonify({'error': 'Usuario no encontrado'}), 404
+        usuario = None
+        if correo_usuario:
+            usuario = User.query.filter_by(correo=correo_usuario).first()
+            if not usuario:
+                return jsonify({'error': 'Usuario no encontrado'}), 404
+        else:
+            # 2) Usuario invitado: buscar por correo de entrega
+            usuario = User.query.filter_by(correo=delivery_email).first()
+            if not usuario:
+                # 3) Si no existe, creamos un usuario “guest”
+                usuario = User(
+                    nombre='Invitado',
+                    apellido='',
+                    correo=delivery_email,
+                    is_guest=True   # Debes tener este campo Boolean en User
+                )
+                db.session.add(usuario)
+                db.session.flush()  # Para generar usuario.id
 
+        # 4) Preparar line_items para Stripe
         line_items = []
         for item in cart_items:
-            if not item.get('title') or not item.get('discountPrice') or not item.get('quantity'):
-                return jsonify({'error': 'Invalid item data'}), 400
-
             line_items.append({
                 'price_data': {
                     'currency': 'usd',
-                    'product_data': {
-                        'name': item['title'],
-                    },
+                    'product_data': {'name': item['title']},
                     'unit_amount': int(item['discountPrice'] * 100),
                 },
                 'quantity': item['quantity'],
             })
 
+        # 5) Crear sesión embebida en Stripe
         session = stripe.checkout.Session.create(
             line_items=line_items,
             mode='payment',
             ui_mode='embedded',
-            return_url=f"https://effective-journey-r9646p9677v3pvrg-3000.app.github.dev/return?session_id={{CHECKOUT_SESSION_ID}}"
+            customer_email=delivery_email,
+            metadata={
+                'delivery_name': delivery_name,
+                'delivery_address': delivery_address,
+                'user_id': usuario.id
+            },
+            return_url=f"{YOUR_DOMAIN}/return/?session_id={{CHECKOUT_SESSION_ID}}"
         )
 
-        # Crear el Payment
+        # 6) Persistir Payment usando siempre usuario.id
         new_payment = Payment(
             currency='usd',
             amount=int(total_price * 100),
@@ -2359,35 +2387,34 @@ def create_checkout_session():
             paypal_payment_id=session.id,
             user_id=usuario.id,
             estado='pendiente',
+            delivery_name=delivery_name,
+            delivery_address=delivery_address,
+            delivery_email=delivery_email
         )
         db.session.add(new_payment)
-        db.session.flush()  # Para obtener el ID antes de hacer commit
+        db.session.flush()
 
-        # Crear los items
+        # 7) Guardar items del pago
         for item in cart_items:
-            payment_item = PaymentItem(
+            db.session.add(PaymentItem(
                 title=item['title'],
                 unit_price=int(item['discountPrice'] * 100),
                 quantity=item['quantity'],
                 payment_id=new_payment.id,
-                image_url=item['image'],
+                image_url=item.get('image', ""),
                 servicio_id=item.get('user_id')
-            )
-            db.session.add(payment_item)
+            ))
 
         db.session.commit()
 
         return jsonify({
-            'sessionId': session.id,
+            'sessionId':     session.id,
             'clientSecret': session.client_secret
         })
 
     except Exception as e:
-        print("Error creating session:", e)
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-
-
 
 
 @app.route('/session-status', methods=['GET'])
@@ -2595,7 +2622,7 @@ def forgot_password():
         db.session.commit()
 
         # Construye el enlace de reset
-        frontend_url = os.getenv('FRONTEND_URL', 'https://effective-journey-r9646p9677v3pvrg-3000.app.github.dev')
+        frontend_url = os.getenv('FRONTEND_URL', 'https://ominous-disco-q7pjgx55qrp9f95x4-3000.app.github.dev')
         reset_link = f"{frontend_url}/reset-password?token={token}"
 
         # Prepara y envía el email
@@ -2665,6 +2692,7 @@ def online_users():
     cutoff = datetime.utcnow() - ONLINE_THRESHOLD
     count = sum(1 for ts in online_users_last_seen.values() if ts > cutoff)
     return jsonify({"id": "onlineUsers", "count": count}), 200
+
 
 @app.route('/orders', methods=['GET'])
 def list_payments():

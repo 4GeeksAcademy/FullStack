@@ -79,6 +79,7 @@
     "@stripe/stripe-js": "^7.3.0",
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.11.3",
+    "jwt-decode": "^4.0.0",
     "prop-types": "^15.6.1",
     "ra-data-simple-rest": "^5.8.0",
     "react": "^18.3.1",

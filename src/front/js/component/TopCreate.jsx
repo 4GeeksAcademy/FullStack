@@ -9,22 +9,19 @@ const TopCreate = () => {
     const [userChoice, setUserChoice] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchUsuarios = async () => {
-            try {
-                await actions.getUsersCombo();
-                const usuarios = store.usersCombo;
-                setUserChoice(usuarios)
-                setLoading(false)
-            }
-            catch (error) {
-                console.error('Error al obtener los usuarios', error);
-                setLoading(false)
-            }
-        }
+    // 1) Solo al montar: dispara la carga de usuarios
+  useEffect(() => {
+    actions.getUsersCombo()
+      .catch(err => console.error('Error al obtener usuarios para combo', err));
+  }, [actions]);
 
-        fetchUsuarios();
-    }, [actions, store]);
+  // 2) Cuando cambie store.usersCombo, actualiza tu estado local
+  useEffect(() => {
+    if (store.usersCombo && store.usersCombo.length > 0) {
+      setUserChoice(store.usersCombo);
+      setLoading(false);
+    }
+  }, [store.usersCombo]);
 
     return (
         <Create title="Crear Oferta">

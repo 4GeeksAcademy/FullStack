@@ -54,8 +54,8 @@ const FeaturedDeals = ({ onViewService = () => {} }) => {
       <div className="col-12 col-sm-10 col-md-9 col-lg-9 mx-auto px-3 px-sm-4">
         <h2 className="mb-4 fw-bold fs-4">Ofertas destacadas</h2>
         <div className="row g-4">
-          {deals.map((deal) => (
-            <div className="col-12 col-md-6 col-lg-3" key={deal.id}>
+          {deals.map((deal, idx) => (
+            <div className="col-12 col-md-6 col-lg-3" key={`${deal.id}-${idx}`}>
               <CategoryCard 
                 offer={deal} 
                 onViewService={() => handleViewOffer(deal)}

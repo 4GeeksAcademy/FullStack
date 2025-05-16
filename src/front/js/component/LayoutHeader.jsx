@@ -330,7 +330,7 @@ const LayoutHeader = () => {
                         <li>
                           <button
                             className="dropdown-item"
-                            onClick={() => handleProtectedNav("/admin/users")}
+                            onClick={() => handleProtectedNav("/admin")}
                           >
                             Panel Admin
                           </button>

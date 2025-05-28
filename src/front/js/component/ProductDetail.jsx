@@ -1,9 +1,23 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom"; 
-import { Button, Container, Row, Col, Card, Spinner, InputGroup, FormControl } from "react-bootstrap";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  Button,
+  Container,
+  Row,
+  Col,
+  Spinner,
+  FormControl,
+  Image,
+  Badge,
+  Accordion
+} from "react-bootstrap";
+import { BsChevronLeft, BsChevronRight, BsWindows, BsController } from "react-icons/bs";
+import { FaStar, FaRegStar } from "react-icons/fa";
 import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
+import FAQSection from "./FAQSection.jsx"
+import SpecialOffersCarousel from "./SpecialOffersCarousel.jsx"
 
 const ProductDetail = () => {
   const location = useLocation();
@@ -16,17 +30,19 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState(locationCategory);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
 
-  const defaultImage = "https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774=";
+  const defaultImage =
+    "https://images.unsplash.com/photo-1646166624994-9bd6876e6520?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3";
 
   const determineCategory = (offerId) => {
-    const numId = parseInt(offerId, 10);
-    if (store.serviciosViajes.some(o => o.id === numId)) return 'viajes';
-    if (store.serviciosBelleza.some(o => o.id === numId)) return 'belleza';
-    if (store.serviciosGastronomia.some(o => o.id === numId)) return 'gastronomia';
-    if (store.serviciosTop.some(o => o.id === numId)) return 'top';
-    if (store.serviciosOfertas.some(o => o.id === numId)) return 'ofertas';
-    return '';
+    const num = parseInt(offerId, 10);
+    if (store.serviciosViajes.some(o => o.id === num)) return "viajes";
+    if (store.serviciosBelleza.some(o => o.id === num)) return "belleza";
+    if (store.serviciosGastronomia.some(o => o.id === num)) return "gastronomia";
+    if (store.serviciosTop.some(o => o.id === num)) return "top";
+    if (store.serviciosOfertas.some(o => o.id === num)) return "ofertas";
+    return "";
   };
 
   useEffect(() => {
@@ -34,272 +50,235 @@ const ProductDetail = () => {
       setLoading(true);
       const cat = locationCategory || determineCategory(id);
       setCurrentCategory(cat);
-
-      switch(cat) {
-        case 'viajes':
+      switch (cat) {
+        case "viajes":
           if (!store.serviciosViajes.length) await actions.cargarServiciosViajes();
           break;
-        case 'belleza':
+        case "belleza":
           if (!store.serviciosBelleza.length) await actions.cargarServiciosBelleza();
           break;
-        case 'gastronomia':
+        case "gastronomia":
           if (!store.serviciosGastronomia.length) await actions.cargarServiciosGastronomia();
           break;
-        case 'top':
+        case "top":
           if (!store.serviciosTop.length) await actions.cargarServiciosTop();
           break;
-        case 'ofertas':
+        case "ofertas":
           if (!store.serviciosOfertas.length) await actions.cargarServiciosOfertas();
           break;
       }
-
       setLoading(false);
     })();
   }, [id, locationCategory, store, actions]);
 
   useEffect(() => {
     if (loading) return;
-    
+    let data = null;
     if (locationOffer) {
-      // Aseguramos que la imagen tenga un valor
-      const offerWithImage = {
-        ...locationOffer,
-        image: locationOffer.image || locationOffer.imagen || defaultImage
-      };
-      // Procesamos los precios igual que en CategoryCard
-      const processedOffer = processOfferPrices(JSON.parse(JSON.stringify(offerWithImage)));
-      setCompleteOffer(processedOffer);
-      return;
+      data = { ...locationOffer };
+    } else {
+      const num = parseInt(id, 10);
+      const key = `servicios${currentCategory.charAt(0).toUpperCase()}${currentCategory.slice(1)}`;
+      data = (store[key] || []).find(o => o.id === num) || null;
     }
-    
-    const numId = parseInt(id, 10);
-    const list = store[`servicios${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}`] || [];
-    const foundOffer = list.find(o => o.id === numId) || null;
-    
-    if (foundOffer) {
-      // Procesamos la oferta con la misma lógica que en CategoryCard
-      const processedOffer = processOfferPrices(JSON.parse(JSON.stringify(foundOffer)));
-      processedOffer.image = processedOffer.image || processedOffer.imagen || defaultImage;
-      setCompleteOffer(processedOffer);
+    if (data) {
+      data.image = data.image || data.imagen || defaultImage;
+      const proc = processOfferPrices(data);
+      setCompleteOffer(proc);
+      setSelectedImage(0);
     } else {
       setCompleteOffer(null);
     }
   }, [loading, currentCategory, id, locationOffer, store]);
 
-  // Función idéntica a la usada en CategoryCard para procesar precios
-  const processOfferPrices = (offerCopy) => {
-    const {
-      price,
-      precio,
-      discountPrice,
-      originalPrice,
-      category_id,
-    } = offerCopy;
-
-    const isBackendService = category_id !== undefined || 
-                          (price !== undefined && discountPrice !== undefined && 
-                           Number(price) < Number(discountPrice));
-
-    let actualPrice = 0;
-    let actualDiscountPrice = 0;
-
-    if (isBackendService) {
-      // Para servicios del backend, donde price y discountPrice están invertidos
-      actualPrice = Number(discountPrice) || 0;
-      actualDiscountPrice = Number(price) || 0;
-    } else {
-      // Para servicios creados por usuarios
-      if (price !== undefined && discountPrice !== undefined) {
-        actualPrice = Number(price) || 0;
-        actualDiscountPrice = Number(discountPrice) || 0;
-      } else if (originalPrice !== undefined && discountPrice !== undefined) {
-        actualPrice = Number(originalPrice) || 0;
-        actualDiscountPrice = Number(discountPrice) || 0;
-      } else if (price !== undefined) {
-        actualPrice = Number(price) || 0;
-        actualDiscountPrice = Math.round(actualPrice * 0.7); // 30% de descuento
-      } else if (precio !== undefined) {
-        actualPrice = Number(precio) || 0;
-        actualDiscountPrice = Math.round(actualPrice * 0.7);
-      }
-    }
-
-    // Valores por defecto si no hay precios válidos
-    if (actualPrice <= 0) actualPrice = 1000;
-    if (actualDiscountPrice <= 0) actualDiscountPrice = Math.round(actualPrice * 0.7);
-
-    // Asegurar que el precio con descuento sea menor que el original
-    if (actualDiscountPrice >= actualPrice && !isBackendService) {
-      actualDiscountPrice = Math.round(actualPrice * 0.7);
-    }
-
-    // Calcular el porcentaje de descuento
-    let finalDiscount = Math.round(((actualPrice - actualDiscountPrice) / actualPrice) * 100);
-    if (finalDiscount < 5) finalDiscount = 5;
-    if (finalDiscount > 80) finalDiscount = 80;
-
-    // Actualizar el objeto offer con los precios procesados
-    return {
-      ...offerCopy,
-      originalPrice: actualPrice,
-      discountPrice: actualDiscountPrice,
-      price: actualDiscountPrice, // Para consistencia
-      pctOff: finalDiscount
-    };
+  const processOfferPrices = (offer) => {
+    let { price, precio, discountPrice, originalPrice, category_id, images = [] } = offer;
+    const isBE = category_id !== undefined;
+    let p = isBE ? Number(discountPrice) : Number(price ?? originalPrice ?? precio);
+    let d = isBE ? Number(price) : Number(discountPrice ?? Math.round(p * 0.7));
+    if (!p || p <= 0) p = 1000;
+    if (!d || d <= 0 || d >= p) d = Math.round(p * 0.7);
+    let pct = Math.round(((p - d) / p) * 100);
+    pct = Math.max(5, Math.min(80, pct));
+    const imgs = images.length >= 4
+      ? images.slice(0, 4)
+      : [offer.image, ...images, defaultImage, defaultImage].slice(0, 4);
+    return { ...offer, originalPrice: p, discountPrice: d, pctOff: pct, images: imgs, stock: offer.stock ?? 0 };
   };
 
-  if (loading) {
-    return (
-      <Container className="my-5 text-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </Spinner>
-      </Container>
-    );
-  }
-  
-  if (!completeOffer) {
-    return (
-      <Container className="my-5">
-        <div className="alert alert-warning">
-          No se encontraron detalles del producto en "{currentCategory}"
-        </div>
-      </Container>
-    );
-  }
+  if (loading) return <Container className="my-5 text-center"><Spinner animation="border" /></Container>;
+  if (!completeOffer) return (
+    <Container className="my-5 text-center">
+      <div className="alert alert-warning">Producto no encontrado</div>
+      <Button variant="secondary" onClick={() => navigate("/")}>Volver</Button>
+    </Container>
+  );
 
-  const display = completeOffer;
-  const title = display.title || display.nombre || "Sin título";
-  const image = display.image || display.imagen || defaultImage;
-  const desc = display.descripcion || display.description || "No hay descripción disponible.";
+  const {
+    images,
+    discountPrice,
+    originalPrice,
+    pctOff,
+    detailImage1,
+    detailText1,
+    detailImage2,
+    detailText2,
+    description2,
+    description3,
+    stock
+  } = completeOffer;
+  const title = completeOffer.title || completeOffer.nombre || "Sin título";
+  const desc = completeOffer.descripcion || completeOffer.description || "No hay descripción.";
+  const title2 = completeOffer.detailTitle1 || "Título 2";
+  const title3 = completeOffer.detailTitle2 || "Título 3";
 
-  // Precios procesados (aseguramos que no sean cero)
-  const original = display.originalPrice > 0 ? display.originalPrice : 1000;
-  const discountPrice = display.discountPrice > 0 ? display.discountPrice : Math.round(original * 0.7);
-  const pctOff = display.pctOff || Math.round(((original - discountPrice) / original) * 100);
-
-  const addToCart = () => {
-    actions.addToCart({
-      ...display,
-      quantity,
-      category: currentCategory
-    });
-  };
-
-  const buyNow = () => {
-    navigate("/checkout", {
-      state: {
-        item: {
-          ...display,
-          quantity,
-          category: currentCategory
-        }
-      }
-    });
-  };
-
-  const renderStars = () =>
-    Array.from({ length: 5 }, (_, i) => (
-      <i
-        key={i}
-        className={`bi ${i < (display.rating||0) ? "bi-star-fill text-warning" : "bi-star text-secondary"} me-1`}
-      />
-    ));
+  const prevImage = () => setSelectedImage(i => (i - 1 + images.length) % images.length);
+  const nextImage = () => setSelectedImage(i => (i + 1) % images.length);
+  const addToCart = () => actions.addToCart({ ...completeOffer, quantity, category: currentCategory });
+  const buyNow = () => navigate("/checkout", { state: { item: { ...completeOffer, quantity, category: currentCategory } } });
 
   return (
     <>
       <LayoutHeader />
       <Container className="my-5">
-        <div className="d-flex justify-content-start mb-4">
-          <button 
-            className="btn btn-outline-secondary" 
-            onClick={() => navigate('/')}
-          >
-            <i className="bi bi-house-door me-2"></i>Volver al inicio
-          </button>
-        </div>
-        
-        <Row>
-          <Col md={6} className="mb-4">
-            <Card>
-              <Card.Img
-                variant="top"
-                src={image}
-                style={{ objectFit: "cover", maxHeight: 500 }}
-                onError={e => { e.target.src = defaultImage; }}
-              />
-            </Card>
+        <Row className="mb-4">
+          <Col md={6} className="position-relative">
+            <Image
+              src={images[selectedImage]}
+              rounded fluid style={{ maxHeight: "500px", objectFit: "cover" }} />
+            <Button variant="light" className="position-absolute top-50 start-0 translate-middle-y" onClick={prevImage} style={{ zIndex: 2 }}>
+              <BsChevronLeft size={28} />
+            </Button>
+            <Button variant="light" className="position-absolute top-50 end-0 translate-middle-y" onClick={nextImage} style={{ zIndex: 2 }}>
+              <BsChevronRight size={28} />
+            </Button>
+            <Row className="mt-3 g-0 d-none d-md-flex">
+              {images.slice(1, 4).map((img, i) => (
+                <Col xs={4} key={i} className="px-1">
+                  <Image src={img} rounded fluid onClick={() => setSelectedImage(i + 1)} className={selectedImage===i+1? 'border border-primary':''} style={{ cursor: 'pointer', height: '100px', objectFit: 'cover' }} />
+                </Col>
+              ))}
+            </Row>
           </Col>
-
-          <Col md={6}>
-            <h2 className="mb-3" style={{ wordWrap: 'break-word' }}>{title}</h2>
-            <div className="mb-3 d-flex align-items-center">
-              {renderStars()}
-              <span className="ms-2 text-muted">({display.reviews||0} reseñas)</span>
+          <Col md={6} className="d-flex flex-column justify-content-center">
+            <h1 className="product-title">{title}</h1>
+            <div className="d-flex align-items-center mb-3">
+      {[...Array(5)].map((_, i) =>
+        i < Math.round(completeOffer.rating) ? (
+          <FaStar key={i} className="text-warning me-1" />
+        ) : (
+          <FaRegStar key={i} className="text-warning me-1" />
+        )
+      )}
+      <span>
+        {completeOffer.rating.toFixed(2)} ({completeOffer.reviews}{" "}
+        reseñas)
+      </span>
+    </div>
+            <div className="mb-3">
+              <div><BsWindows className="me-2"/>Para Windows, MacOS</div>
+              <div><BsController className="me-2"/>Más de 20,000 juegos</div>
+              <div><BsController className="me-2"/>+50 consolas modernas</div>
+              <div><BsController className="me-2"/>Garantía de 30 días</div>
             </div>
-
-            <div className="mb-4 d-flex align-items-center">
-              {/* Precio con descuento (rojo) - igual que en CategoryCard */}
-              <h3 className="text-danger fw-bold mb-0">${discountPrice.toFixed(2)}</h3>
-              
-              {/* Precio original tachado - solo si hay descuento */}
-              {discountPrice < original && (
-                <span className="ms-3 text-muted text-decoration-line-through fs-5">
-                  ${original.toFixed(2)}
-                </span>
-              )}
-              
-              {/* Badge de descuento - solo si hay descuento */}
-              {discountPrice < original && (
-                <span className="ms-3 badge bg-danger">{pctOff}% OFF</span>
-              )}
+            <div className="d-flex align-items-center mb-4">
+              <h2 className="me-3">€{discountPrice.toFixed(2)}</h2>
+              <del className="text-muted me-3">€{originalPrice.toFixed(2)}</del>
+              <Badge bg="success">-{pctOff}%OFF</Badge>
             </div>
-            
-            <p className="text-success mb-4">
-              {display.buyers||0} personas ya han comprado esta oferta
-            </p>
-
-            <h5>Descripción:</h5>
-            <p className="text-muted" style={{ wordWrap: 'break-word' }}>{desc}</p>
-
-            {display.city && (
-              <div className="mb-4">
-                <h5 className="mb-2">Ubicación:</h5>
-                <p className="text-muted">{display.city}</p>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <h5>Cantidad:</h5>
-              <InputGroup style={{ maxWidth: 120 }}>
-                <Button variant="outline-secondary" onClick={() => setQuantity(q => Math.max(1, q - 1))}>−</Button>
-                <FormControl
-                  type="number"
-                  value={quantity}
-                  min={1}
-                  onChange={e => {
-                    const v = parseInt(e.target.value, 10);
-                    if (!isNaN(v) && v > 0) setQuantity(v);
-                  }}
-                />
-                <Button variant="outline-secondary" onClick={() => setQuantity(q => q + 1)}>+</Button>
-              </InputGroup>
+            <div className="d-flex align-items-center mb-4">
+              <Button variant="outline-secondary" onClick={()=>setQuantity(q=>Math.max(1,q-1))}>–</Button>
+              <FormControl readOnly value={quantity} className="text-center mx-2" style={{width:'60px'}} />
+              <Button variant="outline-secondary" onClick={()=>setQuantity(q=>q+1)}>+</Button>
+              <small className="text-muted ms-3"></small>
             </div>
-
-            <div className="d-grid gap-2">
-              <Button variant="danger" size="lg" onClick={addToCart}>
-                <i className="bi bi-cart-plus me-2" /> Agregar al carrito
-              </Button>
-              <Button variant="success" size="lg" onClick={buyNow}>
-                Comprar ahora
-              </Button>
+            <div className="d-grid gap-2 mb-3">
+              <Button variant="danger" size="lg" onClick={addToCart}>Añadir al carrito</Button>
+              <Button variant="success" size="lg" onClick={buyNow}>Comprar ahora</Button>
             </div>
+            <Accordion className="mb-4">
+              <Accordion.Item eventKey="0">
+                <Accordion.Header>Garantía de 30 días</Accordion.Header>
+                <Accordion.Body>Garantía de devolución completa sin preguntas.</Accordion.Body>
+              </Accordion.Item>
+              <Accordion.Item eventKey="1">
+                <Accordion.Header>Envío rápido gratuito</Accordion.Header>
+                <Accordion.Body>Envío rápido gratuito a todo el mundo.</Accordion.Body>
+              </Accordion.Item>
+              <Accordion.Item eventKey="2">
+                <Accordion.Header>Qué recibirás</Accordion.Header>
+                <Accordion.Body>Consola PlayZone™, controladores y cableado completo.</Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
           </Col>
         </Row>
-      </Container>
-      <Footer />
+
+        {/* Sección ondulada */}
+          <div style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+            <h4>Descripción</h4>
+            <p>{desc}</p>
+          </div>
+
+{/* Descripciones alternas */}
+<div
+  style={{
+    border: "1px solid #000",
+    borderRadius: "8px",
+    backgroundColor: "#f8f8f8",
+    overflow: "hidden",
+    marginBottom: "2rem"
+  }}
+>
+  <Row className="gx-0 align-items-center" style={{ borderBottom: "1px solid #000" }}>
+    {/* Imagen izquierda */}
+    <Col md={6} style={{ padding: "2rem" }}>
+      <Image
+        src={detailImage1 || defaultImage}
+        fluid
+        style={{ width: "100%", height: "auto", display: "block" }}
+      />
+    </Col>
+    {/* Texto derecha */}
+    <Col
+      md={6}
+      className="d-flex flex-column justify-content-center"
+      style={{ padding: "2rem", minHeight: "300px" }}
+    >
+      <h5>{title2}</h5>
+      <p>{description2 || "Descripción 2"}</p>
+    </Col>
+  </Row>
+
+  <Row className="gx-0 align-items-center">
+    {/* Texto izquierda */}
+    <Col
+      md={6}
+      className="d-flex flex-column justify-content-center"
+      style={{ padding: "2rem", minHeight: "300px" }}
+    >
+      <h5>{title3}</h5>
+      <p>{description3 || "Descripción 3"}</p>
+    </Col>
+    {/* Imagen derecha */}
+    <Col md={6} style={{ padding: "2rem" }}>
+      <Image
+        src={detailImage2 || defaultImage}
+        fluid
+        style={{ width: "100%", height: "auto", display: "block" }}
+      />
+    </Col>     
+  </Row>
+</div>
+    <FAQSection/>
+    
+   
+    </Container>
+    <SpecialOffersCarousel/>
+     <Footer />
     </>
   );
 };
 
 export default ProductDetail;
+
+

@@ -7,11 +7,33 @@ const RelatedContent = () => {
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
 
+  const getCardsPerPage = () => {
+    const w = window.innerWidth;
+    if (w >= 992) return 4;   // escritorio
+    if (w >= 768) return 2;   // tablet
+    return 1;                  // móvil
+  };
+
+  const [cardsPerPage, setCardsPerPage] = useState(getCardsPerPage());
   const [currentIndices, setCurrentIndices] = useState({
     Belleza: 0,
     gastronomia: 0,
     viajes: 0,
   });
+
+  useEffect(() => {
+    const handleResize = () => setCardsPerPage(getCardsPerPage());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (!store.serviciosViajes.length) await actions.cargarServiciosViajes();
+      if (!store.serviciosGastronomia.length) await actions.cargarServiciosGastronomia();
+      if (!store.serviciosBelleza.length) await actions.cargarServiciosBelleza();
+    })();
+  }, []);
 
   const categories = [
     { id: "Belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
@@ -19,63 +41,41 @@ const RelatedContent = () => {
     { id: "viajes", name: "Viajes", deals: store.serviciosViajes || [] },
   ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (store.serviciosViajes.length === 0) await actions.cargarServiciosViajes();
-      if (store.serviciosGastronomia.length === 0) await actions.cargarServiciosGastronomia();
-      if (store.serviciosBelleza.length === 0) await actions.cargarServiciosBelleza();
-    };
-
-    fetchData();
-  }, []);
-
   const handleNavigate = (deal, categoryId) => {
     const offer = {
-      id: deal.id,
-      title: deal.title || deal.nombre || "Sin título",
-      image: deal.image || deal.imagen || "https://via.placeholder.com/300x200?text=Sin+imagen",
-      rating: deal.rating || 4,
-      reviews: deal.reviews || 20,
-      price: deal.price || deal.precio || 0,
-      discountPrice: deal.discountPrice || null,
-      originalPrice: deal.originalPrice || null,
-      buyers: deal.buyers || 0,
-      descripcion: deal.descripcion || "",
-      city: deal.city || "",
-      category: categoryId // Añadimos explícitamente la categoría
+      ...deal,
+      title: deal.title || deal.nombre,
+      image: deal.image || deal.imagen,
+      price: deal.price || deal.precio,
+      rating: deal.rating,
+      reviews: deal.reviews,
+      category: categoryId
     };
-
-    navigate(`/product-detail`, {
-      state: { 
-        offer: offer,
-        category: categoryId // Pasamos la categoría como dato separado también
-      }
-    });
+    navigate(`/product-detail`, { state: { offer, category: categoryId } });
   };
 
   const scroll = (categoryId, direction, e) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentIndices(prev => ({
-      ...prev,
-      [categoryId]: direction === "left" 
-        ? Math.max(prev[categoryId] - 4, 0)
-        : Math.min(prev[categoryId] + 4, categories.find(c => c.id === categoryId).deals.length - 4)
-    }));
+    setCurrentIndices(prev => {
+      const len = categories.find(c => c.id === categoryId).deals.length;
+      const idx = prev[categoryId];
+      const delta = direction === "left" ? -cardsPerPage : cardsPerPage;
+      const next = Math.min(Math.max(idx + delta, 0), Math.max(len - cardsPerPage, 0));
+      return { ...prev, [categoryId]: next };
+    });
   };
 
-  const hasAnyData = categories.some(cat => cat.deals.length > 0);
+  const hasAnyData = categories.some(c => c.deals.length > 0);
 
   return (
     <section className="col-12 col-sm-10 col-md-9 col-lg-9 mx-auto px-3 px-sm-4">
-      <div>
-        <h2 className="fs-3 fw-bold mb-4">También te puede interesar</h2>
+      <h2 className="fs-3 fw-bold mb-4">También te puede interesar</h2>
 
-        {hasAnyData ? (
-          categories.map((category) => {
+      {hasAnyData
+        ? categories.map(category => {
             const currentIndex = currentIndices[category.id] || 0;
-            const dealsToShow = category.deals.slice(currentIndex, currentIndex + 4);
-
+            const visibleDeals = category.deals.slice(currentIndex, currentIndex + cardsPerPage);
             return (
               <div key={category.id} className="mb-5">
                 <div className="d-flex justify-content-between align-items-center mb-3">
@@ -89,17 +89,22 @@ const RelatedContent = () => {
                 </div>
 
                 <div className="position-relative">
+                  {/* Flecha izquierda */}
                   <button
-                    className="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y z-1"
-                    onClick={(e) => scroll(category.id, "left", e)}
+                    className="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y"
+                    style={{ zIndex: 2 }}
+                    onClick={e => scroll(category.id, "left", e)}
                     disabled={currentIndex === 0}
                   >
                     &#8592;
                   </button>
 
                   <div className="row gx-3">
-                    {dealsToShow.map((deal) => (
-                      <div key={`${category.id}-${deal.id}`} className="col-12 col-sm-6 col-md-3">
+                    {visibleDeals.map(deal => (
+                      <div
+                        key={`${category.id}-${deal.id}`}
+                        className="col-12 col-md-6 col-lg-3"
+                      >
                         <CategoryCard
                           offer={{
                             ...deal,
@@ -113,10 +118,12 @@ const RelatedContent = () => {
                     ))}
                   </div>
 
+                  {/* Flecha derecha */}
                   <button
-                    className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y z-1"
-                    onClick={(e) => scroll(category.id, "right", e)}
-                    disabled={currentIndex + 4 >= category.deals.length}
+                    className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y"
+                    style={{ zIndex: 2 }}
+                    onClick={e => scroll(category.id, "right", e)}
+                    disabled={currentIndex + cardsPerPage >= category.deals.length}
                   >
                     &#8594;
                   </button>
@@ -124,12 +131,11 @@ const RelatedContent = () => {
               </div>
             );
           })
-        ) : (
-          <p>Cargando información...</p>
-        )}
-      </div>
+        : <p>Cargando información...</p>
+      }
     </section>
   );
 };
 
 export default RelatedContent;
+

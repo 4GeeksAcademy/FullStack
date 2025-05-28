@@ -176,25 +176,9 @@ const LayoutHeader = () => {
                   <li>
                     <button
                       className="dropdown-item"
-                      onClick={() => handleProtectedNav("/crear-servicio")}
-                    >
-                      Crear Servicio
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      className="dropdown-item"
                       onClick={() => handleProtectedNav("/mis-compras")}
                     >
                       Mis Compras
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      className="dropdown-item"
-                      onClick={() => handleProtectedNav("/mis-reservas")}
-                    >
-                      Mis Reservas
                     </button>
                   </li>
                   {user.isAdmin && (
@@ -207,6 +191,14 @@ const LayoutHeader = () => {
                           Panel Admin
                         </button>
                       </li>
+                      <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => handleProtectedNav("/crear-servicio")}
+                    >
+                      Crear Servicio
+                    </button>
+                  </li>
                       <li>
                         <button
                           className="dropdown-item"
@@ -304,25 +296,9 @@ const LayoutHeader = () => {
                     <li>
                       <button
                         className="dropdown-item"
-                        onClick={() => handleProtectedNav("/crear-servicio")}
-                      >
-                        Crear Servicio
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
                         onClick={() => handleProtectedNav("/mis-compras")}
                       >
                         Mis Compras
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => handleProtectedNav("/mis-reservas")}
-                      >
-                        Mis Reservas
                       </button>
                     </li>
                     {user.isAdmin && (
@@ -335,6 +311,14 @@ const LayoutHeader = () => {
                             Panel Admin
                           </button>
                         </li>
+                        <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => handleProtectedNav("/crear-servicio")}
+                    >
+                      Crear Servicio
+                    </button>
+                  </li>
                         <li>
                           <button
                             className="dropdown-item"

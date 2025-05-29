@@ -172,6 +172,11 @@ class Ofertas(db.Model):
     title = db.Column(db.String(255))
     descripcion = db.Column(db.String(500))
     image = db.Column(db.String(255))
+    # Nuevos campos de imágenes adicionales
+    image2 = db.Column(db.String(255))
+    image3 = db.Column(db.String(255))
+    image4 = db.Column(db.String(255))
+    image5 = db.Column(db.String(255))
     city = db.Column(db.String(100))
     category = db.Column(db.String(100))
     discountPrice = db.Column(db.Float)
@@ -179,12 +184,17 @@ class Ofertas(db.Model):
     rating = db.Column(db.Float)
     reviews = db.Column(db.Integer)
     buyers = db.Column(db.Integer)
+    # Nuevos campos de texto adicionales
+    title2 = db.Column(db.String(255))
+    descripcion2 = db.Column(db.String(500))
+    title3 = db.Column(db.String(255))
+    descripcion3 = db.Column(db.String(500))
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
     user = db.relationship('User', back_populates='ofertas_list')
     category = db.relationship('Category', back_populates='ofertas_category')
-
 
     def serialize(self):
         return {
@@ -192,15 +202,24 @@ class Ofertas(db.Model):
             "title": self.title,
             "descripcion": self.descripcion,
             "image": self.image,
+            "image2": self.image2,
+            "image3": self.image3,
+            "image4": self.image4,
+            "image5": self.image5,
             "city": self.city,
             "discountPrice": self.discountPrice,
             "price": self.price,
             "rating": self.rating,
             "reviews": self.reviews,
             "buyers": self.buyers,
+            "title2": self.title2,
+            "descripcion2": self.descripcion2,
+            "title3": self.title3,
+            "descripcion3": self.descripcion3,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
+
 
 class Viajes(db.Model):
     __tablename__ = 'viajes'
@@ -209,6 +228,10 @@ class Viajes(db.Model):
     title = db.Column(db.String(255))
     descripcion = db.Column(db.String(500))
     image = db.Column(db.String(255))
+    image2 = db.Column(db.String(255))
+    image3 = db.Column(db.String(255))
+    image4 = db.Column(db.String(255))
+    image5 = db.Column(db.String(255))
     city = db.Column(db.String(100))
     category = db.Column(db.String(100))
     discountPrice = db.Column(db.Float)
@@ -216,6 +239,11 @@ class Viajes(db.Model):
     rating = db.Column(db.Float)
     reviews = db.Column(db.Integer)
     buyers = db.Column(db.Integer)
+    title2 = db.Column(db.String(255))
+    descripcion2 = db.Column(db.String(500))
+    title3 = db.Column(db.String(255))
+    descripcion3 = db.Column(db.String(500))
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
@@ -228,15 +256,24 @@ class Viajes(db.Model):
             "title": self.title,
             "descripcion": self.descripcion,
             "image": self.image,
+            "image2": self.image2,
+            "image3": self.image3,
+            "image4": self.image4,
+            "image5": self.image5,
             "city": self.city,
             "discountPrice": self.discountPrice,
             "price": self.price,
             "rating": self.rating,
             "reviews": self.reviews,
             "buyers": self.buyers,
+            "title2": self.title2,
+            "descripcion2": self.descripcion2,
+            "title3": self.title3,
+            "descripcion3": self.descripcion3,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
+
 
 class Top(db.Model):
     __tablename__ = 'top'
@@ -245,6 +282,10 @@ class Top(db.Model):
     title = db.Column(db.String(255))
     descripcion = db.Column(db.String(500))
     image = db.Column(db.String(255))
+    image2 = db.Column(db.String(255))
+    image3 = db.Column(db.String(255))
+    image4 = db.Column(db.String(255))
+    image5 = db.Column(db.String(255))
     city = db.Column(db.String(100))
     category = db.Column(db.String(100))
     discountPrice = db.Column(db.Float)
@@ -252,6 +293,11 @@ class Top(db.Model):
     rating = db.Column(db.Float)
     reviews = db.Column(db.Integer)
     buyers = db.Column(db.Integer)
+    title2 = db.Column(db.String(255))
+    descripcion2 = db.Column(db.String(500))
+    title3 = db.Column(db.String(255))
+    descripcion3 = db.Column(db.String(500))
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
@@ -264,12 +310,20 @@ class Top(db.Model):
             "title": self.title,
             "descripcion": self.descripcion,
             "image": self.image,
+            "image2": self.image2,
+            "image3": self.image3,
+            "image4": self.image4,
+            "image5": self.image5,
             "city": self.city,
             "discountPrice": self.discountPrice,
             "price": self.price,
             "rating": self.rating,
             "reviews": self.reviews,
             "buyers": self.buyers,
+            "title2": self.title2,
+            "descripcion2": self.descripcion2,
+            "title3": self.title3,
+            "descripcion3": self.descripcion3,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
@@ -282,6 +336,10 @@ class Belleza(db.Model):
     title = db.Column(db.String(255))
     descripcion = db.Column(db.String(500))
     image = db.Column(db.String(255))
+    image2 = db.Column(db.String(255))
+    image3 = db.Column(db.String(255))
+    image4 = db.Column(db.String(255))
+    image5 = db.Column(db.String(255))
     city = db.Column(db.String(100))
     category = db.Column(db.String(100))
     discountPrice = db.Column(db.Float)
@@ -289,6 +347,11 @@ class Belleza(db.Model):
     rating = db.Column(db.Float)
     reviews = db.Column(db.Integer)
     buyers = db.Column(db.Integer)
+    title2 = db.Column(db.String(255))
+    descripcion2 = db.Column(db.String(500))
+    title3 = db.Column(db.String(255))
+    descripcion3 = db.Column(db.String(500))
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
@@ -301,12 +364,20 @@ class Belleza(db.Model):
             "title": self.title,
             "descripcion": self.descripcion,
             "image": self.image,
+            "image2": self.image2,
+            "image3": self.image3,
+            "image4": self.image4,
+            "image5": self.image5,
             "city": self.city,
             "discountPrice": self.discountPrice,
             "price": self.price,
             "rating": self.rating,
             "reviews": self.reviews,
             "buyers": self.buyers,
+            "title2": self.title2,
+            "descripcion2": self.descripcion2,
+            "title3": self.title3,
+            "descripcion3": self.descripcion3,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
@@ -319,6 +390,10 @@ class Gastronomia(db.Model):
     title = db.Column(db.String(255))
     descripcion = db.Column(db.String(500))
     image = db.Column(db.String(255))
+    image2 = db.Column(db.String(255))
+    image3 = db.Column(db.String(255))
+    image4 = db.Column(db.String(255))
+    image5 = db.Column(db.String(255))
     city = db.Column(db.String(100))
     category = db.Column(db.String(100))
     discountPrice = db.Column(db.Float)
@@ -326,6 +401,11 @@ class Gastronomia(db.Model):
     rating = db.Column(db.Float)
     reviews = db.Column(db.Integer)
     buyers = db.Column(db.Integer)
+    title2 = db.Column(db.String(255))
+    descripcion2 = db.Column(db.String(500))
+    title3 = db.Column(db.String(255))
+    descripcion3 = db.Column(db.String(500))
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
@@ -338,16 +418,23 @@ class Gastronomia(db.Model):
             "title": self.title,
             "descripcion": self.descripcion,
             "image": self.image,
+            "image2": self.image2,
+            "image3": self.image3,
+            "image4": self.image4,
+            "image5": self.image5,
             "city": self.city,
             "discountPrice": self.discountPrice,
             "price": self.price,
             "rating": self.rating,
             "reviews": self.reviews,
             "buyers": self.buyers,
+            "title2": self.title2,
+            "descripcion2": self.descripcion2,
+            "title3": self.title3,
+            "descripcion3": self.descripcion3,
             "user_id": self.user_id,
             "category_id": self.category_id
         }
-
 
 class Category(db.Model):
     __tablename__ = 'categories'

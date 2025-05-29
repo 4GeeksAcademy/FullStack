@@ -1654,23 +1654,45 @@ def obtener_categorias():
 def crear_oferta():
     data = request.get_json()
 
-    nueva_oferta = Ofertas(
-        title=data.get('title'),
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),
-        city=data.get('city'),
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
-    db.session.add(nueva_oferta)
-    db.session.commit()
+    # Validación básica de campos requeridos
+    if not data.get('title') or not data.get('descripcion') or not data.get('price'):
+        return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    return jsonify(nueva_oferta.serialize()), 201
+    try:
+        nueva_oferta = Ofertas(
+            title         = data.get('title'),
+            descripcion   = data.get('descripcion'),
+            price         = data.get('price'),
+            city          = data.get('city', ''),
+            image         = data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image2        = data.get('image2', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image3        = data.get('image3', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image4        = data.get('image4', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image5        = data.get('image5', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            title2        = data.get('title2', ''),
+            descripcion2  = data.get('descripcion2', ''),
+            title3        = data.get('title3', ''),
+            descripcion3  = data.get('descripcion3', ''),
+            discountPrice = data.get('discountPrice'),
+            rating        = data.get('rating', 4.0),
+            reviews       = data.get('reviews', 0),
+            buyers        = data.get('buyers', 0),
+            user_id       = data.get('user_id'),
+            category_id   = data.get('category_id')
+        )
+
+        db.session.add(nueva_oferta)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Oferta creada exitosamente",
+            "oferta": nueva_oferta.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/ofertas', methods=['GET'])
 def obtener_ofertas():
@@ -1704,23 +1726,30 @@ def crear_viaje():
 
     try:
         nuevo_viaje = Viajes(
-            title=data.get('title'),
-            descripcion=data.get('descripcion'),
-            price=data.get('price'),
-            city=data.get('city', ''),  # Valor por defecto si no se proporciona
-            image=data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
-            discountPrice=data.get('discountPrice'),
-            rating=data.get('rating', 4.0),  # Valor por defecto
-            reviews=data.get('reviews', 0),
-            buyers=data.get('buyers', 0),
-            user_id=data.get('user_id'),
-            category_id=data.get('category_id', 1)  # Valor por defecto para viajes
+            title         = data.get('title'),
+            descripcion   = data.get('descripcion'),
+            price         = data.get('price'),
+            city          = data.get('city', ''),
+            image         = data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image2        = data.get('image2', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image3        = data.get('image3', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image4        = data.get('image4', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image5        = data.get('image5', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            title2        = data.get('title2', ''),
+            descripcion2  = data.get('descripcion2', ''),
+            title3        = data.get('title3', ''),
+            descripcion3  = data.get('descripcion3', ''),
+            discountPrice = data.get('discountPrice'),
+            rating        = data.get('rating', 4.0),
+            reviews       = data.get('reviews', 0),
+            buyers        = data.get('buyers', 0),
+            user_id       = data.get('user_id'),
+            category_id   = data.get('category_id', 1)
         )
 
         db.session.add(nuevo_viaje)
         db.session.commit()
 
-        # Devolver el viaje creado con su ID
         return jsonify({
             "message": "Viaje creado exitosamente",
             "viaje": nuevo_viaje.serialize()
@@ -1729,6 +1758,7 @@ def crear_viaje():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/viajes', methods=['GET'])
 def obtener_viajes():
@@ -1760,17 +1790,25 @@ def crear_top():
 
     try:
         nuevo_top = Top(
-            title=data['title'],
-            descripcion=data['descripcion'],
-            price=data['price'],
-            city=data.get('city', ''),
-            image=data.get('image', 'https://media.istockphoto.com/id/1396814518/es/vector/imagen-pr%C3%B3ximamente-sin-foto-sin-imagen-en-miniatura-disponible-ilustraci%C3%B3n-vectorial.jpg?s=612x612&w=0&k=20&c=aA0kj2K7ir8xAey-SaPc44r5f-MATKGN0X0ybu_A774='),
-            discountPrice=data.get('discountPrice'),
-            rating=data.get('rating', 4.5),
-            reviews=data.get('reviews', 0),
-            buyers=data.get('buyers', 0),
-            user_id=data['user_id'],
-            category_id=data.get('category_id', 3)  # ID de categoría para Top
+            title         = data['title'],
+            descripcion   = data['descripcion'],
+            price         = data['price'],
+            city          = data.get('city', ''),
+            image         = data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image2        = data.get('image2', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image3        = data.get('image3', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image4        = data.get('image4', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image5        = data.get('image5', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            title2        = data.get('title2', ''),
+            descripcion2  = data.get('descripcion2', ''),
+            title3        = data.get('title3', ''),
+            descripcion3  = data.get('descripcion3', ''),
+            discountPrice = data.get('discountPrice'),
+            rating        = data.get('rating', 4.5),
+            reviews       = data.get('reviews', 0),
+            buyers        = data.get('buyers', 0),
+            user_id       = data['user_id'],
+            category_id   = data.get('category_id', 3)  # ID de categoría para Top
         )
 
         db.session.add(nuevo_top)
@@ -1784,6 +1822,7 @@ def crear_top():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/top', methods=['GET'])
 def obtener_top():
@@ -1841,23 +1880,30 @@ def crear_gastronomia():
 
     try:
         nuevo_gastronomia = Gastronomia(
-            title=data.get('title'),
-            descripcion=data.get('descripcion'),
-            price=data.get('price'),
-            city=data.get('city', ''),  # Valor por defecto si no se proporciona
-            image=data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
-            discountPrice=data.get('discountPrice'),
-            rating=data.get('rating', 4.0),  # Valor por defecto
-            reviews=data.get('reviews', 0),
-            buyers=data.get('buyers', 0),
-            user_id=data.get('user_id'),
-            category_id=data.get('category_id', 4)  # Valor por defecto para gastronomía
+            title         = data.get('title'),
+            descripcion   = data.get('descripcion'),
+            price         = data.get('price'),
+            city          = data.get('city', ''),
+            image         = data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image2        = data.get('image2', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image3        = data.get('image3', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image4        = data.get('image4', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image5        = data.get('image5', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            title2        = data.get('title2', ''),
+            descripcion2  = data.get('descripcion2', ''),
+            title3        = data.get('title3', ''),
+            descripcion3  = data.get('descripcion3', ''),
+            discountPrice = data.get('discountPrice'),
+            rating        = data.get('rating', 4.0),
+            reviews       = data.get('reviews', 0),
+            buyers        = data.get('buyers', 0),
+            user_id       = data.get('user_id'),
+            category_id   = data.get('category_id', 4)
         )
 
         db.session.add(nuevo_gastronomia)
         db.session.commit()
 
-        # Devolver el gastronomía creado con su ID
         return jsonify({
             "message": "Servicio de gastronomía creado exitosamente",
             "gastronomia": nuevo_gastronomia.serialize()
@@ -1889,24 +1935,45 @@ def obtener_gastronomia():
 def crear_belleza():
     data = request.get_json()
 
-    nuevo_belleza = Belleza(
-        title=data.get('title'),
-        descripcion=data.get('descripcion'),
-        price=data.get('price'),
-        city=data.get('city'),
-        image=data.get('image'),
-        discountPrice=data.get('discountPrice'),
-        rating=data.get('rating'),
-        reviews=data.get('reviews'),
-        buyers=data.get('buyers'),
-        user_id=data.get('user_id'),
-        category_id=data.get('category_id')
-    )
+    # Validación básica de campos requeridos
+    if not data.get('title') or not data.get('descripcion') or not data.get('price'):
+        return jsonify({"error": "Faltan campos requeridos"}), 400
 
-    db.session.add(nuevo_belleza)
-    db.session.commit()
+    try:
+        nuevo_belleza = Belleza(
+            title         = data.get('title'),
+            descripcion   = data.get('descripcion'),
+            price         = data.get('price'),
+            city          = data.get('city', ''),
+            image         = data.get('image', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image2        = data.get('image2', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image3        = data.get('image3', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image4        = data.get('image4', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            image5        = data.get('image5', 'https://via.placeholder.com/300x200?text=Sin+imagen'),
+            title2        = data.get('title2', ''),
+            descripcion2  = data.get('descripcion2', ''),
+            title3        = data.get('title3', ''),
+            descripcion3  = data.get('descripcion3', ''),
+            discountPrice = data.get('discountPrice'),
+            rating        = data.get('rating', 4.0),
+            reviews       = data.get('reviews', 0),
+            buyers        = data.get('buyers', 0),
+            user_id       = data.get('user_id'),
+            category_id   = data.get('category_id')
+        )
 
-    return jsonify(nuevo_belleza.serialize()), 201
+        db.session.add(nuevo_belleza)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Belleza creada exitosamente",
+            "belleza": nuevo_belleza.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/belleza', methods=['GET'])
 def obtener_belleza():

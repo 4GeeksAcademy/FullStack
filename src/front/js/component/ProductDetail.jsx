@@ -1,3 +1,5 @@
+// src/components/ProductDetail.jsx
+
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
@@ -16,8 +18,8 @@ import { FaStar, FaRegStar } from "react-icons/fa";
 import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
-import FAQSection from "./FAQSection.jsx"
-import SpecialOffersCarousel from "./SpecialOffersCarousel.jsx"
+import FAQSection from "./FAQSection.jsx";
+import SpecialOffersCarousel from "./SpecialOffersCarousel.jsx";
 
 const ProductDetail = () => {
   const location = useLocation();
@@ -32,8 +34,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  const defaultImage =
-    "https://images.unsplash.com/photo-1646166624994-9bd6876e6520?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3";
+  const defaultImage = "https://images.unsplash.com/photo-1646166624994-9bd6876e6520?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3";
 
   const determineCategory = (offerId) => {
     const num = parseInt(offerId, 10);
@@ -73,18 +74,20 @@ const ProductDetail = () => {
 
   useEffect(() => {
     if (loading) return;
-    let data = null;
-    if (locationOffer) {
-      data = { ...locationOffer };
-    } else {
-      const num = parseInt(id, 10);
-      const key = `servicios${currentCategory.charAt(0).toUpperCase()}${currentCategory.slice(1)}`;
-      data = (store[key] || []).find(o => o.id === num) || null;
-    }
+    let data = locationOffer
+      ? { ...locationOffer }
+      : (store[
+          `servicios${currentCategory.charAt(0).toUpperCase()}${currentCategory.slice(1)}`
+        ] || []).find(o => o.id === parseInt(id, 10)) || null;
+
     if (data) {
-      data.image = data.image || data.imagen || defaultImage;
-      const proc = processOfferPrices(data);
-      setCompleteOffer(proc);
+      data.image = data.image || defaultImage;
+      // si no trae arrays de imágenes, ponemos placeholders
+      data.image2 = data.image2 || defaultImage;
+      data.image3 = data.image3 || defaultImage;
+      data.image4 = data.image4 || defaultImage;
+      data.image5 = data.image5 || defaultImage;
+      setCompleteOffer(processOfferPrices(data));
       setSelectedImage(0);
     } else {
       setCompleteOffer(null);
@@ -94,48 +97,77 @@ const ProductDetail = () => {
   const processOfferPrices = (offer) => {
     let { price, precio, discountPrice, originalPrice, category_id, images = [] } = offer;
     const isBE = category_id !== undefined;
-    let p = isBE ? Number(discountPrice) : Number(price ?? originalPrice ?? precio);
-    let d = isBE ? Number(price) : Number(discountPrice ?? Math.round(p * 0.7));
+    let p = isBE
+      ? Number(discountPrice)
+      : Number(price ?? originalPrice ?? precio);
+    let d = isBE
+      ? Number(price)
+      : Number(discountPrice ?? Math.round(p * 0.7));
     if (!p || p <= 0) p = 1000;
     if (!d || d <= 0 || d >= p) d = Math.round(p * 0.7);
     let pct = Math.round(((p - d) / p) * 100);
     pct = Math.max(5, Math.min(80, pct));
+    // reemplazamos images si vienen
     const imgs = images.length >= 4
       ? images.slice(0, 4)
       : [offer.image, ...images, defaultImage, defaultImage].slice(0, 4);
-    return { ...offer, originalPrice: p, discountPrice: d, pctOff: pct, images: imgs, stock: offer.stock ?? 0 };
+    return {
+      ...offer,
+      originalPrice: p,
+      discountPrice: d,
+      pctOff: pct,
+      images: imgs,
+      stock: offer.stock ?? 0
+    };
   };
 
-  if (loading) return <Container className="my-5 text-center"><Spinner animation="border" /></Container>;
-  if (!completeOffer) return (
-    <Container className="my-5 text-center">
-      <div className="alert alert-warning">Producto no encontrado</div>
-      <Button variant="secondary" onClick={() => navigate("/")}>Volver</Button>
-    </Container>
-  );
+  if (loading) {
+    return (
+      <Container className="my-5 text-center">
+        <Spinner animation="border" />
+      </Container>
+    );
+  }
+  if (!completeOffer) {
+    return (
+      <Container className="my-5 text-center">
+        <div className="alert alert-warning">Producto no encontrado</div>
+        <Button variant="secondary" onClick={() => navigate("/")}>
+          Volver
+        </Button>
+      </Container>
+    );
+  }
 
   const {
     images,
-    discountPrice,
-    originalPrice,
-    pctOff,
-    detailImage1,
-    detailText1,
-    detailImage2,
-    detailText2,
-    description2,
-    description3,
-    stock
+    discountPrice = 0,
+    originalPrice = 0,
+    pctOff = 0,
+    image2,
+    image3,
+    image4,
+    image5,
+    rating = 0,
+    reviews = 0,
+    title2 = "",
+    descripcion2 = "",
+    title3 = "",
+    descripcion3 = "",
+    stock = 0
   } = completeOffer;
+
   const title = completeOffer.title || completeOffer.nombre || "Sin título";
   const desc = completeOffer.descripcion || completeOffer.description || "No hay descripción.";
-  const title2 = completeOffer.detailTitle1 || "Título 2";
-  const title3 = completeOffer.detailTitle2 || "Título 3";
 
-  const prevImage = () => setSelectedImage(i => (i - 1 + images.length) % images.length);
-  const nextImage = () => setSelectedImage(i => (i + 1) % images.length);
-  const addToCart = () => actions.addToCart({ ...completeOffer, quantity, category: currentCategory });
-  const buyNow = () => navigate("/checkout", { state: { item: { ...completeOffer, quantity, category: currentCategory } } });
+  const prevImage = () => setSelectedImage(i => (i - 1 + 3) % 3);
+  const nextImage = () => setSelectedImage(i => (i + 1) % 3);
+  const thumbs = [image2, image3];
+
+  const addToCart = () =>
+    actions.addToCart({ ...completeOffer, quantity, category: currentCategory });
+  const buyNow = () =>
+    navigate("/checkout", { state: { item: { ...completeOffer, quantity, category: currentCategory } } });
 
   return (
     <>
@@ -144,8 +176,11 @@ const ProductDetail = () => {
         <Row className="mb-4">
           <Col md={6} className="position-relative">
             <Image
-              src={images[selectedImage]}
-              rounded fluid style={{ maxHeight: "500px", objectFit: "cover" }} />
+              src={[images[0], image2, image3][selectedImage]}
+              rounded
+              fluid
+              style={{ maxHeight: "500px", objectFit: "cover" }}
+            />
             <Button variant="light" className="position-absolute top-50 start-0 translate-middle-y" onClick={prevImage} style={{ zIndex: 2 }}>
               <BsChevronLeft size={28} />
             </Button>
@@ -153,9 +188,16 @@ const ProductDetail = () => {
               <BsChevronRight size={28} />
             </Button>
             <Row className="mt-3 g-0 d-none d-md-flex">
-              {images.slice(1, 4).map((img, i) => (
-                <Col xs={4} key={i} className="px-1">
-                  <Image src={img} rounded fluid onClick={() => setSelectedImage(i + 1)} className={selectedImage===i+1? 'border border-primary':''} style={{ cursor: 'pointer', height: '100px', objectFit: 'cover' }} />
+              {thumbs.map((t, i) => (
+                <Col xs={6} key={i} className="px-1">
+                  <Image
+                    src={t}
+                    rounded
+                    fluid
+                    onClick={() => setSelectedImage(i + 1)}
+                    className={selectedImage === i + 1 ? "border border-primary" : ""}
+                    style={{ cursor: "pointer", height: "100px", objectFit: "cover" }}
+                  />
                 </Col>
               ))}
             </Row>
@@ -163,18 +205,13 @@ const ProductDetail = () => {
           <Col md={6} className="d-flex flex-column justify-content-center">
             <h1 className="product-title">{title}</h1>
             <div className="d-flex align-items-center mb-3">
-      {[...Array(5)].map((_, i) =>
-        i < Math.round(completeOffer.rating) ? (
-          <FaStar key={i} className="text-warning me-1" />
-        ) : (
-          <FaRegStar key={i} className="text-warning me-1" />
-        )
-      )}
-      <span>
-        {completeOffer.rating.toFixed(2)} ({completeOffer.reviews}{" "}
-        reseñas)
-      </span>
-    </div>
+              {[...Array(5)].map((_, i) =>
+                i < Math.round(rating) ? <FaStar key={i} className="text-warning me-1" /> : <FaRegStar key={i} className="text-warning me-1" />
+              )}
+              <span>
+                {(rating ?? 0).toFixed(2)} ({reviews ?? 0} reseñas)
+              </span>
+            </div>
             <div className="mb-3">
               <div><BsWindows className="me-2"/>Para Windows, MacOS</div>
               <div><BsController className="me-2"/>Más de 20,000 juegos</div>
@@ -182,15 +219,15 @@ const ProductDetail = () => {
               <div><BsController className="me-2"/>Garantía de 30 días</div>
             </div>
             <div className="d-flex align-items-center mb-4">
-              <h2 className="me-3">€{discountPrice.toFixed(2)}</h2>
-              <del className="text-muted me-3">€{originalPrice.toFixed(2)}</del>
-              <Badge bg="success">-{pctOff}%OFF</Badge>
+              <h2 className="me-3">€{(discountPrice ?? 0).toFixed(2)}</h2>
+              <del className="text-muted me-3">€{(originalPrice ?? 0).toFixed(2)}</del>
+              <Badge bg="success">-{pctOff}% OFF</Badge>
             </div>
             <div className="d-flex align-items-center mb-4">
               <Button variant="outline-secondary" onClick={()=>setQuantity(q=>Math.max(1,q-1))}>–</Button>
-              <FormControl readOnly value={quantity} className="text-center mx-2" style={{width:'60px'}} />
-              <Button variant="outline-secondary" onClick={()=>setQuantity(q=>q+1)}>+</Button>
-              <small className="text-muted ms-3"></small>
+              <FormControl readOnly value={quantity} className="text-center mx-2" style={{width:'60px'}}/>
+              <Button variant="outline-secondary" onClick={() => setQuantity(q=>q+1)}>+</Button>
+              <small className="text-muted ms-3">En stock: {stock} unidades</small>
             </div>
             <div className="d-grid gap-2 mb-3">
               <Button variant="danger" size="lg" onClick={addToCart}>Añadir al carrito</Button>
@@ -213,72 +250,44 @@ const ProductDetail = () => {
           </Col>
         </Row>
 
-        {/* Sección ondulada */}
-          <div style={{ padding: '4rem 1rem', textAlign: 'center' }}>
-            <h4>Descripción</h4>
-            <p>{desc}</p>
-          </div>
+        {/* Descripción */}
+        <div style={{ padding: "4rem 1rem", textAlign: "center" }}>
+          <h4>Descripción</h4>
+          <p>{desc}</p>
+        </div>
 
-{/* Descripciones alternas */}
-<div
-  style={{
-    border: "1px solid #000",
-    borderRadius: "8px",
-    backgroundColor: "#f8f8f8",
-    overflow: "hidden",
-    marginBottom: "2rem"
-  }}
->
-  <Row className="gx-0 align-items-center" style={{ borderBottom: "1px solid #000" }}>
-    {/* Imagen izquierda */}
-    <Col md={6} style={{ padding: "2rem" }}>
-      <Image
-        src={detailImage1 || defaultImage}
-        fluid
-        style={{ width: "100%", height: "auto", display: "block" }}
-      />
-    </Col>
-    {/* Texto derecha */}
-    <Col
-      md={6}
-      className="d-flex flex-column justify-content-center"
-      style={{ padding: "2rem", minHeight: "300px" }}
-    >
-      <h5>{title2}</h5>
-      <p>{description2 || "Descripción 2"}</p>
-    </Col>
-  </Row>
+        {/* Descripciones alternas */}
+        <div style={{ border: "1px solid #000", borderRadius: "8px", backgroundColor: "#f8f8f8", overflow: "hidden", marginBottom: "2rem" }}>
+          <Row className="gx-0 align-items-center" style={{ borderBottom: "1px solid #000" }}>
+            <Col md={6} style={{ padding: "2rem" }}>
+              <Image src={image4} fluid style={{ width: "100%", display: "block" }} />
+            </Col>
+            <Col md={6} className="d-flex flex-column justify-content-center" style={{ padding: "2rem", minHeight: "300px" }}>
+              <h5>{title2}</h5>
+              <p>{descripcion2}</p>
+            </Col>
+          </Row>
+          <Row className="gx-0 align-items-center">
+            <Col md={6} className="d-flex flex-column justify-content-center" style={{ padding: "2rem", minHeight: "300px" }}>
+              <h5>{title3}</h5>
+              <p>{descripcion3}</p>
+            </Col>
+            <Col md={6} style={{ padding: "2rem" }}>
+              <Image src={image5} fluid style={{ width: "100%", display: "block" }} />
+            </Col>
+          </Row>
+        </div>
 
-  <Row className="gx-0 align-items-center">
-    {/* Texto izquierda */}
-    <Col
-      md={6}
-      className="d-flex flex-column justify-content-center"
-      style={{ padding: "2rem", minHeight: "300px" }}
-    >
-      <h5>{title3}</h5>
-      <p>{description3 || "Descripción 3"}</p>
-    </Col>
-    {/* Imagen derecha */}
-    <Col md={6} style={{ padding: "2rem" }}>
-      <Image
-        src={detailImage2 || defaultImage}
-        fluid
-        style={{ width: "100%", height: "auto", display: "block" }}
-      />
-    </Col>     
-  </Row>
-</div>
-    <FAQSection/>
-    
-   
-    </Container>
-    <SpecialOffersCarousel/>
-     <Footer />
+      </Container>
+
+      <FAQSection />
+      <SpecialOffersCarousel />
+      <Footer />
     </>
   );
 };
 
 export default ProductDetail;
+
 
 

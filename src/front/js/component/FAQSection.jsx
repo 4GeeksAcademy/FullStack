@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Container, Accordion } from "react-bootstrap";
-import { BsController, BsTv, BsGlobe, BsSave, BsNintendoSwitch } from "react-icons/bs";
+import { BsCalendarDate, BsHouseDoor, BsHeart, BsPeople, BsChatDots } from "react-icons/bs";
 
 const FAQSection = () => (
   <Container className="my-5">
@@ -10,51 +10,51 @@ const FAQSection = () => (
     <Accordion flush>
       <Accordion.Item eventKey="0">
         <Accordion.Header>
-          <BsController className="me-2" />
-          ¿Puedo descargar juegos en la PlayZone?
+          <BsCalendarDate className="me-2" />
+          ¿Con cuánta antelación debo reservar?
         </Accordion.Header>
         <Accordion.Body>
-          Sí, la PlayZone™ incluye acceso a nuestra tienda digital desde donde podrás descargar miles de videojuegos directamente al dispositivo.
+          Recomendamos comenzar la planificación con al menos 3 meses de antelación para asegurar disponibilidad de finca, catering y proveedores clave.
         </Accordion.Body>
       </Accordion.Item>
 
       <Accordion.Item eventKey="1">
         <Accordion.Header>
-          <BsTv className="me-2" />
-          ¿Se puede usar en un televisor?
+          <BsHouseDoor className="me-2" />
+          ¿Cómo elijo la finca ideal?
         </Accordion.Header>
         <Accordion.Body>
-          Claro, la consola viene con salida HDMI y es compatible con cualquier TV HD o 4K. Solo conecta y empieza a jugar en pantalla grande.
+          Te presentamos hasta 5 opciones según tu estilo, presupuesto y ubicación. Tras una visita virtual o presencial, seleccionas tu favorita y gestionamos la reserva.
         </Accordion.Body>
       </Accordion.Item>
 
       <Accordion.Item eventKey="2">
         <Accordion.Header>
-          <BsGlobe className="me-2" />
-          ¿Está disponible en varios idiomas?
+          <BsHeart className="me-2" />
+          ¿Puedo personalizar el menú?
         </Accordion.Header>
         <Accordion.Body>
-          Sí, la interfaz de usuario y los menús están traducidos a español, inglés, francés, alemán y más. Podrás cambiar el idioma cuando quieras.
+          Por supuesto. Nuestros menús de boda son completamente a medida: platos locales, menús veganos, estaciones temáticas y opción de cata previa.
         </Accordion.Body>
       </Accordion.Item>
 
       <Accordion.Item eventKey="3">
         <Accordion.Header>
-          <BsSave className="me-2" />
-          ¿Podré guardar mi progreso?
+          <BsPeople className="me-2" />
+          ¿Qué sucede si cambia el número de invitados?
         </Accordion.Header>
         <Accordion.Body>
-          Por supuesto. La PlayZone™ guarda automáticamente tu progreso en la nube, así que podrás retomarlo desde cualquier consola vinculada a tu cuenta.
+          Ajustamos tu presupuesto hasta 15 días antes del evento sin coste adicional. Posterior a esa fecha, revisamos costes según el número final.
         </Accordion.Body>
       </Accordion.Item>
 
       <Accordion.Item eventKey="4">
         <Accordion.Header>
-          <BsNintendoSwitch className="me-2" />
-          ¿Qué consolas o accesorios incluye el pack?
+          <BsChatDots className="me-2" />
+          ¿Cómo puedo contactar con un asesor?
         </Accordion.Header>
         <Accordion.Body>
-          El paquete estándar incluye la consola PlayZone™, dos mandos inalámbricos, cable HDMI, adaptador de corriente y manual de inicio rápido.
+          Puedes llamarnos directamente, enviarnos un WhatsApp o solicitar una videollamada desde nuestro formulario de contacto. Te acompañamos en cada paso.
         </Accordion.Body>
       </Accordion.Item>
     </Accordion>
@@ -62,3 +62,4 @@ const FAQSection = () => (
 );
 
 export default FAQSection;
+

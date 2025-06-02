@@ -8,16 +8,23 @@ import PromoBanner from "../component/PromoBanner.jsx";
 import SpecialOffersCarousel from "../component/SpecialOffersCarousel.jsx";
 import Newsletter from "../component/Newsletter.jsx";
 import Footer from "../component/Footer.jsx";
+import TravelSections from "../component/TravelSections.jsx"
+import StyledInfoSection from '../component/StyledInfoSection.jsx';
+import RelatedContent2 from "../component/RelatedContent2.jsx";
+import FAQSection from "../component/FAQSection.jsx";
 
 export const Home = () => {
   return (
     <div>
       <LayoutHeader />
       <HeroBanner />
-      <CategoriesSection />
+      <CategoriesSection/>
       <RelatedContent />
+      <StyledInfoSection/>
+      <TravelSections/>
       <PromoBanner />
-      <SpecialOffersCarousel />
+      <RelatedContent2 />
+      <FAQSection />
       <Newsletter />
       <Footer />
     </div>

@@ -20,12 +20,12 @@ const HeroBanner = () => {
             <div className="container-fluid py-5 px-4">
               <div className="row justify-content-center">
                 <div className="col-12 col-lg-10">
-                  <h2
+                  <h1
                     className="text-white fw-bold mb-3"
                     style={{ fontSize: "clamp(1.75rem, 5vw, 2.5rem)" }}
                   >
-                    Descubre increíbles ofertas cerca de ti
-                  </h2>
+                    Creamos la boda de tus sueños en cualquier rincón de España
+                  </h1>
                   <p
                     className="text-light mb-4"
                     style={{
@@ -33,12 +33,11 @@ const HeroBanner = () => {
                       color: "#fecaca",
                     }}
                   >
-                    Ahorra hasta un 70% en tus experiencias favoritas. ¡
-                    {ofertas} ofertas disponibles!
+                    Banquete, música, ceremonia, decoración y todos los detalles… sin preocupaciones
                   </p>
 
                   <Link
-                    to="/todaslascategorias"
+                    to="/category/belleza"
                     className="btn bg-white text-danger fw-semibold px-4 py-2 rounded-3 shadow-sm"
                   >
                     Explorar ofertas

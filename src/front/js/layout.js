@@ -44,6 +44,8 @@ import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import VistaBusqueda from "./pages/VistaBusqueda.jsx";
 import EditNewsletter from "./pages/EditNewsletter.jsx";
 import ViewNewsletter from "./pages/ViewNewsletter.jsx";
+import { Bodas2025Page } from "./component/Bodas2025Page.jsx";
+import { Tendencias2025Page } from "./component/Tendencias2025Page.jsx";
 
 
 const Layout = () => {
@@ -100,6 +102,9 @@ const Layout = () => {
             <Route path="/newsletter" element={<AdminNewsletter />} />
             <Route path="/newsletter/edit-newsletter/:id" element={<EditNewsletter />}/>
             <Route path="/newsletter/view-newsletter/:id" element={<ViewNewsletter />}/>
+            <Route path="/guia2025" element={<Bodas2025Page />}/>
+            <Route path="/tendencias2025" element={<Tendencias2025Page />}/>
+            
               
           </Routes>
           <Footer />

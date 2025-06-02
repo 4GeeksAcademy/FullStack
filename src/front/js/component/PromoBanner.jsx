@@ -13,10 +13,10 @@ const PromoBanner = () => {
           >
             <div className="container text-center py-5 px-3">
               <h3 className="fs-2 fw-bold text-white mb-3">
-                ¡Seguimos creciendo con vos!
+                ¿Listo para llevar tu boda al siguiente nivel?
               </h3>
               <p className="fs-5 text-light mb-4">
-                ¡Gracias por acompañarnos!
+                👉 Descubre la guía completa “Bodas 2025” y reserva tu asesoría gratuita con nuestro equipo de expertos.
               </p>
               <div className="d-flex justify-content-center">
                 <div
@@ -27,7 +27,7 @@ const PromoBanner = () => {
                   }}
                 >
                   <span className="text-white fw-medium">
-                    GroupOn
+                    Empieza a planificar tu boda hoy!
                   </span>
                 </div>
               </div>

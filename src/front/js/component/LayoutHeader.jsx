@@ -9,7 +9,7 @@ import { jwtDecode } from "jwt-decode";
 
 const LayoutHeader = () => {
   const { store, actions } = useContext(Context);
-  const [location, setLocation] = useState("Madrid");
+  const [location, setLocation] = useState("España");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -138,7 +138,7 @@ const LayoutHeader = () => {
             onClick={() => navigate("/")}
           >
             <i className="bi bi-house-fill fs-2 text-danger me-2" />
-            <h1 className="fs-4 fw-bold mb-0">GroupOn</h1>
+            <h1 className="fs-4 fw-bold mb-0">Bodas</h1>
           </div>
 
           {/* MOBILE CART + USER */}

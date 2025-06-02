@@ -18,9 +18,9 @@ const getState = ({ getStore, getActions, setStore }) => {
       ],
       categories: [
         { id: "top", name: "Top Ofertas", icon: "⭐" },
-        { id: "belleza", name: "Belleza", icon: "💄" },
-        { id: "gastronomia", name: "Gastronomía", icon: "🍴" },
-        { id: "viajes", name: "Viajes", icon: "✈️" },
+        { id: "belleza", name: "Guía 2025", icon: "📖" },
+        { id: "gastronomia", name: "Tendencias 2025", icon: "📈" },
+        { id: "viajes", name: "Contacto", icon: "📞" },
       ],
       producto: [
         {

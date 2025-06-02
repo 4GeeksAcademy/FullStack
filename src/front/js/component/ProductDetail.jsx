@@ -13,13 +13,14 @@ import {
   Badge,
   Accordion
 } from "react-bootstrap";
-import { BsChevronLeft, BsChevronRight, BsWindows, BsController } from "react-icons/bs";
 import { FaStar, FaRegStar } from "react-icons/fa";
 import { Context } from "../store/appContext";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
 import FAQSection from "./FAQSection.jsx";
 import SpecialOffersCarousel from "./SpecialOffersCarousel.jsx";
+import RelatedContent2 from "../component/RelatedContent2.jsx";
+import { BsCalendarDate, BsHouseDoor, BsCupStraw, BsClock } from "react-icons/bs";
 
 const ProductDetail = () => {
   const location = useLocation();
@@ -83,8 +84,8 @@ const ProductDetail = () => {
     if (data) {
       data.image = data.image || defaultImage;
       // si no trae arrays de imágenes, ponemos placeholders
-      data.image2 = data.image2 || defaultImage;
-      data.image3 = data.image3 || defaultImage;
+      //data.image2 = data.image2 || defaultImage;
+      //data.image3 = data.image3 || defaultImage;
       data.image4 = data.image4 || defaultImage;
       data.image5 = data.image5 || defaultImage;
       setCompleteOffer(processOfferPrices(data));
@@ -108,9 +109,8 @@ const ProductDetail = () => {
     let pct = Math.round(((p - d) / p) * 100);
     pct = Math.max(5, Math.min(80, pct));
     // reemplazamos images si vienen
-    const imgs = images.length >= 4
-      ? images.slice(0, 4)
-      : [offer.image, ...images, defaultImage, defaultImage].slice(0, 4);
+    const imgs = [offer.image, ...images]
+  .filter(src => typeof src === 'string' && src.trim() !== '').slice(0, 4);
     return {
       ...offer,
       originalPrice: p,
@@ -144,8 +144,8 @@ const ProductDetail = () => {
     discountPrice = 0,
     originalPrice = 0,
     pctOff = 0,
-    image2,
-    image3,
+    //image2,
+    //image3,
     image4,
     image5,
     rating = 0,
@@ -162,7 +162,7 @@ const ProductDetail = () => {
 
   const prevImage = () => setSelectedImage(i => (i - 1 + 3) % 3);
   const nextImage = () => setSelectedImage(i => (i + 1) % 3);
-  const thumbs = [image2, image3];
+  const thumbs = [];
 
   const addToCart = () =>
     actions.addToCart({ ...completeOffer, quantity, category: currentCategory });
@@ -176,17 +176,17 @@ const ProductDetail = () => {
         <Row className="mb-4">
           <Col md={6} className="position-relative">
             <Image
-              src={[images[0], image2, image3][selectedImage]}
+              src={[images[0]][selectedImage]}
               rounded
               fluid
               style={{ maxHeight: "500px", objectFit: "cover" }}
             />
-            <Button variant="light" className="position-absolute top-50 start-0 translate-middle-y" onClick={prevImage} style={{ zIndex: 2 }}>
+           {/* <Button variant="light" className="position-absolute top-50 start-0 translate-middle-y" onClick={prevImage} style={{ zIndex: 2 }}>
               <BsChevronLeft size={28} />
             </Button>
             <Button variant="light" className="position-absolute top-50 end-0 translate-middle-y" onClick={nextImage} style={{ zIndex: 2 }}>
               <BsChevronRight size={28} />
-            </Button>
+            </Button> */}
             <Row className="mt-3 g-0 d-none d-md-flex">
               {thumbs.map((t, i) => (
                 <Col xs={6} key={i} className="px-1">
@@ -213,10 +213,11 @@ const ProductDetail = () => {
               </span>
             </div>
             <div className="mb-3">
-              <div><BsWindows className="me-2"/>Para Windows, MacOS</div>
-              <div><BsController className="me-2"/>Más de 20,000 juegos</div>
-              <div><BsController className="me-2"/>+50 consolas modernas</div>
-              <div><BsController className="me-2"/>Garantía de 30 días</div>
+              <div><BsCalendarDate className="me-2" />Planificación Personalizada</div>
+              <div><BsHouseDoor className="me-2" />Selección Exquisita de Fincas</div>
+              <div><BsCupStraw className="me-2" />Banquete Gourmet a Medida</div>
+              <div><BsClock className="me-2" />Coordinación Profesional 24/7</div>
+
             </div>
             <div className="d-flex align-items-center mb-4">
               <h2 className="me-3">€{(discountPrice ?? 0).toFixed(2)}</h2>
@@ -227,7 +228,7 @@ const ProductDetail = () => {
               <Button variant="outline-secondary" onClick={()=>setQuantity(q=>Math.max(1,q-1))}>–</Button>
               <FormControl readOnly value={quantity} className="text-center mx-2" style={{width:'60px'}}/>
               <Button variant="outline-secondary" onClick={() => setQuantity(q=>q+1)}>+</Button>
-              <small className="text-muted ms-3">En stock: {stock} unidades</small>
+              <small className="text-muted ms-3"></small>
             </div>
             <div className="d-grid gap-2 mb-3">
               <Button variant="danger" size="lg" onClick={addToCart}>Añadir al carrito</Button>
@@ -235,16 +236,16 @@ const ProductDetail = () => {
             </div>
             <Accordion className="mb-4">
               <Accordion.Item eventKey="0">
-                <Accordion.Header>Garantía de 30 días</Accordion.Header>
-                <Accordion.Body>Garantía de devolución completa sin preguntas.</Accordion.Body>
+                <Accordion.Header>Visita Virtual Gratis</Accordion.Header>
+                <Accordion.Body>recorrido 360º de las fincas antes de elegir.</Accordion.Body>
               </Accordion.Item>
               <Accordion.Item eventKey="1">
-                <Accordion.Header>Envío rápido gratuito</Accordion.Header>
-                <Accordion.Body>Envío rápido gratuito a todo el mundo.</Accordion.Body>
+                <Accordion.Header>Soporte 24/7</Accordion.Header>
+                <Accordion.Body>whatsapp para resolver cualquier imprevisto.</Accordion.Body>
               </Accordion.Item>
               <Accordion.Item eventKey="2">
-                <Accordion.Header>Qué recibirás</Accordion.Header>
-                <Accordion.Body>Consola PlayZone™, controladores y cableado completo.</Accordion.Body>
+                <Accordion.Header>Garantía de Satisfacción</Accordion.Header>
+                <Accordion.Body>ajustes gratuitos hasta 7 días antes del evento.</Accordion.Body>
               </Accordion.Item>
             </Accordion>
           </Col>
@@ -253,7 +254,7 @@ const ProductDetail = () => {
         {/* Descripción */}
         <div style={{ padding: "4rem 1rem", textAlign: "center" }}>
           <h4>Descripción</h4>
-          <p>{desc}</p>
+          <p style={{ textAlign: "justify" }}>{desc}</p>
         </div>
 
         {/* Descripciones alternas */}
@@ -263,14 +264,14 @@ const ProductDetail = () => {
               <Image src={image4} fluid style={{ width: "100%", display: "block" }} />
             </Col>
             <Col md={6} className="d-flex flex-column justify-content-center" style={{ padding: "2rem", minHeight: "300px" }}>
-              <h5>{title2}</h5>
-              <p>{descripcion2}</p>
+            <h5>{title2}</h5>
+            <p style={{ textAlign: "justify" }}>{descripcion2}</p>
             </Col>
           </Row>
           <Row className="gx-0 align-items-center">
             <Col md={6} className="d-flex flex-column justify-content-center" style={{ padding: "2rem", minHeight: "300px" }}>
               <h5>{title3}</h5>
-              <p>{descripcion3}</p>
+              <p style={{ textAlign: "justify" }}>{descripcion3}</p>
             </Col>
             <Col md={6} style={{ padding: "2rem" }}>
               <Image src={image5} fluid style={{ width: "100%", display: "block" }} />
@@ -281,7 +282,7 @@ const ProductDetail = () => {
       </Container>
 
       <FAQSection />
-      <SpecialOffersCarousel />
+      <RelatedContent2 />
       <Footer />
     </>
   );

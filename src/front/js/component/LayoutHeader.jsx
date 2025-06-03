@@ -133,13 +133,17 @@ const LayoutHeader = () => {
 
           {/* LOGO */}
           <div
-            className="d-flex align-items-center me-auto me-md-4"
-            role="button"
-            onClick={() => navigate("/")}
-          >
-            <i className="bi bi-house-fill fs-2 text-danger me-2" />
-            <h1 className="fs-4 fw-bold mb-0">Bodas</h1>
-          </div>
+  className="d-flex align-items-center me-auto me-md-4"
+  role="button"
+  onClick={() => navigate("/")}
+>
+  <i
+    className="fa-brands fa-fort-awesome-alt"
+    style={{ color: "#e54e34", fontSize: "2.5rem", marginRight: "0.5rem" }}
+  />
+  <h4 className="fs-4 fw-bold mb-0">Camino al Sí</h4>
+</div>
+
 
           {/* MOBILE CART + USER */}
           <div className="d-flex d-md-none align-items-center gap-3 order-md-last">
@@ -248,7 +252,7 @@ const LayoutHeader = () => {
               <input
                 type="text"
                 className="form-control me-2 rounded-pill"
-                placeholder="Busca restaurantes, spas, actividades..."
+                placeholder="Buscar paquetes de boda, fincas o servicios…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

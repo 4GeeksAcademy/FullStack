@@ -9,9 +9,9 @@ const Footer = () => {
       <div className="container">
         <div className="row mb-4">
           <div className="col-12 col-md-3">
-            <h4 className="font-weight-bold mb-3">GroupOn</h4>
+            <h4 className="font-weight-bold mb-3">Camino al Sí</h4>
             <p>
-              Descubre las mejores ofertas en tu ciudad y ahorra hasta un 70%.
+              Diseñamos momentos inolvidables para tu gran día.
             </p>
           </div>
           <div className="col-12 col-md-3">

@@ -1,8 +1,8 @@
 import React from 'react';
-import planificacionImg from '../../img/Planesdebodas.png';
-import espaciosImg from '../../img/SeleccioDeEspacios.png';
-import serviciosImg from '../../img/ServiciosProfecionales.png';
-import inspiracionImg from '../../img/planificacion.png';
+import planificacionImg from '../../img/thomas-william-OAVqa8hQvWI-unsplash.jpg';
+import espaciosImg from '../../img/arshad-pooloo-GdwWrLHdwpw-unsplash.jpg';
+import serviciosImg from '../../img/Diseño sin título (1).png';
+import inspiracionImg from '../../img/Diseño sin título.png';
 
 export default function StyledInfoSection() {
   // Sections with title, text, and image

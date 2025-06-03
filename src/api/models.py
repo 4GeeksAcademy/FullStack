@@ -334,7 +334,7 @@ class Belleza(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255))
-    descripcion = db.Column(db.String(900))
+    descripcion = db.Column(db.String(1200))
     image = db.Column(db.String(255))
     image2 = db.Column(db.String(255))
     image3 = db.Column(db.String(255))

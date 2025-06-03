@@ -1,6 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const PromoBanner = () => {
+  const navigate = useNavigate();
+  
   return (
     <div className="container-fluid">
       <div className="row">
@@ -26,9 +29,11 @@ const PromoBanner = () => {
                     backdropFilter: "blur(6px)",
                   }}
                 >
-                  <span className="text-white fw-medium">
-                    Empieza a planificar tu boda hoy!
-                  </span>
+                 <button onClick={() => navigate("/guia2025")}
+  className="btn ms-3 text-white"
+>
+  Empieza a planificar tu boda hoy!
+</button>
                 </div>
               </div>
             </div>

@@ -9,7 +9,7 @@ export default function StyledInfoSection() {
   const sections = [
     {
       title: 'Planificación Detallada',
-      text: 'En nuestra plataforma encontrarás todo lo necesario para planificar la boda perfecta en España, cubriendo cada etapa del proceso con claridad y detalle. Comenzamos con la planificación de bodas y la coordinación del día B, ofreciéndote un completo checklist boda que incluye desde el presupuesto boda para 100 invitados hasta la gestión de permisos para ceremonia civil o ceremonia religiosa.',
+      text: 'En nuestra plataforma encontrarás todo lo necesario para planificar la boda perfecta en España, cubriendo cada etapa del proceso con claridad y detalle. Comenzamos con la planificación de bodas y la coordinación del día B, ofreciéndote un completo checklist boda que incluye desde el presupuesto boda hasta la gestión de permisos para ceremonia civil o ceremonia religiosa.',
       image: planificacionImg
     },
     {
@@ -23,8 +23,8 @@ export default function StyledInfoSection() {
       image: serviciosImg
     },
     {
-      title: 'Inspiración y Blog',
-      text: 'Además, ofrecemos inspiración en nuestro blog: ideas de vestido de novia, trajes de novio, alianzas de boda personalizadas, tarta de boda, candy bar, photobooth boda y recuerdos de boda. Y para las parejas tecnológicas, disponemos de un planner online que te ayudará a coordinar todos los detalles desde tu móvil o tablet. Con nosotros, tendrás una wedding planner de confianza que te acompañará paso a paso hacia el “sí, quiero”.',
+      title: 'Te acompañamos en cada etapa de tu boda, ofreciendo:',
+      text: 'Te acompañamos en cada etapa de tu boda, ofreciéndote planificación integral para coordinar proveedores, cronograma y logística para que tú solo disfrutes; selección de la finca perfecta y diseño de ambientación con flores, iluminación y detalles a medida; catering y tartas personalizadas con menús adaptados a tus gustos (incluyendo opciones temáticas, veganas o sin gluten) y tartas únicas que sorprendan a tus invitados; montaje de candy bar y estaciones temáticas—como barras de dulces, cócteles y coffee bar—para que tus invitados vivan una experiencia inolvidable; gestión de entretenimiento y audiovisual con DJs, música en vivo, fotógrafos, videógrafos y pantallas para capturar los mejores momentos; atención a los detalles y recuerdos, encargándonos de las invitaciones, el seating plan, el photocall y los regalos personalizados; y, por último, coordinación del “Día B” supervisando horarios, montaje y desmontaje, para garantizar que todo fluya sin contratiempos. Con nuestro servicio tendrás una wedding planner de confianza que hará realidad tu visión y cuidará cada detalle para que tu gran día sea inolvidable.',
       image: inspiracionImg
     }
   ];

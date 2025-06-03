@@ -82,16 +82,7 @@ export function TravelSections() {
         <div className="bgcolor">
           <h2 className="section-title">Recursos y Consejos para tu Boda</h2>
           <p className="justify-text">
-            En nuestro <strong>blog de consejos para organizar bodas</strong> encontrarás guías prácticas con <strong>checklist boda</strong>, <strong>trucos para bodas</strong> y consejos para una boda sostenible adaptados a las <strong>tendencias bodas 2025</strong>.
-          </p>
-          <p className="justify-text">
-            Descubre <strong>lugares para bodas en Madrid</strong>, <strong>fincas para bodas en Andalucía</strong>, <strong>fincas para bodas en Galicia</strong> y otras regiones clave, con reseñas y comparativas de <strong>lugar boda civil Sevilla</strong>, <strong>lugar boda civil Barcelona</strong> o <strong>lugar boda civil Valencia</strong>.
-          </p>
-          <p className="justify-text">
-            Si buscas <strong>planificación de boda low-cost</strong>, ofrecemos artículos sobre <strong>organización boda civil</strong> o <strong>organización boda religiosa</strong> ajustados a presupuestos reducidos y con ejemplos de <strong>presupuesto boda 100 invitados</strong>.
-          </p>
-          <p className="justify-text">
-            También cubrimos temáticas informativas como <strong>anillos de boda</strong> y <strong>vestidos de novia</strong>, y aportamos <strong>regalos de bodas ideas</strong> para que cada detalle de vuestro día sea inolvidable.
+            En nuestra guia de bodas 2025 tenemos la planificación y recomendaciones para una boda sostenible acorde a las tendencias. Te ayudamos a descubrir fincas y salones únicos en Madrid y Barcelona para tu ceremonia civil o religiosa. Si buscas organización de boda con presupuesto ajustado o de lujo, nos ajustamos a ti y ofrecemos ideas creativas para gestionar cada aspecto, desde la decoración hasta el catering. Además, ofrecemos inspiraciones sobre tarta nupcial y detalles personalizados para que cada elemento de vuestra boda sea inolvidable.
           </p>
         </div>
       </main>

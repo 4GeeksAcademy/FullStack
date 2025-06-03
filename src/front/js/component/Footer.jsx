@@ -18,7 +18,7 @@ const Footer = () => {
             <h4 className="font-weight-bold mb-3">Explorar</h4>
             <ul className="list-unstyled">
               <li>
-                <Link to="/todaslascategorias" className="text-white no-underline">
+                <Link to="/category/belleza" className="text-white no-underline">
                   Ofertas
                 </Link>
               </li>

@@ -2433,7 +2433,7 @@ def create_checkout_session():
         for item in cart_items:
             line_items.append({
                 'price_data': {
-                    'currency': 'usd',
+                    'currency': 'eur',
                     'product_data': {'name': item['title']},
                     'unit_amount': int(item['discountPrice'] * 100),
                 },

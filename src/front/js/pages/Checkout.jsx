@@ -113,8 +113,8 @@ const Checkout = () => {
       <Container className="d-flex justify-content-center align-items-center min-vh-100 bg-light">
         <div className="card shadow-lg p-4" style={{ maxWidth: 500, width: '100%' }}>
           <div className="text-center mb-4">
-            <i className="bi bi-truck text-danger" style={{ fontSize: '3rem' }}></i>
-            <h4 className="mt-2 fw-bold">Datos de entrega</h4>
+            <i className="bi bi-envelope-at text-primary" style={{ fontSize: '3rem' }}></i>
+            <h4 className="mt-2 fw-bold">Datos de Facturación</h4>
             <p className="text-muted">Completa la información antes de pagar</p>
           </div>
           <Form onSubmit={e => { e.preventDefault(); setFormSubmitted(true); }}>
@@ -146,7 +146,7 @@ const Checkout = () => {
             </Form.Group>
 
             <Form.Group className="mb-4" controlId="deliveryAddress">
-              <Form.Label>Dirección de entrega</Form.Label>
+              <Form.Label>Dirección</Form.Label>
               <InputGroup>
                 <InputGroup.Text><i className="bi bi-geo-alt"></i></InputGroup.Text>
                 <Form.Control

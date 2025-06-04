@@ -69,9 +69,6 @@ const Footer = () => {
             <a href="https://www.facebook.com" className="text-white" style={{ marginRight: "10px" }}>
               <BsFacebook size={24} />
             </a>
-            <a href="https://www.twitter.com" className="text-white" style={{ marginRight: "10px" }}>
-              <BsTwitter size={24} />
-            </a>
             <a href="https://www.instagram.com" className="text-white">
               <BsInstagram size={24} />
             </a>

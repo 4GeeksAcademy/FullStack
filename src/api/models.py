@@ -334,7 +334,7 @@ class Belleza(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255))
-    descripcion = db.Column(db.String(1200))
+    descripcion = db.Column(db.Text, nullable=True)
     image = db.Column(db.String(255))
     image2 = db.Column(db.String(255))
     image3 = db.Column(db.String(255))
@@ -348,9 +348,9 @@ class Belleza(db.Model):
     reviews = db.Column(db.Integer)
     buyers = db.Column(db.Integer)
     title2 = db.Column(db.String(255))
-    descripcion2 = db.Column(db.String(900))
+    descripcion2 = db.Column(db.Text)  
     title3 = db.Column(db.String(255))
-    descripcion3 = db.Column(db.String(900))
+    descripcion3 = db.Column(db.Text)  
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)

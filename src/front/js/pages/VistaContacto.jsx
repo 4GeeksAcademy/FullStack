@@ -1,86 +1,67 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Context } from "../store/appContext";
+import React, { useState } from "react";
 import LayoutHeader from "../component/LayoutHeader.jsx";
 import Footer from "../component/Footer.jsx";
-import Newsletter from "../component/Newsletter.jsx";
 
 const VistaContacto = () => {
-  const { store } = useContext(Context);
-  const [contacto, setContacto] = useState(null); // Para almacenar los datos
-  const [loading, setLoading] = useState(true); // Para manejar el estado de carga
-  const [error, setError] = useState(null); // Para manejar errores
+  const [formData, setFormData] = useState({ nombre: "", email: "", mensaje: "" });
+  const [enviado, setEnviado] = useState(false);
 
-  useEffect(() => {
-    const fetchContacto = async () => {
-      try {
-        const backendUrl = process.env.BACKEND_URL;
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-        if (!backendUrl) {
-          throw new Error("BACKEND_URL no está definido en el .env");
-        }
-
-        const response = await fetch(`${backendUrl}/politicas/5`);
-
-        if (!response.ok) {
-          throw new Error(`Error al obtener datos: ${response.statusText}`);
-        }
-
-        const contentType = response.headers.get("Content-Type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await response.json();
-
-          console.log("Respuesta del servidor: ", data); // Para debug
-
-          if (data && data.contenido) {
-            setContacto(data); // Guardamos la respuesta
-          } else {
-            throw new Error("No se encontró el campo 'contenido' en la respuesta.");
-          }
-        } else {
-          const text = await response.text();
-          throw new Error("La respuesta no es JSON. Recibí HTML: " + text);
-        }
-      } catch (err) {
-        console.error("Error al cargar la política de contacto:", err);
-        setError("Hubo un error al cargar la política de contacto.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContacto();
-  }, []);
-
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
-
-  if (error) {
-    return <div>{error}</div>;
-  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Aquí podrías integrar tu lógica de envío, p.ej. llamada a API
+    setEnviado(true);
+    setFormData({ nombre: "", email: "", mensaje: "" });
+  };
 
   return (
     <div>
-      {/* Navbar */}
       <LayoutHeader />
 
-      {/* Contenedor principal */}
       <div className="container my-5">
         <div className="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
           <div className="card-body">
-            <h3 className="fw-bold text-center mb-4">
-              {contacto ? contacto.titulo : "Cargando..."}
-            </h3>
-            {/* Contenido justificado */}
-            <p
-              className="text-muted mb-4"
-              style={{ whiteSpace: "pre-wrap", textAlign: "justify" }}
-            >
-              {contacto ? contacto.contenido : "No hay contenido disponible."}
+            <h3 className="fw-bold text-center mb-4">Contacto</h3>
+
+            <p className="text-muted mb-3" style={{ whiteSpace: "pre-wrap" }}>
+              ¿Tienes alguna pregunta, sugerencia o simplemente quieres saludarnos?
+              Nuestro equipo estará encantado de atenderte y ayudarte en todo lo que necesites.
+              A continuación encontrarás varias formas de ponerte en contacto con nosotros:
             </p>
+
+            <div className="mb-4">
+              <h5 className="fw-semibold">WhatsApp</h5>
+              <p>
+                Escríbenos a: <strong>+34 641 363 127</strong>
+                <br />
+                Horario de atención: Lunes a Viernes, de 09:00 a 18:00 (hora local)
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <h5 className="fw-semibold">Dirección Física</h5>
+              <p>
+                Oficina Central: <br />
+                Calle Estrella Polar, n.º 1<br />
+                28983 Madrid, España
+              </p>
+              <div className="ratio ratio-16x9">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3047.1234567890123!2d-3.703790384607401!3d40.41677537936224!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd42288e1234567%3A0x1234567890abcdef!2sCalle%20Paseo%20de%20la%20Ilusi%C3%B3n%2C%2015%2C%2028003%20Madrid!5e0!3m2!1ses!2ses!4v1610000000000!5m2!1ses!2ses"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  title="Mapa de nuestra oficina en Madrid"
+                ></iframe>
+              </div>
+            </div>
+
+            <hr />
           </div>
         </div>
-        <Newsletter />
       </div>
 
       <Footer />
@@ -89,3 +70,4 @@ const VistaContacto = () => {
 };
 
 export default VistaContacto;
+

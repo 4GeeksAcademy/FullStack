@@ -2355,7 +2355,7 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-YOUR_DOMAIN = "https://obscure-space-spoon-g47jwpvvq9qxhvwr5-3000.app.github.dev"
+YOUR_DOMAIN = "https://bodas-front.web.app"
 
 @app.route('/create-checkout-session', methods=['POST'])
 @jwt_required(optional=True)
@@ -2664,7 +2664,7 @@ def forgot_password():
         db.session.commit()
 
         # Construye el enlace de reset
-        frontend_url = os.getenv('FRONTEND_URL', 'https://obscure-space-spoon-g47jwpvvq9qxhvwr5-3000.app.github.dev')
+        frontend_url = os.getenv('FRONTEND_URL', 'https://bodas-front.web.app')
         reset_link = f"{frontend_url}/reset-password?token={token}"
 
         # Prepara y envía el email

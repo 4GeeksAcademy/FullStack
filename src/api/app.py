@@ -64,9 +64,6 @@ MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
 migrate = Migrate(app, db)
 
-with app.app_context():
-    db.create_all()
-
 datos = {
     "newsletter": []
 }
@@ -89,41 +86,36 @@ app.register_blueprint(payment_bp)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
-@app.before_request
-def inicializar_db():
-    categorias = [
+def seed_categories():
+    seeds = [
         {"id": 1, "nombre": "Viajes"},
         {"id": 2, "nombre": "Belleza"},
         {"id": 3, "nombre": "Top"},
         {"id": 4, "nombre": "Gastronomía"},
         {"id": 5, "nombre": "Ofertas"},
     ]
-
-    for cat in categorias:
-        if not Category.query.get(cat["id"]):
-            db.session.add(Category(id=cat["id"], nombre=cat["nombre"]))
+    existing = {c.id for c in Category.query.all()}
+    for s in seeds:
+        if s["id"] not in existing:
+            db.session.add(Category(id=s["id"], nombre=s["nombre"]))
     db.session.commit()
 
-    # ID de usuario (ajusta si no existe)
-    user_id = 1
+with app.app_context():
+    # 1) crea las tablas
+    db.create_all()
 
-    # IDs de categoría ya asegurados arriba
-    viajes_category_id = 1
-    belleza_category_id = 2
-    top_category_id = 3
-    gastronomia_category_id = 4
-    ofertas_category_id = 5
+    # 2) semillas inmutables (ejecuta UNA sola vez)
+    seed_categories()
 
-    # Inicializar servicios si no existen
+    # 3) inicializa tus servicios si no existen
     inicializar_servicios(
-        user_id,
-        viajes_category_id,
-        top_category_id,
-        belleza_category_id,
-        gastronomia_category_id,
-        ofertas_category_id
+        user_id=1,
+        viajes_category_id=1,
+        top_category_id=3,
+        belleza_category_id=2,
+        gastronomia_category_id=4,
+        ofertas_category_id=5
     )
-
 
 # generate sitemap with all your endpoints
 @app.route('/')
@@ -1563,33 +1555,6 @@ def crear_categoria():
         "nombre": nueva_categoria.nombre
     }), 201
 
-# Crear categorías si no existen al iniciar la app
-@app.before_request
-def crear_categorias():
-    # Verifica si las categorías existen al principio de cada solicitud
-    categorias = Category.query.all()
-
-    if not any(c.nombre == 'Viajes' for c in categorias):
-        categoria_viajes = Category(nombre='Viajes')
-        db.session.add(categoria_viajes)
-
-    if not any(c.nombre == 'Top' for c in categorias):
-        categoria_top = Category(nombre='Top')
-        db.session.add(categoria_top)
-
-    if not any(c.nombre == 'Belleza' for c in categorias):
-        categoria_belleza = Category(nombre='Belleza')
-        db.session.add(categoria_belleza)
-
-    if not any(c.nombre == 'Gastronomia' for c in categorias):
-        categoria_gastronomia = Category(nombre='Gastronomia')
-        db.session.add(categoria_gastronomia)
-
-    if not any(c.nombre == 'Ofertas' for c in categorias):
-        categoria_ofertas = Category(nombre='Ofertas')
-        db.session.add(categoria_ofertas)
-
-    db.session.commit()  # Confirmar los cambios en la base de datos
 
 
 

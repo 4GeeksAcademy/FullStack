@@ -651,7 +651,7 @@ def inicializar_servicios(user_id, viajes_category_id, top_category_id, belleza_
     create_admin_user()
     # Crear los servicios para cada categoría
     crear_servicios_belleza(user_id, belleza_category_id)
-//    crear_servicios_viajes(user_id, viajes_category_id)
-//    crear_servicios_top(user_id, top_category_id)  
-//    crear_servicios_gastronomia(user_id, gastronomia_category_id)
-//    crear_servicios_ofertas(user_id, ofertas_category_id)  
+    crear_servicios_viajes(user_id, viajes_category_id)
+    crear_servicios_top(user_id, top_category_id)  
+    crear_servicios_gastronomia(user_id, gastronomia_category_id)
+    crear_servicios_ofertas(user_id, ofertas_category_id)  

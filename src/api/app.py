@@ -32,10 +32,12 @@ from itsdangerous import URLSafeTimedSerializer
 from api.models import db, User, PasswordResetToken
 from api.mail_service import MailService
 from sqlalchemy import extract
+from flask_migrate import Migrate
 import json
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
 
 load_dotenv()
 
@@ -63,7 +65,7 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
-
+migrate = Migrate(app, db)
 
 datos = {
     "newsletter": []

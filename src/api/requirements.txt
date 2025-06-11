@@ -13,5 +13,6 @@ SQLAlchemy>=1.4
 itsdangerous>=2.0
 gunicorn>=20.0
 psycopg2-binary>=2.9
-
+twilio>=8.0
+openai>=0.27.0
 

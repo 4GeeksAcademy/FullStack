@@ -1,28 +1,49 @@
-# bot.py
 import os
-from flask import Flask, request, Response
+from flask import Flask, request, Response, abort
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
+from twilio.request_validator import RequestValidator
 import openai
 from dotenv import load_dotenv
 
 # Carga variables de entorno desde .env
 load_dotenv()
 
-TWILIO_ACCOUNT_SID   = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN    = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_NUMBER")
-OPENAI_API_KEY       = os.getenv("OPENAI_API_KEY")
-PORT                 = int(os.getenv("PORT", 3002))
+# Configuración de credenciales
+twilio_account_sid   = os.getenv("TWILIO_ACCOUNT_SID")
+twilio_auth_token    = os.getenv("TWILIO_AUTH_TOKEN")
+twilio_whatsapp_from = os.getenv("TWILIO_WHATSAPP_NUMBER")
+openai_api_key       = os.getenv("OPENAI_API_KEY")
+PORT                  = int(os.getenv("PORT", 3002))
 
 # Inicializar clientes
-twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-openai.api_key = OPENAI_API_KEY
+client = Client(twilio_account_sid, twilio_auth_token)
+validator = RequestValidator(twilio_auth_token)
+openai.api_key = openai_api_key
 
 app = Flask(__name__)
 
-# Prompt optimizado y resumido para reducir tokens
-SYSTEM_PROMPT = """
+@app.route("/webhook", methods=["GET", "POST"])
+def whatsapp_webhook():
+    # GET para health check
+    if request.method == "GET":
+        return "✅ Bot en línea", 200
+
+    # Validación de la firma de Twilio
+    signature = request.headers.get("X-Twilio-Signature", "")
+    url       = request.url
+    params    = request.form.to_dict()
+    if not validator.validate(url, params, signature):
+        print("Error: firma inválida")
+        abort(400)
+
+    # Datos del mensaje entrante
+    incoming_msg = params.get("Body", "").strip()
+    from_number  = params.get("From", "").strip()
+    print(f"DEBUG - Mensaje de {from_number}: {incoming_msg}")
+
+    # Prompt optimizado para ChatGPT
+    SYSTEM_PROMPT = """
 Eres un asistente de ventas de 'Camino al Sí'. Usa solo esta info:
 
 Paquetes (máx. invitados / precio):
@@ -39,15 +60,7 @@ Proceso:
 Saluda, califica y propone el paquete más ajustado.
 """
 
-@app.route("/webhook", methods=["POST"])
-def whatsapp_webhook():
-    # Captura datos del mensaje de Twilio
-    vals         = request.values
-    incoming_msg = vals.get("Body", "").strip()
-    from_number  = vals.get("From", "").strip()
-    print(f"DEBUG - De {from_number}: {incoming_msg}")
-
-    # Llamada a OpenAI ChatCompletion
+    # Llamada a la API de OpenAI
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
@@ -61,7 +74,7 @@ def whatsapp_webhook():
         print("Error OpenAI:", e)
         reply_text = "Lo siento, no puedo procesar tu solicitud ahora."
 
-    # Enviar respuesta vía TwiML
+    # Construir respuesta TwiML
     twiml = MessagingResponse()
     twiml.message(reply_text)
     return Response(str(twiml), mimetype="application/xml")

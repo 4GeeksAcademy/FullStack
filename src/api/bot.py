@@ -1,73 +1,31 @@
-import os
 from flask import Flask, request, Response
 from twilio.twiml.messaging_response import MessagingResponse
-from twilio.rest import Client
 import openai
+import os
 from dotenv import load_dotenv
 
-# Carga variables de entorno desde .env
 load_dotenv()
-
-# Configuración de credenciales
-twilio_account_sid   = os.getenv("TWILIO_ACCOUNT_SID")
-twilio_auth_token    = os.getenv("TWILIO_AUTH_TOKEN")
-twilio_whatsapp_from = os.getenv("TWILIO_WHATSAPP_NUMBER")
-openai_api_key       = os.getenv("OPENAI_API_KEY")
-PORT                 = int(os.getenv("PORT", 3002))
-
-# Inicializar clientes
-twilio_client = Client(twilio_account_sid, twilio_auth_token)
-openai.api_key = openai_api_key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 
 @app.route("/webhook", methods=["GET", "POST"])
 def whatsapp_webhook():
-    # Health check
     if request.method == "GET":
         return "✅ Bot en línea", 200
 
-    # Procesar mensaje entrante sin verificar firma (sandbox)
-    data = request.values
-    incoming_msg = data.get("Body", "").strip()
-    from_number = data.get("From", "").strip()
-    print(f"DEBUG - Mensaje de {from_number}: {incoming_msg}")
+    # Procesa SIN validar firma
+    body = request.values.get("Body", "").strip()
+    frm  = request.values.get("From", "").strip()
+    print(f"DEBUG – de {frm}: {body}")
 
-    # Prompt optimizado para ChatGPT
-    SYSTEM_PROMPT = """
-Eres un asistente de ventas de 'Camino al Sí'. Usa solo esta info:
-
-Paquetes (máx. invitados / precio):
-• Gold (50 pax / €26 825): 3 platos, cóctel 1,5 h, barra libre 3 h, DJ, coche clásico, noche recién casados.
-• Platinum (100 pax / €35 299): menú gourmet/vegano, barra premium, 5 habitaciones, asesoría.
-• Emerald (150 pax / €42 341): 4 platos, maquillaje novia, fotógrafo, 5 hab. finca + 3 hotel.
-• Diamond (250 pax / €71 124): menú premium, maquillaje acompañantes, 5 hab. noche antes + 8 boda.
-
-Proceso:
-1. Pregunta estilo, invitados y zona.
-2. Informa que precios son orientativos (varían por finca y número).
-3. Ofrece cotización de finca y menú; si acepta, avanzamos.
-
-Saluda, califica y propone el paquete más ajustado.
-"""
-
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": incoming_msg}
-            ]
-        )
-        reply_text = response.choices[0].message.content.strip()
-    except Exception as e:
-        print("Error OpenAI:", e)
-        reply_text = "Lo siento, no puedo procesar tu solicitud ahora."
+    # Aquí tu prompt y llamada a OpenAI...
+    reply = "Aquí iría la respuesta de tu bot"
 
     twiml = MessagingResponse()
-    twiml.message(reply_text)
-
+    twiml.message(reply)
     return Response(str(twiml), mimetype="application/xml")
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=PORT, debug=True)
+if __name__ == "__main__":
+    app.run(port=int(os.getenv("PORT", 3002)), host="0.0.0.0", debug=True)
+

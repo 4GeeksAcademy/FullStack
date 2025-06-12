@@ -191,6 +191,21 @@ def whatsapp_webhook():
         tb = traceback.format_exc()
         print(tb)
         return jsonify({"error":str(e),"traceback":tb.splitlines()}), 500
+    
+@app.route("/status", methods=["POST"])
+def message_status():
+    # 1) Vuelca todo lo que llega para inspeccionar los nombres de los campos
+    data = request.values.to_dict()
+    print("STATUS CALLBACK – request.values:", data)
+
+    # 2) Extrae los campos realmente útiles
+    message_sid    = data.get("MessageSid")
+    message_status = data.get("MessageStatus")  # queued, sent, delivered, undelivered, failed…
+    twilio_number  = data.get("From")           # tu número de Twilio
+    client_number  = data.get("To")             # el número del cliente
+
+    print(f"STATUS – SID {message_sid} | from Twilio: {twilio_number} → client: {client_number} = {message_status}")
+    return ("", 204)
 
 @app.route('/search', methods=['GET'])
 def search_all_services():

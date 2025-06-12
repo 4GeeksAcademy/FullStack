@@ -35,6 +35,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 import openai
 import os
 import traceback
+from openai import OpenAI
 
 
 
@@ -148,43 +149,48 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # avoid cache memory
     return response
 
-# WhatsApp webhook route (fixed path)
-@app.route("/webhook", methods=["GET", "POST"])
+# Initialize clients
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# WhatsApp webhook
+@app.route("/webhook", methods=["GET","POST"])
 def whatsapp_webhook():
     # Health check
     if request.method == "GET":
         return "✅ Bot en línea", 200
-
     try:
-        # === INICIO LÓGICA EXISTENTE ===
-        incoming_msg = request.values.get("Body", "").strip()
-        from_number  = request.values.get("From", "").strip()
+        msg = request.values
+        incoming_msg = msg.get("Body", "").strip()
+        from_number  = msg.get("From", "").strip()
         print(f"DEBUG - Mensaje de {from_number}: {incoming_msg}")
 
-        SYSTEM_PROMPT = """Eres un asistente…"""
-        resp = openai.ChatCompletion.create(
+        SYSTEM_PROMPT = (
+            "Eres un asistente de ventas de 'Camino al Sí'. Usa solo esta info:\n"
+            "Paquetes (máx. invitados / precio):\n"
+            "• Gold (50 pax / €26 825): menú 3 platos, cóctel 1.5h, barra libre 3h, DJ, coche, noche novios.\n"
+            "• Platinum (100 pax / €35 299): menú gourmet/vegano, barra premium, 5 habitaciones, asesoría.\n"
+            "• Emerald (150 pax / €42 341): menú 4 platos, maquillaje, foto, 5 hab. finca + 3 hotel.\n"
+            "• Diamond (250 pax / €71 124): menú premium, maquillaje acompañantes, 5 hab. noche antes +8 boda.\n\n"
+            "Proceso:\n"
+            "1. Pregunta estilo, invitados y zona.\n"
+            "2. Informa precios orientativos.\n"
+            "3. Ofrece cotización."
+        )
+        resp = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": incoming_msg}
+                {"role":"system","content":SYSTEM_PROMPT},
+                {"role":"user","content":incoming_msg}
             ]
         )
         reply = resp.choices[0].message.content.strip()
-
         twiml = MessagingResponse()
         twiml.message(reply)
         return Response(str(twiml), mimetype="application/xml")
-        # === FIN LÓGICA EXISTENTE ===
-
     except Exception as e:
-        # Imprime el stack trace completo en los logs de Render
         tb = traceback.format_exc()
         print(tb)
-        # Devuelve el error al cliente para depuración
-        return jsonify({
-            "error": str(e),
-            "traceback": tb.splitlines()
-        }), 500
+        return jsonify({"error":str(e),"traceback":tb.splitlines()}), 500
 
 @app.route('/search', methods=['GET'])
 def search_all_services():

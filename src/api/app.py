@@ -31,12 +31,17 @@ from api.models import db, User, PasswordResetToken
 from api.mail_service import MailService
 from sqlalchemy import extract
 import json
+from twilio.twiml.messaging_response import MessagingResponse
+import openai
+import os
+
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 
 load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -132,6 +137,23 @@ def serve_any_other_file(path):
     response = send_from_directory(static_file_dir, path)
     response.cache_control.max_age = 0  # avoid cache memory
     return response
+
+@app.route("/webhook", methods=["GET", "POST"])
+def whatsapp_webhook():
+    if request.method == "GET":
+        return "✅ Bot en línea", 200
+
+    # Procesa SIN validar firma
+    body = request.values.get("Body", "").strip()
+    frm  = request.values.get("From", "").strip()
+    print(f"DEBUG – de {frm}: {body}")
+
+    # Aquí tu prompt y llamada a OpenAI...
+    reply = "Aquí iría la respuesta de tu bot"
+
+    twiml = MessagingResponse()
+    twiml.message(reply)
+    return Response(str(twiml), mimetype="application/xml")
 
 @app.route('/search', methods=['GET'])
 def search_all_services():

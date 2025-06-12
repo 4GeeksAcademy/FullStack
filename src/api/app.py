@@ -3,7 +3,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 import os
 import stripe
-from flask import Flask, Blueprint, request, jsonify, url_for, send_from_directory
+from flask import Flask, Blueprint, request, jsonify, url_for, send_from_directory, Response
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
@@ -34,6 +34,7 @@ import json
 from twilio.twiml.messaging_response import MessagingResponse
 import openai
 import os
+import traceback
 
 
 
@@ -154,42 +155,36 @@ def whatsapp_webhook():
     if request.method == "GET":
         return "✅ Bot en línea", 200
 
-    # Process incoming message
-    incoming_msg = request.values.get("Body", "").strip()
-    from_number  = request.values.get("From", "").strip()
-    print(f"DEBUG - Mensaje de {from_number}: {incoming_msg}")
-
-    SYSTEM_PROMPT = """
-Eres un asistente de ventas de 'Camino al Sí'. Usa solo esta info:
-
-Paquetes (máx. invitados / precio):
-• Gold (50 pax / €26 825): menú 3 platos, cóctel 1.5h, barra libre 3h, DJ, coche clásico, noche novios.
-• Platinum (100 pax / €35 299): menú gourmet/vegano, barra premium, 5 habitaciones, asesoría.
-• Emerald (150 pax / €42 341): menú 4 platos, maquillaje, foto, 5 hab. finca + 3 hotel.
-• Diamond (250 pax / €71 124): premium completo, maquillaje acompañantes, 5 hab. antes +8 boda.
-
-Proceso:
-1. Pregunta estilo, invitados y zona.
-2. Informa precios orientativos.
-3. Ofrece cotización.
-"""
-
     try:
+        # === INICIO LÓGICA EXISTENTE ===
+        incoming_msg = request.values.get("Body", "").strip()
+        from_number  = request.values.get("From", "").strip()
+        print(f"DEBUG - Mensaje de {from_number}: {incoming_msg}")
+
+        SYSTEM_PROMPT = """Eres un asistente…"""
         resp = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[
-                {"role":"system","content":SYSTEM_PROMPT},
-                {"role":"user","content":incoming_msg}
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user",   "content": incoming_msg}
             ]
         )
         reply = resp.choices[0].message.content.strip()
-    except Exception as e:
-        print("Error OpenAI:", e)
-        reply = "Lo siento, no puedo procesar tu solicitud ahora."
 
-    twiml = MessagingResponse()
-    twiml.message(reply)
-    return Response(str(twiml), mimetype="application/xml")
+        twiml = MessagingResponse()
+        twiml.message(reply)
+        return Response(str(twiml), mimetype="application/xml")
+        # === FIN LÓGICA EXISTENTE ===
+
+    except Exception as e:
+        # Imprime el stack trace completo en los logs de Render
+        tb = traceback.format_exc()
+        print(tb)
+        # Devuelve el error al cliente para depuración
+        return jsonify({
+            "error": str(e),
+            "traceback": tb.splitlines()
+        }), 500
 
 @app.route('/search', methods=['GET'])
 def search_all_services():

@@ -41,7 +41,16 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+TWILIO_ACCOUNT_SID   = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN    = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_NUMBER")
+OPENAI_API_KEY       = os.getenv("OPENAI_API_KEY")
+
+# Inicializar cliente OpenAI
+openai.api_key = OPENAI_API_KEY
+
+# Inicializar cliente de Twilio si lo necesitas más adelante
+twilio_client = None
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -138,18 +147,45 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # avoid cache memory
     return response
 
+# WhatsApp webhook route (fixed path)
 @app.route("/webhook", methods=["GET", "POST"])
 def whatsapp_webhook():
+    # Health check
     if request.method == "GET":
         return "✅ Bot en línea", 200
 
-    # Procesa SIN validar firma
-    body = request.values.get("Body", "").strip()
-    frm  = request.values.get("From", "").strip()
-    print(f"DEBUG – de {frm}: {body}")
+    # Process incoming message
+    incoming_msg = request.values.get("Body", "").strip()
+    from_number  = request.values.get("From", "").strip()
+    print(f"DEBUG - Mensaje de {from_number}: {incoming_msg}")
 
-    # Aquí tu prompt y llamada a OpenAI...
-    reply = "Aquí iría la respuesta de tu bot"
+    SYSTEM_PROMPT = """
+Eres un asistente de ventas de 'Camino al Sí'. Usa solo esta info:
+
+Paquetes (máx. invitados / precio):
+• Gold (50 pax / €26 825): menú 3 platos, cóctel 1.5h, barra libre 3h, DJ, coche clásico, noche novios.
+• Platinum (100 pax / €35 299): menú gourmet/vegano, barra premium, 5 habitaciones, asesoría.
+• Emerald (150 pax / €42 341): menú 4 platos, maquillaje, foto, 5 hab. finca + 3 hotel.
+• Diamond (250 pax / €71 124): premium completo, maquillaje acompañantes, 5 hab. antes +8 boda.
+
+Proceso:
+1. Pregunta estilo, invitados y zona.
+2. Informa precios orientativos.
+3. Ofrece cotización.
+"""
+
+    try:
+        resp = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role":"system","content":SYSTEM_PROMPT},
+                {"role":"user","content":incoming_msg}
+            ]
+        )
+        reply = resp.choices[0].message.content.strip()
+    except Exception as e:
+        print("Error OpenAI:", e)
+        reply = "Lo siento, no puedo procesar tu solicitud ahora."
 
     twiml = MessagingResponse()
     twiml.message(reply)

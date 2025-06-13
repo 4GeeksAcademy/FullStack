@@ -178,7 +178,7 @@ export function Tendencias2025Page() {
         </p>
 
         <div className="text-center">
-          <a href="#/contacto" className="cta-link">Solicita tu asesoría gratuita</a>
+          <a href="https://wa.me/34641363127?text=Hola%20buen%20dia%20quiero%20solicitar%20informacion%20sobre%20los%20paquetes%20de%20bodas" className="cta-link">Solicita tu asesoría gratuita</a>
         </div>
       </section>
 

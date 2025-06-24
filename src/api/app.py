@@ -124,6 +124,8 @@ with app.app_context():
     seed_categories()
 
     # 3) inicializa tus servicios si no existen
+@app.before_first_request
+def setup_services():
     inicializar_servicios(
         user_id=1,
         viajes_category_id=1,
@@ -132,7 +134,6 @@ with app.app_context():
         gastronomia_category_id=4,
         ofertas_category_id=5
     )
-
 # generate sitemap with all your endpoints
 @app.route('/')
 def sitemap():

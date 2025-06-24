@@ -124,16 +124,23 @@ with app.app_context():
     seed_categories()
 
     # 3) inicializa tus servicios si no existen
-@app.before_first_request
-def setup_services():
-    inicializar_servicios(
-        user_id=1,
-        viajes_category_id=1,
-        top_category_id=3,
-        belleza_category_id=2,
-        gastronomia_category_id=4,
-        ofertas_category_id=5
-    )
+# Flag para evitar inicializar varias veces
+_services_initialized = False
+
+@app.before_request
+def _initialize_once():
+    global _services_initialized
+    if not _services_initialized:
+        inicializar_servicios(
+            user_id=1,
+            viajes_category_id=1,
+            top_category_id=3,
+            belleza_category_id=2,
+            gastronomia_category_id=4,
+            ofertas_category_id=5
+        )
+        _services_initialized = True
+
 # generate sitemap with all your endpoints
 @app.route('/')
 def sitemap():

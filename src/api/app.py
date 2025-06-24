@@ -2442,7 +2442,7 @@ def limpiar_tablas_api():
     limpiar_tablas()
     return jsonify({'message': 'Las tablas han sido limpiadas exitosamente.'}), 200
 
-YOUR_DOMAIN = "www.camino-al-si.com"
+YOUR_DOMAIN = "https://www.camino-al-si.com"
 
 @app.route('/create-checkout-session', methods=['POST'])
 @jwt_required(optional=True)

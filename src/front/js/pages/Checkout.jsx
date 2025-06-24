@@ -8,7 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const stripePromise = loadStripe(
-  "pk_test_51RHkEqFNyrX4spGdBv11uJQXp9SbJRaSxzsolRbEeZVVYuzxZqtdF4uBytcTV0BkfQRgMemgaA2DnGI4lriZZpWb00g736yfzD"
+  "pk_live_51QwRWwFM4KKObJguDO8JFVOyw2cYK7Tr6U2u9DBWwF8mgQrwTsIi4Z3fPbZeE68ri3QQbEryE9tZcRQNRucdH6aZ00FycVnu2X"
 );
 
 const Checkout = () => {

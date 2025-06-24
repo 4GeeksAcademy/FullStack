@@ -12,7 +12,7 @@ from api.admin import setup_admin
 from api.commands import setup_commands
 from api.models import User
 from api.models import Viajes, Top, Belleza, Gastronomia, Category, Reservation, Cart, CartService, Newsletter, Ofertas, Payment, PaymentItem, NewsletterSubscriptions, NewsletterServices
-from api.services import inicializar_servicios
+from api.services import inicializar_servicios, create_admin_user
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, verify_jwt_in_request
@@ -36,7 +36,8 @@ import openai
 import os
 import traceback
 from openai import OpenAI
-
+from flask.cli import with_appcontext
+import click
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -124,22 +125,23 @@ with app.app_context():
     seed_categories()
 
     # 3) inicializa tus servicios si no existen
-# Flag para evitar inicializar varias veces
-_services_initialized = False
 
-@app.before_request
-def _initialize_once():
-    global _services_initialized
-    if not _services_initialized:
-        inicializar_servicios(
-            user_id=1,
-            viajes_category_id=1,
-            top_category_id=3,
-            belleza_category_id=2,
-            gastronomia_category_id=4,
-            ofertas_category_id=5
-        )
-        _services_initialized = True
+@app.cli.command("seed-all")
+@with_appcontext
+def seed_all():
+    """Ejecuta migraciones y crea admin + categorías."""
+    click.echo("Creando usuario admin…")
+    create_admin_user()
+    click.echo("Creando datos de categorías…")
+    inicializar_servicios(
+        user_id=1,
+        viajes_category_id=1,
+        top_category_id=3,
+        belleza_category_id=2,
+        gastronomia_category_id=4,
+        ofertas_category_id=5
+    )
+    click.echo("¡Seed completo!")
 
 # generate sitemap with all your endpoints
 @app.route('/')

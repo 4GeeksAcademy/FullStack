@@ -31,6 +31,7 @@ class User(db.Model):
     payments = db.relationship('Payment', lazy='dynamic', cascade='all, delete-orphan')
     reservations = db.relationship('Reservation', lazy='dynamic', cascade='all, delete-orphan')
     cart = db.relationship('Cart', back_populates='user', uselist=False)
+    is_guest = db.Column(db.Boolean(), default=False, nullable=False)
 
     def __repr__(self):
         return f'<User {self.correo}>'

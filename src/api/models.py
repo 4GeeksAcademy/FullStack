@@ -10,7 +10,7 @@ class User(db.Model):
     nombre = db.Column(db.String(120), nullable=True)
     apellido = db.Column(db.String(120), nullable=True)
     correo = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
+    password = db.Column(db.String(200), nullable=True)
     telefono = db.Column(db.String(20))
     direccion_line1 = db.Column(db.String(120))
     direccion_line2 = db.Column(db.String(120), nullable=True)

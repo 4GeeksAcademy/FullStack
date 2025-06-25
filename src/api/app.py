@@ -38,6 +38,7 @@ import traceback
 from openai import OpenAI
 from flask.cli import with_appcontext
 import click
+from flask import g
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -117,19 +118,30 @@ def seed_categories():
             db.session.add(Category(id=s["id"], nombre=s["nombre"]))
     db.session.commit()
 
-with app.app_context():
-    # 1) crea las tablas
+@app.before_request
+def inicializar_db_una_vez():
+    # Sólo corremos esta semilla la primera vez que llegue una petición
+    if getattr(g, "db_inicializada", False):
+        return
+    g.db_inicializada = True
+
+    # 1) Crear tablas
     db.create_all()
 
-    # 2) semillas inmutables (ejecuta UNA sola vez)
-    seed_categories()
+    # 2) Semilla de categorías
+    categorias = [
+        {"id": 1, "nombre": "Viajes"},
+        {"id": 2, "nombre": "Belleza"},
+        {"id": 3, "nombre": "Top"},
+        {"id": 4, "nombre": "Gastronomía"},
+        {"id": 5, "nombre": "Ofertas"},
+    ]
+    for cat in categorias:
+        if not Category.query.get(cat["id"]):
+            db.session.add(Category(id=cat["id"], nombre=cat["nombre"]))
+    db.session.commit()
 
-    # 3) inicializa tus servicios si no existen
-    #    Asume que creas la función inicializar_servicios(user_id, viajes_category_id, ...)
-    #    en api/services.py y que el admin tiene id=1
-    from api.services import inicializar_servicios
-
-    # Solo ejecutamos la semilla de servicios si no hay ninguno
+    # 3) Semilla de servicios (sólo si no hay ninguno en la BD)
     if not Viajes.query.first() and not Belleza.query.first() and not Gastronomia.query.first():
         inicializar_servicios(
             user_id=1,

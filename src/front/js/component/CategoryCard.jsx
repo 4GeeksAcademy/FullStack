@@ -42,17 +42,10 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
   // Función para formatear números como euros con punto como separador de miles y sin decimales
   const formatEuros = (num) => {
     const parsed = Number(num);
-    console.log(
-      "CategoryCard → formatEuros recibió:",
-      num,
-      "parsed como número:",
-      parsed
-    );
     const formatted = `€${parsed.toLocaleString("es-ES", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     })}`;
-    console.log("CategoryCard → formatEuros devuelve:", formatted);
     return formatted;
   };
 
@@ -62,11 +55,9 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
 
   // Lógica para determinar los precios correctos
   if (isBackendService) {
-    // Para servicios del backend, donde price y discountPrice están invertidos
     actualPrice = Number(discountPrice) || 0;
     actualDiscountPrice = Number(price) || 0;
   } else {
-    // Para servicios creados por usuarios
     if (price !== undefined && discountPrice !== undefined) {
       actualPrice = Number(price) || 0;
       actualDiscountPrice = Number(discountPrice) || 0;
@@ -75,59 +66,35 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
       actualDiscountPrice = Number(discountPrice) || 0;
     } else if (price !== undefined) {
       actualPrice = Number(price) || 0;
-      actualDiscountPrice = Math.round(actualPrice * 0.7); // 30% de descuento
+      actualDiscountPrice = Math.round(actualPrice * 0.7);
     } else if (precio !== undefined) {
       actualPrice = Number(precio) || 0;
       actualDiscountPrice = Math.round(actualPrice * 0.7);
     }
   }
 
-  // Si después de todo esto, seguimos sin precios válidos, asignamos valores por defecto
   if (actualPrice <= 0) actualPrice = 1000;
   if (actualDiscountPrice <= 0)
     actualDiscountPrice = Math.round(actualPrice * 0.7);
 
-  // Nos aseguramos que el precio con descuento sea menor que el precio original
   if (actualDiscountPrice >= actualPrice && !isBackendService) {
-    actualDiscountPrice = Math.round(actualPrice * 0.7); // 30% de descuento por defecto
+    actualDiscountPrice = Math.round(actualPrice * 0.7);
   }
 
-  // Calculamos el descuento real
   let finalDiscount = Math.round(
     ((actualPrice - actualDiscountPrice) / actualPrice) * 100
   );
-
-  // Nos aseguramos de que el descuento tenga sentido
   if (finalDiscount < 5) finalDiscount = 5;
   if (finalDiscount > 80) finalDiscount = 80;
 
-  // Logueamos los valores antes de formatear para verificar
-  console.log(
-    `CategoryCard → Oferta ID: ${offerCopy.id}, actualPrice raw:`,
-    actualPrice,
-    ", actualDiscountPrice raw:",
-    actualDiscountPrice
-  );
-
-  // Formateamos para mostrar en pantalla
   const precioOriginalFormateado = formatEuros(actualPrice);
   const precioDescuentoFormateado = formatEuros(actualDiscountPrice);
 
-  // Logueamos tras formatear
-  console.log(
-    `CategoryCard → Oferta ID: ${offerCopy.id}, precio original formateado:`,
-    precioOriginalFormateado,
-    ", precio descuento formateado:",
-    precioDescuentoFormateado
-  );
-
-  // Modificamos el objeto offer para que estos valores estén disponibles para ProductDetail
   offerCopy.originalPrice = actualPrice;
   offerCopy.discountPrice = actualDiscountPrice;
-  offerCopy.price = actualDiscountPrice; // Para consistencia
-  offerCopy.image = displayImage; // Aseguramos que la imagen esté en el campo correcto
+  offerCopy.price = actualDiscountPrice;
+  offerCopy.image = displayImage;
 
-  // Render de estrellas
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, i) => (
       <i
@@ -157,12 +124,9 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
           }}
           onError={(e) => {
             e.target.src = defaultImage;
-            console.log("⚠️ Error cargando imagen, usando la predeterminada");
           }}
           loading="lazy"
         />
-
-        {/* Mostramos la etiqueta de descuento con el valor calculado */}
         <span className="position-absolute top-0 end-0 bg-danger text-white small px-2 py-1 m-2 rounded">
           {finalDiscount}% OFF
         </span>
@@ -182,7 +146,6 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
 
         <div className="d-flex flex-column">
           <div className="d-flex justify-content-start align-items-center mb-1">
-            {/* Aquí usamos los valores formateados */}
             <span className={`fw-bold text-danger ${compact ? "fs-6" : "fs-5"}`}>
               {precioDescuentoFormateado}
             </span>
@@ -213,23 +176,15 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
             font-size: 10px !important;
             margin-right: 12px; /* espacio a la derecha solo en móvil */
           }
-
-          /* Ajuste del título */
           .category-card h5.card-title-hover {
             font-size: 0.75rem !important;
           }
-
-          /* Ajuste del precio actual (texto en rojo) */
           .category-card .text-danger {
             font-size: 0.9rem !important;
           }
-
-          /* Ajuste del precio anterior (tachado) */
           .category-card .text-muted.text-decoration-line-through {
             font-size: 0.75rem !important;
           }
-
-          /* Ajuste de las estrellas */
           .category-card i.bi-star-fill,
           .category-card i.bi-star {
             font-size: 0.75rem !important;
@@ -277,12 +232,20 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
         .category-card-img:hover {
           opacity: 0.9;
         }
+
+        /* ----------------------------------------
+           AJUSTE PARA PANTALLAS MUY GRANDES (>1920px)
+           Para no cortar la imagen, mostrarla completa
+        ---------------------------------------- */
+        @media (min-width: 1920px) {
+          .category-card-img {
+            height: auto !important;
+            object-fit: contain !important;
+          }
+        }
       `}</style>
     </div>
   );
 };
 
 export default CategoryCard;
-
-
-

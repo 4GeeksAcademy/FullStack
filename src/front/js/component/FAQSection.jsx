@@ -14,7 +14,7 @@ const FAQSection = () => (
           ¿Con cuánta antelación debo reservar?
         </Accordion.Header>
         <Accordion.Body>
-          En general, cuanto antes reserves, más opciones y mejores precios encontrarás. Para la finca o salón, lo ideal es asegurar la fecha con al menos 12 – 18 meses de antelación, especialmente si tu boda será en temporada alta (primavera o verano). Proveedores como catering, fotógrafo, música o transporte suelen reservarse con 9 – 12 meses de anticipación. Si necesitas servicios adicionales (decoración, vídeo, peluquería y maquillaje), conviene confirmarlos 6 – 9 meses antes. Por último, cuestiones más puntuales como invitaciones, ramo y detalles de papelería pueden dejarse para 4 – 6 meses antes, siempre teniendo en cuenta la fecha que ya tengas bloqueada. De este modo podrás garantizar disponibilidad y negociar con calma cada aspecto de tu día.
+          En general, cuanto antes reserves, más opciones y mejores precios encontrarás. Para la finca o salón, lo ideal es asegurar la fecha con al menos 4 – 6 meses de antelación, especialmente si tu boda será en temporada alta (primavera o verano). Proveedores como catering, fotógrafo, música o transporte suelen reservarse con 6 meses de anticipación. Si necesitas servicios adicionales (decoración, vídeo, peluquería y maquillaje), conviene confirmarlos 4 – 7 meses antes. Por último, cuestiones más puntuales como invitaciones, ramo y detalles de papelería pueden dejarse para 4 – 6 meses antes, siempre teniendo en cuenta la fecha que ya tengas bloqueada. De este modo podrás garantizar disponibilidad y negociar con calma cada aspecto de tu día.
 
 Sin embargo, se puede planificar una boda express en tan solo 3 meses. 
         </Accordion.Body>
@@ -23,10 +23,10 @@ Sin embargo, se puede planificar una boda express en tan solo 3 meses.
       <Accordion.Item eventKey="1">
         <Accordion.Header>
           <BsHouseDoor className="me-2" />
-          ¿Cómo elijo la finca ideal?
+          ¿Cómo elijo la locación ideal?
         </Accordion.Header>
         <Accordion.Body>
-          Nosotros te ayudamos a encontrar la finca perfecta para tu boda sin que tengas que preocuparte por nada. Definimos tu estilo (rústico, moderno o clásico) y ajustamos el presupuesto comparando tarifas y servicios incluidos. Seleccionamos ubicaciones accesibles, con buen aparcamiento y opciones de alojamiento para invitados. Verificamos capacidad y comodidades (ceremonia, banquete, baile), así como servicios básicos y climatización según la temporada. Visitamos las fincas por ti, analizando luz, espacio y confort, para que tú solo te dediques a disfrutar de tu gran día.
+          Nosotros te ayudamos a encontrar la locación perfecta para tu boda, sin que tengas que preocuparte por nada. Te ayudamos a definir tu estilo (rústico, moderno o clásico) y ajustamos el presupuesto comparando tarifas y servicios incluidos. Te asesoramos para seleccionar ubicaciones accesibles, con buen aparcamiento y opciones de alojamiento para novios e invitados. Verificamos capacidad y comodidades (ceremonia, banquete, baile), así como servicios básicos y climatización, según la temporada. Visitamos las fincas por ti, y con los novios si lo desean, analizando luz, espacio y confort, para que tú sólo te dediques a disfrutar de tu gran día.
         </Accordion.Body>
       </Accordion.Item>
 

@@ -7,8 +7,8 @@ const CategoriesSection = ({ categories, onNavigate }) => {
   // Usa las categorías pasadas por props o un fallback
  const items = categories || [
     { id: "belleza",     name: "Top Ofertas",     icon: "⭐", url: "/category/belleza" },
-    { id: "gastronomia", name: "Guía 2025",       icon: "📖", url: "/guia2025" },
-    { id: "viajes",      name: "Tendencias 2025", icon: "📈", url: "/tendencias2025" },
+    { id: "gastronomia", name: "Guía de Bodas",       icon: "📖", url: "/guia2025" },
+    { id: "viajes",      name: "Tendencias", icon: "📈", url: "/tendencias2025" },
     {
       id: "ofertas",
       name: "Contacto",

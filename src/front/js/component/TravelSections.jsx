@@ -59,22 +59,22 @@ export function TravelSections() {
         <div className="bgcolor">
           <h2 className="section-title">Nuestros Servicios de Wedding Planner</h2>
           <p className="justify-text">
-            Ofrecemos un servicio integral de <strong>organizador de bodas</strong> y <strong>wedding planner en España</strong>, abarcando desde la <strong>planificación de bodas</strong> hasta la coordinación del “día B” como <strong>coordinador de bodas</strong>, para que disfrutéis sin estrés.
+            Ofrecemos un servicio integral de <strong>wedding planner en España</strong> y <strong>organizador de bodas</strong>, abarcando desde la <strong>planificación de bodas</strong> hasta la <strong>coordinación del “DIA B”</strong> con tu propio <strong>coordinador de bodas</strong>, para que disfruts sin estrés.
           </p>
           <p className="justify-text">
-            Trabajamos con <strong>fincas para bodas "cerca de mí"</strong> y espacios exclusivos: gestionamos el <strong>alquiler mobiliario bodas</strong>, la <strong>decoración de bodas</strong> y la <strong>iluminación decorativa boda</strong> para adaptar cada finca a vuestro estilo.
+            Trabajamos con <strong>locaciones especiales para bodas "cerca de tí"</strong> (fincas, hoteles, restaurantes, etc.) y espacios exclusivos: gestionamos el <strong>alquiler del mobiliario para bodas</strong>, la <strong>decoración de bodas</strong> y la <strong>iluminación decorativa de boda</strong> para adaptar cada opción a tu estilo personal.
           </p>
           <p className="justify-text">
-            Nuestro <strong>catering bodas</strong> incluye menús personalizados, <strong>barra libre bodas</strong> y servicio de <strong>mesas y centros florales bodas</strong>.
+            Nuestro <strong>catering para bodas</strong> incluye menús personalizados, <strong>barra libre</strong> y <strong>servicio de mesas y centros florales para bodas</strong>.
           </p>
           <p className="justify-text">
-            Coordinamos los <strong>servicios de DJ para bodas</strong>, <strong>música en vivo para boda</strong> y <strong>sonorización boda</strong>, garantizando ambiente desde el cóctel hasta el último baile.
+            Coordinamos los <strong>servicios de DJ para bodas</strong>, <strong>música en vivo para tu boda</strong> y la <strong>sonorización de tu boda</strong>, garantizándote el ambiente ideal, desde el cóctel hasta el último baile.
           </p>
           <p className="justify-text">
-            Gestionamos tanto la <strong>ceremonia civil bodas</strong> como la <strong>ceremonia religiosa bodas</strong>, incluyendo <strong>paquetes de boda todo incluido</strong> y permisos, decorando la iglesia o el espacio civil según convenga.
+            Gestionamos tanto la <strong>ceremonia civil como la ceremonia religiosa de tu boda</strong>, incluyendo <strong>paquetes de boda todo incluido</strong>, la decoración de la iglesia y del espacio civil, según convenga, así como la gestión de los permisos necesarios.
           </p>
           <p className="justify-text">
-            Nos encargamos del <strong>coche nupcial alquiler</strong>, el diseño de <strong>invitaciones de boda personalizadas</strong> y el <strong>alojamiento para invitados boda</strong>, con tarifas competitivas y opciones de <strong>paquetes boda personalizados</strong>.
+            Nos encargamos del <strong>alquiler del coche nupcial</strong>, el diseño de <strong>invitaciones de boda personalizadas</strong> y el <strong>alojamiento para los novios e invitados especiales de tu boda</strong>, con tarifas competitivas y opciones de <strong>paquetes de boda personalizados</strong>.
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export function TravelSections() {
         <div className="bgcolor">
           <h2 className="section-title">Recursos y Consejos para tu Boda</h2>
           <p className="justify-text">
-            En nuestra guia de bodas 2025 tenemos la planificación y recomendaciones para una boda sostenible acorde a las tendencias. Te ayudamos a descubrir fincas y salones únicos en Madrid y Barcelona para tu ceremonia civil o religiosa. Si buscas organización de boda con presupuesto ajustado o de lujo, nos ajustamos a ti y ofrecemos ideas creativas para gestionar cada aspecto, desde la decoración hasta el catering. Además, ofrecemos inspiraciones sobre tarta nupcial y detalles personalizados para que cada elemento de vuestra boda sea inolvidable.
+          En nuestra Guía de Bodas tenemos la planificación y recomendaciones para una boda acorde a las tendencias eco-friendly que prefieras. Te ayudamos a descubrir fincas y salones únicos en Madrid, Barcelona y Valencia, para tu ceremonia civil o religiosa. Si buscas organización de boda con presupuesto ajustado o de lujo, nos adaptamos a ti, ofreciéndote ideas creativas para gestionar cada aspecto, desde la decoración hasta el catering. Además, ofrecemos inspiraciones sobre tarta nupcial y detalles personalizados para que cada elemento de tu boda sea inolvidable.
           </p>
         </div>
       </main>

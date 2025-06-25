@@ -19,7 +19,7 @@ const PromoBanner = () => {
                 ¿Listo para llevar tu boda al siguiente nivel?
               </h3>
               <p className="fs-5 text-light mb-4">
-                👉 Descubre la guía completa “Bodas 2025” y reserva tu asesoría gratuita con nuestro equipo de expertos.
+                👉 Descubre Nuestra Guía de “Bodas” y reserva tu asesoría gratuita con nuestro equipo de expertos.
               </p>
               <div className="d-flex justify-content-center">
                 <div

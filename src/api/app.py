@@ -125,23 +125,21 @@ with app.app_context():
     seed_categories()
 
     # 3) inicializa tus servicios si no existen
+    #    Asume que creas la función inicializar_servicios(user_id, viajes_category_id, ...)
+    #    en api/services.py y que el admin tiene id=1
+    from api.services import inicializar_servicios
 
-@app.cli.command("seed-all")
-@with_appcontext
-def seed_all():
-    """Ejecuta migraciones y crea admin + categorías."""
-    click.echo("Creando usuario admin…")
-    create_admin_user()
-    click.echo("Creando datos de categorías…")
-    inicializar_servicios(
-        user_id=1,
-        viajes_category_id=1,
-        top_category_id=3,
-        belleza_category_id=2,
-        gastronomia_category_id=4,
-        ofertas_category_id=5
-    )
-    click.echo("¡Seed completo!")
+    # Solo ejecutamos la semilla de servicios si no hay ninguno
+    if not Viajes.query.first() and not Belleza.query.first() and not Gastronomia.query.first():
+        inicializar_servicios(
+            user_id=1,
+            viajes_category_id=1,
+            top_category_id=3,
+            belleza_category_id=2,
+            gastronomia_category_id=4,
+            ofertas_category_id=5
+        )
+
 
 # generate sitemap with all your endpoints
 @app.route('/')

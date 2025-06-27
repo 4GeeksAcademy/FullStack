@@ -7,6 +7,11 @@ const VistaCookies = () => {
   const [acepto, setAcepto] = useState(false);
 
   const handleCheckbox = () => setAcepto(!acepto);
+  const handleAccept = () => setAcepto(true);
+  const handleDecline = () => {
+    setAcepto(false);
+    // opcional: podrías redirigir al usuario o desactivar scripts aquí
+  };
 
   return (
     <div>
@@ -119,7 +124,8 @@ const VistaCookies = () => {
                 aquí. Puedes modificar tu consentimiento en cualquier momento a través del banner de cookies o
                 configurando tu navegador.
               </p>
-              <div className="form-check mb-4">
+
+              <div className="form-check mb-3">
                 <input
                   className="form-check-input"
                   type="checkbox"
@@ -131,9 +137,28 @@ const VistaCookies = () => {
                   Acepto el uso de cookies según esta política
                 </label>
               </div>
+
+              <div className="d-flex gap-2 mb-3">
+                <button
+                  className="btn btn-success"
+                  onClick={handleAccept}
+                  disabled={acepto}
+                >
+                  Aceptar
+                </button>
+                <button
+                  className="btn btn-outline-danger"
+                  onClick={handleDecline}
+                  disabled={!acepto}
+                >
+                  Rechazar
+                </button>
+              </div>
+
               {!acepto && (
                 <div className="alert alert-warning">
-                  Debes aceptar las cookies para continuar navegando sin restricciones.
+                  Has rechazado las cookies. Algunas funcionalidades pueden verse
+                  limitadas.
                 </div>
               )}
             </div>
@@ -149,4 +174,5 @@ const VistaCookies = () => {
 };
 
 export default VistaCookies;
+
 

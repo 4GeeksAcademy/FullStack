@@ -46,7 +46,7 @@ import EditNewsletter from "./pages/EditNewsletter.jsx";
 import ViewNewsletter from "./pages/ViewNewsletter.jsx";
 import { Bodas2025Page } from "./component/Bodas2025Page.jsx";
 import { Tendencias2025Page } from "./component/Tendencias2025Page.jsx";
-import CookiesPolicy from './pages/CookiesPolicy';
+
 
 
 const Layout = () => {
@@ -96,7 +96,7 @@ const Layout = () => {
             <Route path="/mis-reservas" element={<VistaReservas />} />
             <Route path="/product-detail/:id" element={<ProductDetail />} />
             <Route path="/product/:category/:id" element={<ProductDetailBusqueda />} />
-            <Route path="/politica-de-cookies" element={<CookiesPolicy />} />
+            <Route path="/politica-de-cookies" element={<VistaCookies />} />
             <Route path="/recuperar-contrasena" element={<ForgotPasswordModal />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/newsletter/create" element={<CreateNewsletter />} />

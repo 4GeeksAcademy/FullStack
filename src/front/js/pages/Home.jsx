@@ -19,25 +19,59 @@ export const Home = () => {
     <div>
       <LayoutHeader />
       <HeroBanner />
-       <CookieConsent
-        location="bottom"            // posición: bottom, top, bottom-left…
-        buttonText="Aceptar"         // texto del botón
-        cookieName="cookieConsent"   // nombre de la cookie que guarda la elección
-        style={{ background: "#000" }}                 // estilo del fondo
-        buttonStyle={{ color: "#fff", fontSize: "13px" }} // estilo del botón
-        expires={365}                // caducidad en días
-        sameSite="strict"            // sameSite para más seguridad
-        overlay={false}              // true para un overlay semitransparente
-        containerClasses="my-cookie-banner" // si quieres clases CSS extra
-      >
-        Usamos cookies propias y de terceros para mejorar tu experiencia.{" "}
-        <a
-          href="/politica-de-cookies"
-          style={{ color: "#FFD700", textDecoration: "underline" }}
-        >
-          Más info
-        </a>
-      </CookieConsent>
+             <CookieConsent
+  location="bottom"
+  cookieName="cookieConsent"
+  expires={365}
+  sameSite="strict"
+  overlay={false}
+  containerClasses="cookie-banner"
+  style={{
+    background: "#000",
+    fontSize: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0.75rem 1rem",
+  }}
+  buttonText="Aceptar"
+  buttonStyle={{
+    background: "#fff",
+    color: "#dc3545",
+    fontWeight: "bold",
+    fontSize: "13px",
+    borderRadius: "4px",
+    padding: "0.5rem 1rem",
+    marginLeft: "1rem",
+  }}
+  declineButtonText="Rechazar"
+  declineButtonStyle={{
+    background: "transparent",
+    color: "#fff",
+    fontSize: "13px",
+    textDecoration: "underline",
+    marginLeft: "1rem",
+  }}
+  enableDeclineButton
+  onDecline={() => {
+    // aquí das por rechazadas las cookies de terceros
+  }}
+  buttonWrapperClasses="cookie-accept-btn"
+>
+  <span style={{ color: "#fff" }}>
+    Usamos cookies propias y de terceros para mejorar tu experiencia.&nbsp;
+    <a
+      href="/politica-de-cookies"
+      style={{
+        color: "#ffc107",
+        textDecoration: "underline",
+        fontWeight: "bold",
+      }}
+    >
+      Más info
+    </a>
+  </span>
+</CookieConsent>
       <CategoriesSection/>
       <RelatedContent />
       <StyledInfoSection/>

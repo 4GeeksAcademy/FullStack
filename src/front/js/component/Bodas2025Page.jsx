@@ -121,9 +121,9 @@ export function Bodas2025Page() {
         {/* Coste Aproximado */}
         <h2>Coste Aproximado de una Boda en España</h2>
         <p>
-          Bodas íntimas (hasta 50 invitados): Desde 26.000 €, incluyendo lugar, ceremonia civil y religiosa, catering, música y coordinación.<br />
-          Bodas medianas (100–150 invitados): Entre 40.000 € y 49.000 €, con los servicios incluidos para las Bodas Íntimas, más: servicios de fotografía, vídeo, decoración personalizada y banquete de 4 platillos.
-          Bodas grandiosas (200 o más invitados): Desde 80.000 €, incluyen los servicios de la Boda Mediana y, adicionalmente, fincas exclusivas, catering con banquete de 5 platillos, barra libre con bebidas premium, alojamiento y la selección de servicios adicionales que prefieras (cotizados bajo pedido).
+          Bodas íntimas (hasta 50 invitados): Desde 37.500 €, incluyendo lugar, ceremonia civil y religiosa, catering, música y coordinación.<br />
+          Bodas medianas (100–150 invitados): Entre 65.000 € y 80.000 €, con los servicios incluidos para las Bodas Íntimas, más: servicios de fotografía, vídeo, decoración personalizada y banquete de 4 platillos.
+          Bodas grandiosas (200 o más invitados): Desde 125.000 €, incluyen los servicios de la Boda Mediana y, adicionalmente, fincas exclusivas, catering con banquete de 5 platillos, barra libre con bebidas premium, alojamiento y la selección de servicios adicionales que prefieras (cotizados bajo pedido).
         </p>
         <p>
           Estos rangos pueden variar según la región (Madrid y Barcelona suelen situarse en la parte alta del mercado), la temporada (temporada alta: mayo-septiembre) y los servicios extras que elijas (decoración floral, diseño gráfico, etc.).

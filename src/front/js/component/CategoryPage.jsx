@@ -23,7 +23,7 @@ const CategoryPage = () => {
       setCategoryName(location.state.categoryName);
     } else {
       const categoryNames = {
-        'belleza': 'Belleza',
+        'belleza': 'Paquetes de Bodas',
         'gastronomia': 'Gastronomía',
         'viajes': 'Viajes',
         'ofertas': 'Ofertas Especiales',

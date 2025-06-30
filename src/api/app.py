@@ -120,7 +120,6 @@ def seed_categories():
 
 @app.before_request
 def inicializar_db_una_vez():
-    # Sólo corremos esta semilla la primera vez que llegue una petición
     if getattr(g, "db_inicializada", False):
         return
     g.db_inicializada = True
@@ -129,20 +128,17 @@ def inicializar_db_una_vez():
     db.create_all()
 
     # 2) Semilla de categorías
-    categorias = [
-        {"id": 1, "nombre": "Viajes"},
-        {"id": 2, "nombre": "Belleza"},
-        {"id": 3, "nombre": "Top"},
-        {"id": 4, "nombre": "Gastronomía"},
-        {"id": 5, "nombre": "Ofertas"},
-    ]
-    for cat in categorias:
-        if not Category.query.get(cat["id"]):
-            db.session.add(Category(id=cat["id"], nombre=cat["nombre"]))
-    db.session.commit()
+    seed_categories()
 
-    # 3) Semilla de servicios (sólo si no hay ninguno en la BD)
-    if not Viajes.query.first() and not Belleza.query.first() and not Gastronomia.query.first():
+    # 3) Semilla de servicios (solo si **ninguna** tabla tiene registros)
+    any_service = (
+        Viajes.query.first()
+        or Belleza.query.first()
+        or Gastronomia.query.first()
+        or Top.query.first()
+        or Ofertas.query.first()
+    )
+    if not any_service:
         inicializar_servicios(
             user_id=1,
             viajes_category_id=1,

@@ -39,6 +39,13 @@ from openai import OpenAI
 from flask.cli import with_appcontext
 import click
 from flask import g
+from api.services import (
+    crear_servicios_viajes,
+    crear_servicios_belleza,
+    crear_servicios_top,
+    crear_servicios_gastronomia,
+    crear_servicios_ofertas
+)
 
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -120,33 +127,33 @@ def seed_categories():
 
 @app.before_request
 def inicializar_db_una_vez():
+    # Ejecutar sólo en la primera petición
     if getattr(g, "db_inicializada", False):
         return
     g.db_inicializada = True
 
-    # 1) Crear tablas
+    # 1) Crear (o actualizar) la estructura de tablas
     db.create_all()
 
-    # 2) Semilla de categorías
+    # 2) Semilla de categorías (si aún no existen)
     seed_categories()
 
-    # 3) Semilla de servicios (solo si **ninguna** tabla tiene registros)
-    any_service = (
-        Viajes.query.first()
-        or Belleza.query.first()
-        or Gastronomia.query.first()
-        or Top.query.first()
-        or Ofertas.query.first()
-    )
-    if not any_service:
-        inicializar_servicios(
-            user_id=1,
-            viajes_category_id=1,
-            top_category_id=3,
-            belleza_category_id=2,
-            gastronomia_category_id=4,
-            ofertas_category_id=5
-        )
+    # 3) Si cada tabla de servicios está vacía, la resembramos
+    if not Viajes.query.first():
+        crear_servicios_viajes(user_id=1, viajes_category_id=1)
+
+    if not Belleza.query.first():
+        crear_servicios_belleza(user_id=1, belleza_category_id=2)
+
+    if not Top.query.first():
+        crear_servicios_top(user_id=1, top_category_id=3)
+
+    if not Gastronomia.query.first():
+        crear_servicios_gastronomia(user_id=1, gastronomia_category_id=4)
+
+    if not Ofertas.query.first():
+        crear_servicios_ofertas(user_id=1, ofertas_category_id=5)
+
 
 
 # generate sitemap with all your endpoints

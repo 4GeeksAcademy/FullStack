@@ -6,6 +6,32 @@
       "**/.*",
       "**/node_modules/**"
     ],
+  
+    "predeploy": [
+      "rm -rf dist",
+      "npm run build"
+    ],
+    
+    "headers": [
+      {
+        "source": "index.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, max-age=0"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css|html|svg|png|jpg|woff2)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ],
     "rewrites": [
       {
         "source": "**",

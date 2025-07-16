@@ -21,6 +21,7 @@ import FAQSection from "./FAQSection.jsx";
 import SpecialOffersCarousel from "./SpecialOffersCarousel.jsx";
 import RelatedContent2 from "../component/RelatedContent2.jsx";
 import { BsCalendarDate, BsHouseDoor, BsCupStraw, BsClock } from "react-icons/bs";
+import WhatsAppButton from "../component/WhatsAppButton.jsx";
 
 const ProductDetail = () => {
   const location = useLocation();
@@ -198,6 +199,7 @@ const ProductDetail = () => {
   return (
     <>
       <LayoutHeader />
+      <WhatsAppButton />
       <Container className="my-5">
         <Row className="mb-4">
           <Col md={6} className="position-relative">

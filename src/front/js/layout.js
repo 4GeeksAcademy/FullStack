@@ -97,7 +97,7 @@ const Layout = () => {
             <Route path="/search/:keyword" element={<VistaBusqueda />} />
             <Route path="/mis-reservas" element={<VistaReservas />} />
             <Route path="/product-detail/:id" element={<ProductDetail />} />
-            <Route path="/product/:category/:id" element={<ProductDetailBusqueda />} />
+            <Route path="/product/:category/:id" element={<ProductDetail />} />
             <Route path="/politica-de-cookies" element={<VistaCookies />} />
             <Route path="/recuperar-contrasena" element={<ForgotPasswordModal />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />

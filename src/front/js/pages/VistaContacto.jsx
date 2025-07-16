@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import LayoutHeader from "../component/LayoutHeader.jsx";
 import Footer from "../component/Footer.jsx";
+import WhatsAppButton from "../component/WhatsAppButton.jsx";
 
 const VistaContacto = () => {
   const [formData, setFormData] = useState({ nombre: "", email: "", mensaje: "" });
@@ -20,6 +21,7 @@ const VistaContacto = () => {
   return (
     <div>
       <LayoutHeader />
+      <WhatsAppButton />
 
       <div className="container my-5">
         <div className="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">

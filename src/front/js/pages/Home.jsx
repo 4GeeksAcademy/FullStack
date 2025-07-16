@@ -13,6 +13,7 @@ import StyledInfoSection from '../component/StyledInfoSection.jsx';
 import RelatedContent2 from "../component/RelatedContent2.jsx";
 import FAQSection from "../component/FAQSection.jsx";
 import CookieConsent from 'react-cookie-consent';
+import WhatsAppButton from "../component/WhatsAppButton.jsx";
 
 export const Home = () => {
   return (
@@ -80,6 +81,7 @@ export const Home = () => {
       <RelatedContent2 />
       <FAQSection />
       <Newsletter />
+      <WhatsAppButton />
       <Footer />
     </div>
   );

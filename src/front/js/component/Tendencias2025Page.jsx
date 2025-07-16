@@ -3,12 +3,14 @@ import LayoutHeader from "../component/LayoutHeader.jsx";
 import CategoriesSection2 from "../component/CategoriesSection2.jsx";
 import RelatedContent from "../component/RelatedContent.jsx";
 import Footer from "../component/Footer.jsx";
+import WhatsAppButton from "../component/WhatsAppButton.jsx";
 
 export function Tendencias2025Page() {
   return (
     <div className="tendencias2025-root">
       <LayoutHeader />
       <CategoriesSection2 />
+      <WhatsAppButton />
 
       <section className="tendencias2025-content">
         <style>{`

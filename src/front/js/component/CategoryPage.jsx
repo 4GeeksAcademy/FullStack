@@ -4,6 +4,7 @@ import { Context } from "../store/appContext";
 import CategoryCard from "./CategoryCard.jsx";
 import LayoutHeader from "./LayoutHeader.jsx";
 import Footer from "./Footer.jsx";
+import WhatsAppButton from "../component/WhatsAppButton.jsx";
 
 const CategoryPage = () => {
   const { categoryId } = useParams();
@@ -158,6 +159,7 @@ const CategoryPage = () => {
   return (
     <>
       <LayoutHeader />
+      <WhatsAppButton />
       <section className="py-5">
         <div className="container col-12 col-sm-10 col-md-9 col-lg-9 mx-auto px-3 px-sm-4">
           <div className="d-flex justify-content-between align-items-center mb-4">

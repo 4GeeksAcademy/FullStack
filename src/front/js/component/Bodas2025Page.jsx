@@ -3,12 +3,14 @@ import LayoutHeader from "../component/LayoutHeader.jsx";
 import CategoriesSection2 from "../component/CategoriesSection2.jsx";
 import RelatedContent from "../component/RelatedContent.jsx";
 import Footer from "../component/Footer.jsx";
+import WhatsAppButton from "../component/WhatsAppButton.jsx";
 
 export function Bodas2025Page() {
   return (
     <div className="bodas2025-root">
       <LayoutHeader />
       <CategoriesSection2 />
+      <WhatsAppButton />
 
       {/* Scoped styled content only for this section */}
       <section className="bodas2025-content">

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import LayoutHeader from '../component/LayoutHeader.jsx';
+import WhatsAppButton from "../component/WhatsAppButton.jsx";
 
 const CartPage = () => {
   const { store, actions } = useContext(Context);
@@ -103,6 +104,7 @@ const CartPage = () => {
   return (
     <div>
       <LayoutHeader />
+      <WhatsAppButton />
       <div className="container py-5 position-relative">
         {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-4">

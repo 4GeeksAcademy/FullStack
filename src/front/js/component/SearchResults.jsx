@@ -84,14 +84,24 @@ const SearchResults = () => {
             const reactKey = `${rawKey}-${item.id}`;
 
             return (
-              <div key={reactKey} className="col-md-4 mb-4">
+              <div
+      key={reactKey}
+      className="col-md-6 col-lg-4 mb-4"
+      style={{ maxWidth: "320px" }}
+    >
                 <div className="card h-100 shadow-sm">
                   {item.image && (
                     <img
                       src={item.image}
                       className="card-img-top"
                       alt={item.title}
-                      style={{ height: 200, objectFit: "cover" }}
+                      style={{
+        height: 250,         // altura fija
+        objectFit: "cover",  // recorta en cover
+        width: "auto",       // full ancho de su contenedor
+        display: "block",    // para que margin auto funcione
+        margin: "0 auto"     // centrado horizontal
+      }}
                     />
                   )}
                   <div className="card-body">

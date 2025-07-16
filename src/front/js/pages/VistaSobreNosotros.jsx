@@ -2,12 +2,14 @@ import React from "react";
 import LayoutHeader from "../component/LayoutHeader.jsx";
 import Footer from "../component/Footer.jsx";
 import Newsletter from "../component/Newsletter.jsx";
+import WhatsAppButton from "../component/WhatsAppButton.jsx";
 
 const VistaSobreNosotros = () => {
   return (
     <div>
       {/* Navbar */}
       <LayoutHeader />
+      <WhatsAppButton />
 
       {/* Contenedor principal */}
       <div className="container my-5">

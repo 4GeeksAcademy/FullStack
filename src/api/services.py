@@ -1,5 +1,6 @@
 from api.models import db, Viajes, Top, Belleza, Gastronomia, User, Ofertas
 from flask_bcrypt import Bcrypt
+import textwrap
 
 bcrypt = Bcrypt()  # Asegúrate de haberlo inicializado con tu app Flask
 
@@ -449,25 +450,34 @@ def crear_servicios_top(user_id, top_category_id):
 # Función para crear los servicios de Belleza
 def crear_servicios_belleza(user_id, belleza_category_id):
     if not Belleza.query.filter_by(category_id=belleza_category_id).first():
+        def html_desc(raw):
+            # elimina indentación y convierte \n en <br/>
+            return textwrap.dedent(raw).strip().replace("\n", "<br/>\n")
+        # 1) Definimos la descripción multilínea sin sangría extra
+        raw_desc_gold = textwrap.dedent("""\
+            Nuestro Paquete Gold para 50 personas incluye estos servicios:
+            ✓ Finca o salón a elección
+            ✓ Ceremonia civil o religiosa
+            ✓ Creación y diseño de invitaciones personalizadas
+            ✓ Menú de 3 platos con ingredientes locales de temporada
+            ✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol
+            ✓ Coche nupcial clásico (limusina o coche vintage)
+            ✓ Maquillaje profesional para la novia
+            ✓ Peinado profesional para la novia
+            ✓ Ramo de flores para la novia
+            ✓ Decoración integral de la finca
+            ✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)
+            ✓ DJ profesional durante la recepción
+            ✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)
+            ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
+        """)
+        # 2) Convertimos saltos de línea a <br/> para que el HTML los respete
+        html_desc_gold = raw_desc_gold.replace("\n", "<br/>\n")
+
         belleza_services = [
             Belleza(
                 title="Paquete Gold",
-                descripcion="""
-Nuestro Paquete Gold para 50 personas incluye estos servicios:
-✓ Finca o salón a elección  
-✓ Ceremonia civil o religiosa  
-✓ Creación y diseño de invitaciones personalizadas  
-✓ Menú de 3 platos con ingredientes locales de temporada  
-✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol  
-✓ Coche nupcial clásico (limusina o coche vintage)
-✓ Maquillaje profesional para la novia  
-✓ Peinado profesional para la novia  
-✓ Ramo de flores para la novia  
-✓ Decoración integral de la finca  
-✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)  
-✓ DJ profesional durante la recepción  
-✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)  
-✓ Coordinador de bodas (logística, montaje, proveedores y horarios)  """,
+                descripcion=html_desc_gold,
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672401/Dise%C3%B1o_sin_t%C3%ADtulo_11_nbpdnt.png",
                 city="España",
                 price=37510,
@@ -477,32 +487,42 @@ Nuestro Paquete Gold para 50 personas incluye estos servicios:
                 buyers=83,
                 image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042110/Dise%C3%B1o_sin_t%C3%ADtulo_3_jdbp8g.png",
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042134/Dise%C3%B1o_sin_t%C3%ADtulo_4_uux8c7.png",
-                title2= "Cómo gestionamos la selección de finca y menú para tu boda",
-                title3= "Recomendaciones para Disfrutar al Máximo tu Gran Día",
-                descripcion2= "Para ofrecerte la mejor experiencia, seguimos estos pasos: Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 50 invitados. Solicitamos cotizaciones detalladas de cada espacio, incluyendo costes de alquiler, decoración y servicios básicos. Con esos datos, diseñamos 3 propuestas",
-                descripcion3= "Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón y visualizar in situ cómo lucirá tu decoración personalizada; comparte con nosotros tus estilos y canciones favoritas para que nuestro DJ diseñe una selección musical a medida que mantenga la emoción y la fiesta toda la noche; y disfruta de un ambiente decorativo exclusivo, con centros florales únicos, iluminación ambiental con guirnaldas y focos cálidos, photocall de ensueño y un seating plan diseñado al detalle para que tu boda refleje vuestra personalidad y sorprenda a cada invitado",
-
+                title2="Cómo gestionamos la selección de finca y menú para tu boda",
+                title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
+                descripcion2=textwrap.dedent("""\
+                    Para ofrecerte la mejor experiencia, seguimos estos pasos:
+                    1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla.
+                    2. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 50 invitados.
+                    3. Solicitamos cotizaciones detalladas de cada espacio, incluyendo costes de alquiler, decoración y servicios básicos.
+                    4. Con esos datos, diseñamos 3 propuestas.
+                """),
+                descripcion3=textwrap.dedent("""\
+                    Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón y visualizar in situ cómo lucirá tu decoración personalizada;<br/>
+                    comparte con nosotros tus estilos y canciones favoritas para que nuestro DJ diseñe una selección musical a medida que mantenga la emoción y la fiesta toda la noche;<br/>
+                    y disfruta de un ambiente decorativo exclusivo, con centros florales únicos, iluminación ambiental con guirnaldas y focos cálidos, photocall de ensueño y un seating plan diseñado al detalle para que tu boda refleje vuestra personalidad y sorprenda a cada invitado.
+                """),
                 user_id=user_id,
                 category_id=belleza_category_id
             ),
-            Belleza(
+         Belleza(
                 title="Paquete Platinum",
-                descripcion="""
-Nuestro Paquete Platinum para 100 personas incluye estos servicios:
-✓ Finca o salón a elección  
-✓ Ceremonia civil o religiosa  
-✓ Creación y diseño de invitaciones personalizadas  
-✓ Menú de 3 platos con ingredientes locales de temporada  
-✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol  
-✓ Coche nupcial clásico (limusina o coche vintage)
-✓ Maquillaje profesional para la novia  
-✓ Peinado profesional para la novia  
-✓ Ramo de flores para la novia  
-✓ Decoración integral de la finca  
-✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)  
-✓ DJ profesional durante la recepción  
-✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)  
-✓ Coordinador de bodas (logística, montaje, proveedores y horarios)  """,
+                descripcion=html_desc("""
+                    Nuestro Paquete Platinum para 100 personas incluye estos servicios:
+                    ✓ Finca o salón a elección
+                    ✓ Ceremonia civil o religiosa
+                    ✓ Creación y diseño de invitaciones personalizadas
+                    ✓ Menú de 3 platos con ingredientes locales de temporada
+                    ✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol
+                    ✓ Coche nupcial clásico (limusina o coche vintage)
+                    ✓ Maquillaje profesional para la novia
+                    ✓ Peinado profesional para la novia
+                    ✓ Ramo de flores para la novia
+                    ✓ Decoración integral de la finca
+                    ✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)
+                    ✓ DJ profesional durante la recepción
+                    ✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)
+                    ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
+                """),
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672328/Dise%C3%B1o_sin_t%C3%ADtulo_10_zhfhvg.png",
                 city="España",
                 price=62315,
@@ -512,31 +532,45 @@ Nuestro Paquete Platinum para 100 personas incluye estos servicios:
                 buyers=193,
                 image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042089/Dise%C3%B1o_sin_t%C3%ADtulo_2_ohbqiv.png",
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042170/Dise%C3%B1o_sin_t%C3%ADtulo_5_izfblt.png",
-                title2= "Cómo gestionamos la selección de finca y menú para tu boda",
-                title3= "Recomendaciones para Disfrutar al Máximo tu Gran Día",
-                descripcion2= "Para ofrecerte la mejor experiencia, seguimos estos pasos: Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 100 invitados. Solicitamos cotizaciones detalladas de cada espacio, incluyendo costes de alquiler, decoración y servicios básicos. Con esos datos, diseñamos 3 propuestas",
-                descripcion3= "Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón y ver cómo lucirá tu decoración personalizada. Comparte con nosotros tus estilos y canciones favoritas, y nuestro DJ diseñará una selección musical a medida para mantener la emoción y la fiesta durante toda la noche. Disfruta de un ambiente decorativo exclusivo, con iluminación ambiental y focos cálidos que crean una atmósfera íntima y acogedora. Cada detalle ha sido cuidadosamente pensado para que vivas una experiencia inolvidable.",
+                title2="Cómo gestionamos la selección de finca y menú para tu boda",
+                title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
+                descripcion2=textwrap.dedent("""\
+                    Para ofrecerte la mejor experiencia, seguimos estos pasos:
+                    1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla.
+                    2. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 100 invitados.
+                    3. Solicitamos cotizaciones detalladas de cada espacio, incluyendo costes de alquiler, decoración y servicios básicos.
+                    4. Con esos datos, diseñamos 3 propuestas.
+                """),
+                descripcion3=textwrap.dedent("""\
+                    Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón y ver cómo lucirá tu decoración personalizada.<br/>
+                    Comparte con nosotros tus estilos y canciones favoritas, y nuestro DJ diseñará una selección musical a medida para mantener la emoción y la fiesta durante toda la noche.<br/>
+                    Disfruta de un ambiente decorativo exclusivo, con iluminación ambiental y focos cálidos que crean una atmósfera íntima y acogedora.<br/>
+                    Cada detalle ha sido cuidadosamente pensado para que vivas una experiencia inolvidable.
+                """),
                 user_id=user_id,
                 category_id=belleza_category_id
             ),
+
+            # — Paquete Emerald —
             Belleza(
                 title="Paquete Emerald",
-                descripcion="""
-Nuestro Paquete Emerald para 150 personas incluye estos servicios:
-✓ Finca o salón a elección  
-✓ Ceremonia civil o religiosa  
-✓ Creación y diseño de invitaciones personalizadas  
-✓ Menú de 4 platos con ingredientes locales de temporada  
-✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol  
-✓ Coche nupcial clásico (limusina o coche vintage)
-✓ Maquillaje profesional para la novia  
-✓ Peinado profesional para la novia  
-✓ Ramo de flores para la novia  
-✓ Decoración integral de la finca  
-✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)  
-✓ DJ profesional durante la recepción  
-✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)  
-✓ Coordinador de bodas (logística, montaje, proveedores y horarios)  """,
+                descripcion=html_desc("""
+                    Nuestro Paquete Emerald para 150 personas incluye estos servicios:
+                    ✓ Finca o salón a elección
+                    ✓ Ceremonia civil o religiosa
+                    ✓ Creación y diseño de invitaciones personalizadas
+                    ✓ Menú de 4 platos con ingredientes locales de temporada
+                    ✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol
+                    ✓ Coche nupcial clásico (limusina o coche vintage)
+                    ✓ Maquillaje profesional para la novia
+                    ✓ Peinado profesional para la novia
+                    ✓ Ramo de flores para la novia
+                    ✓ Decoración integral de la finca
+                    ✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)
+                    ✓ DJ profesional durante la recepción
+                    ✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)
+                    ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
+                """),
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672469/Dise%C3%B1o_sin_t%C3%ADtulo_12_hwkc91.png",
                 city="España",
                 price=79400,
@@ -546,48 +580,26 @@ Nuestro Paquete Emerald para 150 personas incluye estos servicios:
                 buyers=149,
                 image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749043462/Dise%C3%B1o_sin_t%C3%ADtulo_6_g2e4wz.png",
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749043477/Dise%C3%B1o_sin_t%C3%ADtulo_7_s9kds6.png",
-                title2= "Cómo gestionamos la selección de finca y menú para tu boda",
-                title3= "Recomendaciones para Disfrutar al Máximo tu Gran Día",
-                descripcion2= "Para ofrecerte la mejor experiencia, seguimos estos pasos: Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 150 invitados. Solicitamos cotizaciones detalladas de cada espacio, incluyendo costes de alquiler, decoración y servicios básicos. Con esos datos, diseñamos 3 propuestas",
-                descripcion3= "Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón y ver cómo lucirá tu decoración personalizada. Comparte con nosotros tus estilos y canciones favoritas, y nuestro DJ diseñará una selección musical a medida para mantener la emoción y la fiesta durante toda la noche. Disfruta de un ambiente decorativo exclusivo, con iluminación ambiental y focos cálidos que crean una atmósfera íntima y acogedora. Cada detalle ha sido cuidadosamente pensado para que vivas una experiencia inolvidable.",
-                user_id=user_id,
-                category_id=belleza_category_id
-            ),
-            Belleza(
-                title="Paquete Diamond",
-                descripcion="""
-Nuestro Paquete Diamond para 250 personas incluye estos servicios:
-✓ Finca o salón a elección  
-✓ Ceremonia civil o religiosa  
-✓ Creación y diseño de invitaciones personalizadas  
-✓ Menú de 3 platos con ingredientes locales de temporada  
-✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol  
-✓ Coche nupcial clásico (limusina o coche vintage)
-✓ Maquillaje profesional para la novia  
-✓ Peinado profesional para la novia  
-✓ Ramo de flores para la novia  
-✓ Decoración integral de la finca  
-✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)  
-✓ DJ profesional durante la recepción  
-✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)  
-✓ Coordinador de bodas (logística, montaje, proveedores y horarios)  """,
-                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672518/Dise%C3%B1o_sin_t%C3%ADtulo_13_vhbcmy.png",
-                city="España",
-                price=113740,
-                discountPrice=137036,
-                rating=4.9,
-                reviews=123,
-                buyers=159,
-                image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1748943954/alvaro-cvg-mW8IZdX7n8E-unsplash_xlxfhd.jpg",
-                image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1748949846/pexels-oskars-lipatovs-46446967-7582980_f0x09u_c_crop_ar_1_1_vubuqh.jpg",
-                title2= "Cómo gestionamos la selección de finca y menú para tu boda",
-                title3= "Recomendaciones para Disfrutar al Máximo tu Gran Día",
-                descripcion2= "Para ofrecerte la mejor experiencia, seguimos estos pasos: Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 250 invitados. Solicitamos cotizaciones detalladas de cada espacio, incluyendo costes de alquiler, decoración y servicios básicos. Con esos datos, diseñamos 3 propuestas",
-                descripcion3= "Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón y ver cómo lucirá tu decoración personalizada. Comparte con nosotros tus estilos y canciones favoritas, y nuestro DJ diseñará una selección musical a medida para mantener la emoción y la fiesta durante toda la noche. Disfruta de un ambiente decorativo exclusivo, con iluminación ambiental y focos cálidos que crean una atmósfera íntima y acogedora. Cada detalle ha sido cuidadosamente pensado para que vivas una experiencia inolvidable.",
+                title2="Cómo gestionamos la selección de finca y menú para tu boda",
+                title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
+                descripcion2=textwrap.dedent("""\
+                    Para ofrecerte la mejor experiencia, seguimos estos pasos:
+                    1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla.
+                    2. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 150 invitados.
+                    3. Solicitamos cotizaciones detalladas de cada espacio, incluyendo costes de alquiler, decoración y servicios básicos.
+                    4. Con esos datos, diseñamos 3 propuestas.
+                """),
+                descripcion3=textwrap.dedent("""\
+                    Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón y ver cómo lucirá tu decoración personalizada.<br/>
+                    Comparte con nosotros tus estilos y canciones favoritas, y nuestro DJ diseñará una selección musical a medida para mantener la emoción y la fiesta durante toda la noche.<br/>
+                    Disfruta de un ambiente decorativo exclusivo, con iluminación ambiental y focos cálidos que crean una atmósfera íntima y acogedora.<br/>
+                    Cada detalle ha sido cuidadosamente pensado para que vivas una experiencia inolvidable.
+                """),
                 user_id=user_id,
                 category_id=belleza_category_id
             ),
         ]
+
         db.session.bulk_save_objects(belleza_services)
         db.session.commit()
 

@@ -452,7 +452,22 @@ def crear_servicios_belleza(user_id, belleza_category_id):
         belleza_services = [
             Belleza(
                 title="Paquete Gold",
-                descripcion="Nuestro Paquete Gold está diseñado para bodas íntimas de hasta 50 invitados, con ceremonia civil y religiosa celebrada en una finca o salón de vuestro gusto. Incluye la creación y diseño de invitaciones personalizadas, un menú de 3 platos elaborado con ingredientes locales de temporada y un cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol. Para vuestra llegada, ponemos a vuestra disposición un coche nupcial clásico (limusina o coche vintage), decorado con detalles florales. Durante la recepción, disfrutaréis de una barra libre de 3 horas con bebidas nacionales (vino, cerveza, refrescos) y una selección de cócteles básicos, amenizada por un DJ profesional que creará el ambiente perfecto para cada momento. Además, garantizamos alojamiento para los recién casados: una habitación en la finca o en un hotel cercano, para que descanséis cómodamente tras la celebración. Nuestro coordinador de bodas se encarga de toda la logística—montaje, proveedores y horarios—para que solo tengáis que vivir cada instante con tranquilidad y emoción.",
+                descripcion="""
+Nuestro Paquete Gold para 50 personas incluye estos servicios:
+✓ Finca o salón a elección  
+✓ Ceremonia civil o religiosa  
+✓ Creación y diseño de invitaciones personalizadas  
+✓ Menú de 3 platos con ingredientes locales de temporada  
+✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol  
+✓ Coche nupcial clásico (limusina o coche vintage)
+✓ Maquillaje profesional para la novia  
+✓ Peinado profesional para la novia  
+✓ Ramo de flores para la novia  
+✓ Decoración integral de la finca  
+✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)  
+✓ DJ profesional durante la recepción  
+✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)  
+✓ Coordinador de bodas (logística, montaje, proveedores y horarios)  """,
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672401/Dise%C3%B1o_sin_t%C3%ADtulo_11_nbpdnt.png",
                 city="España",
                 price=37510,
@@ -472,7 +487,22 @@ def crear_servicios_belleza(user_id, belleza_category_id):
             ),
             Belleza(
                 title="Paquete Platinum",
-                descripcion="Nuestro Paquete Platinum para bodas de hasta 100 invitados incluye la organización de la ceremonia civil y religiosa en la finca o salón de vuestra elección, gestionando todos los trámites necesarios. Diseñamos invitaciones personalizadas según vuestro estilo. El banquete consta de un menú de tres platos elaborado por nuestros chefs, que combinan propuestas tradicionales con opciones gourmet, veganas o sin gluten, y durante 1,5 horas ofrecéis un cóctel de bienvenida con aperitivos selectos. Contamos con un DJ profesional que ambienta la fiesta al ritmo de vuestros gustos, y la barra libre de tres horas incluye bebidas nacionales premium y cócteles exclusivos, garantizando que cada brindis sea inolvidable. Para vuestra comodidad, reservamos cinco habitaciones en la misma finca o en un alojamiento cercano, cubriendo la noche anterior y el día de la boda; además, ponemos a vuestra disposición un coche nupcial clásico o de la elección de los novios. Nuestro coordinador de bodas se encarga de gestionar proveedores, horarios y logística, asegurando que todo fluya sin contratiempos desde la llegada de los invitados hasta el último baile. La asesoría es totalmente gratuita; contáctanos para personalizar cada detalle de tu gran día.",
+                descripcion="""
+Nuestro Paquete Platinum para 100 personas incluye estos servicios:
+✓ Finca o salón a elección  
+✓ Ceremonia civil o religiosa  
+✓ Creación y diseño de invitaciones personalizadas  
+✓ Menú de 3 platos con ingredientes locales de temporada  
+✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol  
+✓ Coche nupcial clásico (limusina o coche vintage)
+✓ Maquillaje profesional para la novia  
+✓ Peinado profesional para la novia  
+✓ Ramo de flores para la novia  
+✓ Decoración integral de la finca  
+✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)  
+✓ DJ profesional durante la recepción  
+✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)  
+✓ Coordinador de bodas (logística, montaje, proveedores y horarios)  """,
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672328/Dise%C3%B1o_sin_t%C3%ADtulo_10_zhfhvg.png",
                 city="España",
                 price=62315,
@@ -491,7 +521,22 @@ def crear_servicios_belleza(user_id, belleza_category_id):
             ),
             Belleza(
                 title="Paquete Emerald",
-                descripcion="Nuestro Paquete Emerald para bodas de hasta 150 invitados abarca tanto la ceremonia civil como la religiosa en la finca o salón seleccionado, encargándonos de todos los trámites necesarios. Diseñamos invitaciones personalizadas que reflejan vuestro estilo. Para el banquete, ofrecemos un menú de cuatro platos ideado por nuestros chefs, con opciones gourmet, veganas o sin gluten según preferencias, y durante 1,5 horas servimos un cóctel de bienvenida con aperitivos seleccionados. Contamos con un DJ profesional para ambientar la celebración y una barra libre de tres horas con bebidas nacionales premium y cócteles exclusivos. Incluimos servicio de maquillaje y peinado profesional para la novia, así como reportaje fotográfico completo a cargo de un fotógrafo especializado en bodas. Para vuestra comodidad, reservamos cinco habitaciones en la finca para la noche de la boda y gestionamos la estancia en un hotel cercano para tres habitaciones la noche anterior. Ponemos a vuestra disposición un coche nupcial clásico o de la elección de los novios. Nuestro coordinador de bodas gestiona proveedores, cronograma y logística, garantizando que cada detalle fluya sin contratiempos y que disfrutéis de cada momento. La asesoría es totalmente gratuita; contáctanos para adaptar este paquete a vuestros deseos.",
+                descripcion="""
+Nuestro Paquete Emerald para 150 personas incluye estos servicios:
+✓ Finca o salón a elección  
+✓ Ceremonia civil o religiosa  
+✓ Creación y diseño de invitaciones personalizadas  
+✓ Menú de 4 platos con ingredientes locales de temporada  
+✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol  
+✓ Coche nupcial clásico (limusina o coche vintage)
+✓ Maquillaje profesional para la novia  
+✓ Peinado profesional para la novia  
+✓ Ramo de flores para la novia  
+✓ Decoración integral de la finca  
+✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)  
+✓ DJ profesional durante la recepción  
+✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)  
+✓ Coordinador de bodas (logística, montaje, proveedores y horarios)  """,
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672469/Dise%C3%B1o_sin_t%C3%ADtulo_12_hwkc91.png",
                 city="España",
                 price=79400,
@@ -510,7 +555,22 @@ def crear_servicios_belleza(user_id, belleza_category_id):
             ),
             Belleza(
                 title="Paquete Diamond",
-                descripcion="Nuestro Paquete Diamond está diseñado para bodas de hasta 250 invitados e incluye la organización completa de la ceremonia civil y religiosa en la finca o salón que elijáis. Elaboramos invitaciones personalizadas que reflejan vuestro estilo único. Para el banquete, ofrecemos un menú premium de cuatro platos, elaborado con ingredientes de la más alta calidad y adaptado a vuestras preferencias (opciones gourmet, veganas o sin gluten). Durante 1,5 horas servimos un cóctel de bienvenida con aperitivos selectos, seguido de una barra libre de tres horas con bebidas nacionales premium y cócteles exclusivos. Ofrecemos servicio de maquillaje y peinado profesional para la novia, así como maquillaje para hasta tres acompañantes, garantizando que luzcáis espectaculares desde el primer momento. El reportaje fotográfico corre a cargo de un fotógrafo profesional que capturará cada detalle de vuestra boda, desde la preparación hasta la fiesta. Para vuestra comodidad, reservamos cinco habitaciones en la finca o en un alojamiento cercano para la noche anterior, y ocho habitaciones la noche de la boda, de modo que vosotros y vuestros invitados descanséis sin preocupaciones. Ponemos a vuestra disposición un coche nupcial clásico (o del estilo que prefiráis) para los traslados de los novios. Nuestro coordinador de bodas se encarga de gestionar proveedores, cronograma y logística, asegurando que cada momento se desarrolle sin contratiempos. La asesoría es totalmente gratuita; contáctanos para adaptar este paquete a vuestros deseos y crear juntos la boda de vuestros sueños.",
+                descripcion="""
+Nuestro Paquete Diamond para 250 personas incluye estos servicios:
+✓ Finca o salón a elección  
+✓ Ceremonia civil o religiosa  
+✓ Creación y diseño de invitaciones personalizadas  
+✓ Menú de 3 platos con ingredientes locales de temporada  
+✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol  
+✓ Coche nupcial clásico (limusina o coche vintage)
+✓ Maquillaje profesional para la novia  
+✓ Peinado profesional para la novia  
+✓ Ramo de flores para la novia  
+✓ Decoración integral de la finca  
+✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)  
+✓ DJ profesional durante la recepción  
+✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)  
+✓ Coordinador de bodas (logística, montaje, proveedores y horarios)  """,
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672518/Dise%C3%B1o_sin_t%C3%ADtulo_13_vhbcmy.png",
                 city="España",
                 price=113740,

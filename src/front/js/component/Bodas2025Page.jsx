@@ -139,7 +139,6 @@ export function Bodas2025Page() {
           – Transporte complementario: limusinas, minibuses de invitados, rutas turísticas para los días previos.<br />
           – Decoración floral & ambientación temática: arcos nupciales, centros de mesa, guirnaldas de luces, photocall personalizado.<br />
           – Entretenimiento extra: fotomatón, caricaturistas, músicos de jazz o cuarteto de cuerda, espectáculo de fuegos artificiales.<br />
-          – Servicio de planificador virtual (app o plataforma online) para gestionar presupuestos, listas de invitados y seguimiento de tareas desde tu móvil.
         </p>
         <p>
           La <strong>asesoría es totalmente gratuita</strong>: contáctanos para recibir más información, un presupuesto detallado o resolver cualquier duda.

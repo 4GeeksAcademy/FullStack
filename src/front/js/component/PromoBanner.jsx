@@ -29,11 +29,13 @@ const PromoBanner = () => {
                     backdropFilter: "blur(6px)",
                   }}
                 >
-                 <button onClick={() => navigate("/guia2025")}
+            <button
+  onClick={() => window.location.href = "https://wa.me/34641363127?text=Hola%20buen%20dia%20quiero%20solicitar%20informacion%20sobre%20los%20paquetes%20de%20bodas"}
   className="btn ms-3 text-white"
 >
-  Empieza a planificar tu boda hoy!
+  Solicita tu presupuesto ahora
 </button>
+
                 </div>
               </div>
             </div>

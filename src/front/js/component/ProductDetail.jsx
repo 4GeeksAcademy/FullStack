@@ -262,9 +262,38 @@ const ProductDetail = () => {
               <small className="text-muted ms-3"></small>
             </div>
             <div className="d-grid gap-2 mb-3">
-              <Button variant="danger" size="lg" onClick={addToCart}>Añadir al carrito</Button>
-              <Button variant="success" size="lg" onClick={buyNow}>Comprar ahora</Button>
-            </div>
+
+          <Button
+            variant="danger"
+            size="lg"
+            data-fbevent="AddToCart"
+            data-fbparams={JSON.stringify({
+              content_ids: [completeOffer.id],
+              content_type: 'product',
+              value: discountPrice,
+              currency: 'EUR'
+            })}
+            onClick={addToCart}
+          >
+            Añadir al carrito
+          </Button>
+
+          <Button
+  variant="success"
+  size="lg"
+  data-fbevent="InitiateCheckout"
+  data-fbparams={JSON.stringify({
+    value: discountPrice,
+    currency: 'EUR'
+  })}
+  onClick={buyNow}
+>
+  Comprar ahora
+</Button>
+
+
+        {/* ... resto de la página ... */}
+</div>
             <Accordion className="mb-4">
               <Accordion.Item eventKey="0">
                 <Accordion.Header>Visita Virtual Gratis</Accordion.Header>

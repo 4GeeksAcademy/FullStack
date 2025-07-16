@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import ReactPixel from "react-facebook-pixel";  // Importa ReactPixel
 import { Context } from "../store/appContext";
 
 const Return = () => {
-  const { actions } = useContext(Context);
+  const { store, actions } = useContext(Context);
   const [status, setStatus] = useState(null);
   const [customerEmail, setCustomerEmail] = useState("");
   const [error, setError] = useState(null);
@@ -72,12 +73,26 @@ const Return = () => {
       });
   }, []);
 
-  // 2) Cuando status pase a 'complete' o 'paid', vaciamos el carrito
+  // 2) Cuando status pase a 'complete' o 'paid', dispara Purchase y luego vacía el carrito
   useEffect(() => {
     if (status === "complete" || status === "paid") {
+      // Recopila IDs y total antes de borrar
+      const items = store.cartItems || [];
+      const contentIds = items.map(i => i.id);
+      const total = items.reduce((sum, i) => sum + (i.discountPrice * i.quantity), 0);
+
+      // Dispara el evento de compra
+      ReactPixel.track("Purchase", {
+        content_ids: contentIds,
+        content_type: "product",
+        value: total,
+        currency: "EUR"
+      });
+
+      // Luego vacía el carrito
       actions.clearCart();
     }
-  }, [status, actions]);
+  }, [status, store.cartItems, actions]);
 
   if (error) {
     return (
@@ -100,7 +115,7 @@ const Return = () => {
         {/* Cabecera con logo */}
         <div style={headerStyle}>
           <i className="bi bi-house-fill fs-2 text-danger me-2"></i>
-          <h1 style={titleStyle}>GroupOn</h1>
+          <h1 style={titleStyle}>Camino al si</h1>
         </div>
         {/* Mensaje de éxito */}
         <div style={messageStyle}>
@@ -124,3 +139,4 @@ const Return = () => {
 };
 
 export default Return;
+

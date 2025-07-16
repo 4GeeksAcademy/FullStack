@@ -191,12 +191,17 @@ const CartPage = () => {
                 >
                   <i className="bi bi-trash me-2"></i>Vaciar Carrito
                 </button>
-                <button 
-                  className="btn btn-success flex-fill"
-                  onClick={handleProceedToPayment}
-                >
-                  Pagar Ahora
-                </button>
+                <button
+  className="btn btn-success flex-fill"
+  data-fbevent="InitiateCheckout"
+  data-fbparams={JSON.stringify({
+    value: subtotal,
+    currency: 'EUR'
+  })}
+  onClick={handleProceedToPayment}
+>
+  Pagar Ahora
+</button>
               </div>
             </div>
           </>

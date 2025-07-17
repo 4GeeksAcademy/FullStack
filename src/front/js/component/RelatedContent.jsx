@@ -6,13 +6,13 @@ import { useNavigate } from "react-router-dom";
 const RelatedContent = () => {
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
-  const containerRefs = useRef({}); // refs per category for touch
+  const containerRefs = useRef({});
 
   const getCardsPerPage = () => {
     const w = window.innerWidth;
-    if (w >= 1150) return 4;   // escritorio
-    if (w >= 870) return 3;    // intermedio
-    return 2;                  // móvil
+    if (w >= 1150) return 4;
+    if (w >= 870) return 3;
+    return 2;
   };
 
   const [cardsPerPage, setCardsPerPage] = useState(getCardsPerPage());
@@ -22,14 +22,12 @@ const RelatedContent = () => {
     viajes: 0,
   });
 
-  // Ajustar número de tarjetas por página al cambiar tamaño de ventana
   useEffect(() => {
     const handleResize = () => setCardsPerPage(getCardsPerPage());
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Cargar datos de servicios
   useEffect(() => {
     (async () => {
       if (!store.serviciosViajes.length) await actions.cargarServiciosViajes();
@@ -38,37 +36,33 @@ const RelatedContent = () => {
     })();
   }, [store, actions]);
 
-  // Solo manejamos la categoría "Belleza" en este componente
   const categories = [
     { id: "Belleza", name: "Belleza", deals: store.serviciosBelleza || [] },
   ];
 
-  // Crear el objeto "offer" y navegar a la página de detalle
   const handleNavigate = (deal, categoryId) => {
     const offer = {
       ...deal,
       title: deal.title || deal.nombre,
       image: deal.image || deal.imagen,
-      // price = precio original, discountPrice = precio con descuento
       price: deal.price || deal.precio,
       discountPrice: deal.discountPrice || deal.discountPrecio,
       rating: deal.rating,
       reviews: deal.reviews,
       buyers: deal.buyers || 0,
-      category: categoryId
+      category: categoryId,
     };
     navigate(`/product-detail`, { state: { offer, category: categoryId } });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Manejo de scroll horizontal de las tarjetas
   const scroll = (categoryId, direction, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    setCurrentIndices(prev => {
-      const len = categories.find(c => c.id === categoryId).deals.length;
+    setCurrentIndices((prev) => {
+      const len = categories.find((c) => c.id === categoryId).deals.length;
       const idx = prev[categoryId];
       const delta = direction === "left" ? -cardsPerPage : cardsPerPage;
       const next = Math.min(
@@ -79,22 +73,21 @@ const RelatedContent = () => {
     });
   };
 
-  const hasAnyData = categories.some(c => c.deals.length > 0);
+  const hasAnyData = categories.some((c) => c.deals.length > 0);
 
-  // --- Touch/swipe handling for mobile ---
   const [touchData, setTouchData] = useState({});
 
-  const onTouchStart = (categoryId) => e => {
-    setTouchData(td => ({
+  const onTouchStart = (categoryId) => (e) => {
+    setTouchData((td) => ({
       ...td,
-      [categoryId]: { startX: e.touches[0].clientX, currentX: null }
+      [categoryId]: { startX: e.touches[0].clientX, currentX: null },
     }));
   };
 
-  const onTouchMove = (categoryId) => e => {
-    setTouchData(td => ({
+  const onTouchMove = (categoryId) => (e) => {
+    setTouchData((td) => ({
       ...td,
-      [categoryId]: { ...td[categoryId], currentX: e.touches[0].clientX }
+      [categoryId]: { ...td[categoryId], currentX: e.touches[0].clientX },
     }));
   };
 
@@ -102,11 +95,11 @@ const RelatedContent = () => {
     const { startX, currentX } = touchData[categoryId] || {};
     if (startX != null && currentX != null) {
       const diff = startX - currentX;
-      if (Math.abs(diff) > 50) { // umbral de swipe
+      if (Math.abs(diff) > 50) {
         scroll(categoryId, diff > 0 ? "right" : "left");
       }
     }
-    setTouchData(td => ({ ...td, [categoryId]: {} }));
+    setTouchData((td) => ({ ...td, [categoryId]: {} }));
   };
 
   return (
@@ -114,13 +107,12 @@ const RelatedContent = () => {
       <h4 className="fs-3 fw-bold mb-4">Descubre nuestros paquetes de bodas</h4>
 
       {hasAnyData ? (
-        categories.map(category => {
+        categories.map((category) => {
           const currentIndex = currentIndices[category.id] || 0;
           const visibleDeals = category.deals.slice(
             currentIndex,
             currentIndex + cardsPerPage
           );
-          const isMobile = window.innerWidth < 870;
           return (
             <div key={category.id} className="mb-5">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -140,29 +132,44 @@ const RelatedContent = () => {
                 onTouchStart={onTouchStart(category.id)}
                 onTouchMove={onTouchMove(category.id)}
                 onTouchEnd={onTouchEnd(category.id)}
-                ref={el => (containerRefs.current[category.id] = el)}
+                ref={(el) => (containerRefs.current[category.id] = el)}
               >
-                {/* Flecha izquierda: solo tablet/desktop */}
-                {!isMobile && (
-                  <button
-                    className="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y"
-                    style={{ zIndex: 2 }}
-                    onClick={e => scroll(category.id, "left", e)}
-                    disabled={currentIndex === 0}
-                  >
-                    &#8592;
-                  </button>
-                )}
+                {/* Flecha izquierda */}
+                <button
+                  className="arrow-btn position-absolute top-50 start-0 translate-middle-y"
+                  style={{
+                    backgroundColor: "#D64550",
+                    color: "#FFFFFF",
+                    border: "2px solid #000000",
+                    borderRadius: "8px",
+                    width: "40px",
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 2,
+                  }}
+                  onClick={(e) => scroll(category.id, "left", e)}
+                  disabled={currentIndex === 0}
+                >
+                  &#8592;
+                </button>
 
-                {/* Forzamos fila con flex */}
-                <div className="row gx-3" style={{ display: "flex", flexWrap: "nowrap", overflow: isMobile ? "auto" : "hidden" }}>
-                  {visibleDeals.map(deal => (
+                <div
+                  className="row gx-3"
+                  style={{
+                    display: "flex",
+                    flexWrap: "nowrap",
+                    overflow: "auto",
+                  }}
+                >
+                  {visibleDeals.map((deal) => (
                     <div
                       key={`${category.id}-${deal.id}`}
                       className="col-12 col-md-6 col-lg-3"
                       style={{
                         flex: `0 0 ${100 / cardsPerPage}%`,
-                        maxWidth: `${100 / cardsPerPage}%`
+                        maxWidth: `${100 / cardsPerPage}%`,
                       }}
                     >
                       <CategoryCard
@@ -171,10 +178,11 @@ const RelatedContent = () => {
                           title: deal.title || deal.nombre,
                           image: deal.image || deal.imagen,
                           price: deal.price || deal.precio,
-                          discountPrice: deal.discountPrice || deal.discountPrecio,
+                          discountPrice:
+                            deal.discountPrice || deal.discountPrecio,
                           rating: deal.rating,
                           reviews: deal.reviews,
-                          buyers: deal.buyers || 0
+                          buyers: deal.buyers || 0,
                         }}
                         onViewService={() =>
                           handleNavigate(deal, category.id)
@@ -184,19 +192,28 @@ const RelatedContent = () => {
                   ))}
                 </div>
 
-                {/* Flecha derecha: solo tablet/desktop */}
-                {!isMobile && (
-                  <button
-                    className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y"
-                    style={{ zIndex: 2 }}
-                    onClick={e => scroll(category.id, "right", e)}
-                    disabled={
-                      currentIndex + cardsPerPage >= category.deals.length
-                    }
-                  >
-                    &#8594;
-                  </button>
-                )}
+                {/* Flecha derecha */}
+                <button
+                  className="arrow-btn position-absolute top-50 end-0 translate-middle-y"
+                  style={{
+                    backgroundColor: "#D64550",
+                    color: "#FFFFFF",
+                    border: "2px solid #000000",
+                    borderRadius: "8px",
+                    width: "40px",
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 2,
+                  }}
+                  onClick={(e) => scroll(category.id, "right", e)}
+                  disabled={
+                    currentIndex + cardsPerPage >= category.deals.length
+                  }
+                >
+                  &#8594;
+                </button>
               </div>
             </div>
           );

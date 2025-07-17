@@ -617,15 +617,15 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                     ✓ Alojamiento para los recién casados
                     ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
                 """),
-                image="https://res.cloudinary.com/.../Diseño_sin_título_13.png",
+                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672518/Dise%C3%B1o_sin_t%C3%ADtulo_13_vhbcmy.png",
                 city="España",
                 price=113740,
                 discountPrice=137036,
                 rating=4.9,
                 reviews=123,
                 buyers=159,
-                image4="https://res.cloudinary.com/.../alvaro-cvg.jpg",
-                image5="https://res.cloudinary.com/.../pexels-oskars.jpg",
+                image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1748943954/alvaro-cvg-mW8IZdX7n8E-unsplash_xlxfhd.jpg",
+                image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1748949846/pexels-oskars-lipatovs-46446967-7582980_f0x09u_c_crop_ar_1_1_vubuqh.jpg",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",
                 title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
                 descripcion2=textwrap.dedent("""\

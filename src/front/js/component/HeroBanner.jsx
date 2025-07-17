@@ -136,7 +136,7 @@ const HeroBanner = () => {
               >
                 <div className="hero-content">
                   <h1 className="text-white fw-bold mb-3" style={{ fontSize: "clamp(1.75rem, 5vw, 2.5rem)" }}>
-                    Creamos la boda de tus sueños en cualquier rincón de España
+                    Creamos bodas íntimas y personalizadas en cualquier rincón de España
                   </h1>
                   <Link
                     to="https://wa.me/34641363127?text=Hola%20buen%20dia%20quiero%20solicitar%20informacion%20sobre%20los%20paquetes%20de%20bodas"

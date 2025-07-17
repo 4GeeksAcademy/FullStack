@@ -489,7 +489,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042134/Dise%C3%B1o_sin_t%C3%ADtulo_4_uux8c7.png",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",
                 title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
-                descripcion2=textwrap.dedent("""\
+                descripcion2=html_desc("""\
                     Para ofrecerte la mejor experiencia, seguimos estos pasos:
                     1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla.
                     2. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 50 invitados.
@@ -534,7 +534,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042170/Dise%C3%B1o_sin_t%C3%ADtulo_5_izfblt.png",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",
                 title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
-                descripcion2=textwrap.dedent("""\
+                descripcion2=html_desc("""\
                     Para ofrecerte la mejor experiencia, seguimos estos pasos:
                     1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla.
                     2. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 100 invitados.
@@ -582,7 +582,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749043477/Dise%C3%B1o_sin_t%C3%ADtulo_7_s9kds6.png",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",
                 title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
-                descripcion2=textwrap.dedent("""\
+                descripcion2=html_desc("""\
                     Para ofrecerte la mejor experiencia, seguimos estos pasos:
                     1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla.
                     2. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 150 invitados.
@@ -628,7 +628,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1748949846/pexels-oskars-lipatovs-46446967-7582980_f0x09u_c_crop_ar_1_1_vubuqh.jpg",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",
                 title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
-                descripcion2=textwrap.dedent("""\
+                descripcion2=html_desc("""\
                     Para ofrecerte la mejor experiencia, seguimos estos pasos:
                     1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas...
                     2. Buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 250 invitados.

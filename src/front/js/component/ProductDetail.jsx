@@ -330,13 +330,19 @@ const ProductDetail = () => {
             </Col>
             <Col md={6} className="d-flex flex-column justify-content-center" style={{ padding: "2rem", minHeight: "300px" }}>
               <h5>{title2}</h5>
-              <p style={{ textAlign: "justify" }}>{descripcion2}</p>
+              <p
+                style={{ textAlign: "justify" }}
+                dangerouslySetInnerHTML={{ __html: descripcion2 }}
+              />
             </Col>
           </Row>
           <Row className="gx-0 align-items-center">
             <Col md={6} className="d-flex flex-column justify-content-center" style={{ padding: "2rem", minHeight: "300px" }}>
               <h5>{title3}</h5>
-              <p style={{ textAlign: "justify" }}>{descripcion3}</p>
+              <p
+                style={{ textAlign: "justify" }}
+                dangerouslySetInnerHTML={{ __html: descripcion3 }}
+              />
             </Col>
             <Col md={6} style={{ padding: "2rem" }}>
               <Image

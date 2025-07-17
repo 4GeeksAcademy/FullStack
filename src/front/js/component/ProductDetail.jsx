@@ -316,7 +316,10 @@ const ProductDetail = () => {
         {/* Descripción */}
         <div style={{ padding: "4rem 1rem", textAlign: "center" }}>
           <h4>Descripción</h4>
-          <p style={{ textAlign: "justify" }}>{desc}</p>
+           <p
+            style={{ textAlign: "justify" }}
+            dangerouslySetInnerHTML={{ __html: desc }}
+          />
         </div>
 
         {/* Descripciones alternas */}

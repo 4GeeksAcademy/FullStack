@@ -598,10 +598,56 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 user_id=user_id,
                 category_id=belleza_category_id
             ),
+            Belleza(
+                title="Paquete Diamond",
+                descripcion=html_desc("""
+                    Nuestro Paquete Diamond para 250 personas incluye estos servicios:
+                    ✓ Finca o salón a elección
+                    ✓ Ceremonia civil o religiosa
+                    ✓ Creación y diseño de invitaciones personalizadas
+                    ✓ Menú de 3 platos con ingredientes locales de temporada
+                    ✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol
+                    ✓ Coche nupcial clásico (limusina o coche vintage)
+                    ✓ Maquillaje profesional para la novia
+                    ✓ Peinado profesional para la novia
+                    ✓ Ramo de flores para la novia
+                    ✓ Decoración integral de la finca
+                    ✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)
+                    ✓ DJ profesional durante la recepción
+                    ✓ Alojamiento para los recién casados
+                    ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
+                """),
+                image="https://res.cloudinary.com/.../Diseño_sin_título_13.png",
+                city="España",
+                price=113740,
+                discountPrice=137036,
+                rating=4.9,
+                reviews=123,
+                buyers=159,
+                image4="https://res.cloudinary.com/.../alvaro-cvg.jpg",
+                image5="https://res.cloudinary.com/.../pexels-oskars.jpg",
+                title2="Cómo gestionamos la selección de finca y menú para tu boda",
+                title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
+                descripcion2=textwrap.dedent("""\
+                    Para ofrecerte la mejor experiencia, seguimos estos pasos:
+                    1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas...
+                    2. Buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 250 invitados.
+                    3. Solicitamos cotizaciones detalladas de cada espacio.
+                    4. Diseñamos 3 propuestas con esos datos.
+                """),
+                descripcion3=textwrap.dedent("""\
+                    Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón;<br/>
+                    comparte tus estilos y canciones favoritas para que nuestro DJ diseñe la selección musical;<br/>
+                    disfruta de un ambiente exclusivo con iluminación ambiental y centros florales.
+                """),
+                user_id=user_id,
+                category_id=belleza_category_id
+            ),
         ]
 
         db.session.bulk_save_objects(belleza_services)
         db.session.commit()
+        
 
 # Función para crear los servicios de Gastronomía
 def crear_servicios_gastronomia(user_id, gastronomia_category_id):

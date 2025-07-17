@@ -452,7 +452,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
     if not Belleza.query.filter_by(category_id=belleza_category_id).first():
         def html_desc(raw):
             # elimina indentación y convierte \n en <br/>
-            return textwrap.dedent(raw).strip().replace("\n", "<br/>\n")
+            return textwrap.dedent(raw).strip().replace("\n", "<br>\n")
         # 1) Definimos la descripción multilínea sin sangría extra
         raw_desc_gold = textwrap.dedent("""\
             Nuestro Paquete Gold para 50 personas incluye estos servicios:
@@ -472,7 +472,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
             ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
         """)
         # 2) Convertimos saltos de línea a <br/> para que el HTML los respete
-        html_desc_gold = raw_desc_gold.replace("\n", "<br/>\n")
+        html_desc_gold = raw_desc_gold.replace("\n", "<br>\n")
 
         belleza_services = [
             Belleza(

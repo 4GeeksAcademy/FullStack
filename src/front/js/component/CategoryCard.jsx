@@ -157,7 +157,7 @@ const CategoryCard = ({ offer, onViewService, compact = false }) => {
           </div>
           {!compact && (
             <div className="d-flex justify-content-end">
-              <small className="text-muted">{buyers}</small>
+              <small className="text-muted">Hasta {buyers} Invitados</small>
             </div>
           )}
         </div>

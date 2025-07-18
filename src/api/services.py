@@ -568,7 +568,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                     ✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)
                     ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
                 """),
-                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752824328/Dise%C3%B1o_sin_t%C3%ADtulo_13_fuizsp.png",
+                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752863544/Dise%C3%B1o_sin_t%C3%ADtulo_17_llqtvz.png",
                 city="España",
                 price=54900,
                 discountPrice=71627,

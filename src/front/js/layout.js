@@ -47,6 +47,14 @@ import ViewNewsletter from "./pages/ViewNewsletter.jsx";
 import { Bodas2025Page } from "./component/Bodas2025Page.jsx";
 import { Tendencias2025Page } from "./component/Tendencias2025Page.jsx";
 import AllArticlesPage from "./component/AllArticlesPage"
+import { Menus } from "./pages/Menus.jsx"
+import { Invitaciones } from "./pages/Invitaciones.jsx"
+import { Coches }  from "./pages/CochesYTransporte.jsx"
+import { EleccionDelLugar } from "./pages/EleccionDelLugar.jsx";
+import { Mesas } from "./pages/Mesas.jsx"
+import { FechaYLugares } from "./pages/FechaYLugares.jsx";
+import  { SectorNupcial } from "./pages/SectorNupcial.jsx"
+
 
 
 
@@ -108,8 +116,13 @@ const Layout = () => {
             <Route path="/guia2025" element={<Bodas2025Page />}/>
             <Route path="/tendencias2025" element={<Tendencias2025Page />}/>
             <Route path="/resumen" element={<AllArticlesPage/>}/>
-            
-            
+            <Route path="/Menus" element={<Menus />}/>
+            <Route path="/Invitaciones" element={<Invitaciones />}/>
+            <Route path="/Coches" element={<Coches />}/>
+            <Route path="/EleccionDelLugar" element={<EleccionDelLugar />}/>
+            <Route path="/ComoOrganizarATusInvitados" element={<Mesas />}/>
+            <Route path="/SectorNupcial" element={<SectorNupcial />}/>
+            <Route path="/FechaYLugares" element={<FechaYLugares />}/>
               
           </Routes>
           <Footer />

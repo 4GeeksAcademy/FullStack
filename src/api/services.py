@@ -476,15 +476,60 @@ def crear_servicios_belleza(user_id, belleza_category_id):
 
         belleza_services = [
             Belleza(
+                title="Paquete Plata",
+                descripcion=html_desc("""
+                    Nuestro Paquete Plata para 25 personas incluye estos servicios:
+                    ✓ Finca o salón a elección
+                    ✓ Ceremonia civil o religiosa
+                    ✓ Creación y diseño de invitaciones personalizadas
+                    ✓ Menú de 3 platos con ingredientes locales de temporada
+                    ✓ Cóctel de bienvenida de 1,5 horas con snacks artesanales y bebidas sin alcohol
+                    ✓ Coche nupcial clásico (limusina o coche vintage)
+                    ✓ Maquillaje profesional para la novia
+                    ✓ Peinado profesional para la novia
+                    ✓ Ramo de flores para la novia
+                    ✓ Decoración integral de la finca
+                    ✓ Barra libre durante 3 horas (vino, cerveza, refrescos y cócteles básicos)
+                    ✓ DJ profesional durante la recepción
+                    ✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)
+                    ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
+                """),
+                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672401/Dise%C3%B1o_sin_t%C3%ADtulo_11_nbpdnt.png",
+                city="España",
+                price=22900,
+                discountPrice=25000,
+                rating=4.7,
+                reviews=37,
+                buyers="Hasta 25 Invitados",
+                image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042110/Dise%C3%B1o_sin_t%C3%ADtulo_3_jdbp8g.png",
+                image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042134/Dise%C3%B1o_sin_t%C3%ADtulo_4_uux8c7.png",
+                title2="Cómo gestionamos la selección de finca y menú para tu boda",
+                title3="Recomendaciones para Disfrutar al Máximo tu Gran Día",
+                descripcion2=html_desc("""\
+                    Para ofrecerte la mejor experiencia, seguimos estos pasos:
+                    1. Contacta con nosotros y cuéntanos el tipo de boda que sueñas, el número de invitados y la provincia o municipio donde quieres celebrarla.
+                    2. Partiendo de tus preferencias (rústica, moderna, playa, campo…), buscamos 5 fincas que se ajusten a tu estilo y capacidad de hasta 25 invitados.
+                    3. Solicitamos cotizaciones detalladas de cada espacio, incluyendo costes de alquiler, decoración y servicios básicos.
+                    4. Con esos datos, diseñamos 3 propuestas.
+                """),
+                descripcion3=textwrap.dedent("""\
+                    Aprovecha nuestra visita inspiradora a la finca para enamorarte de cada rincón y visualizar in situ cómo lucirá tu decoración personalizada;<br/>
+                    comparte con nosotros tus estilos y canciones favoritas para que nuestro DJ diseñe una selección musical a medida que mantenga la emoción y la fiesta toda la noche;<br/>
+                    y disfruta de un ambiente decorativo exclusivo, con centros florales únicos, iluminación ambiental con guirnaldas y focos cálidos, photocall de ensueño y un seating plan diseñado al detalle para que tu boda refleje vuestra personalidad y sorprenda a cada invitado.
+                """),
+                user_id=user_id,
+                category_id=belleza_category_id
+            ),
+            Belleza(
                 title="Paquete Gold",
                 descripcion=html_desc_gold,
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672401/Dise%C3%B1o_sin_t%C3%ADtulo_11_nbpdnt.png",
                 city="España",
-                price=37510,
+                price=29900,
                 discountPrice=40702,
                 rating=4.8,
                 reviews=67,
-                buyers=83,
+                buyers="Hasta 50 Invitados",
                 image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042110/Dise%C3%B1o_sin_t%C3%ADtulo_3_jdbp8g.png",
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042134/Dise%C3%B1o_sin_t%C3%ADtulo_4_uux8c7.png",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",
@@ -525,11 +570,11 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 """),
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672328/Dise%C3%B1o_sin_t%C3%ADtulo_10_zhfhvg.png",
                 city="España",
-                price=62315,
+                price=54900,
                 discountPrice=71627,
                 rating=4.85,
                 reviews=137,
-                buyers=193,
+                buyers="Hasta 100 Invitados",
                 image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042089/Dise%C3%B1o_sin_t%C3%ADtulo_2_ohbqiv.png",
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749042170/Dise%C3%B1o_sin_t%C3%ADtulo_5_izfblt.png",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",
@@ -573,11 +618,11 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 """),
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672469/Dise%C3%B1o_sin_t%C3%ADtulo_12_hwkc91.png",
                 city="España",
-                price=79400,
+                price=74900,
                 discountPrice=93412,
                 rating=4.85,
                 reviews=106,
-                buyers=149,
+                buyers="Hasta 150 Invitados",
                 image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749043462/Dise%C3%B1o_sin_t%C3%ADtulo_6_g2e4wz.png",
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1749043477/Dise%C3%B1o_sin_t%C3%ADtulo_7_s9kds6.png",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",
@@ -619,11 +664,11 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 """),
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672518/Dise%C3%B1o_sin_t%C3%ADtulo_13_vhbcmy.png",
                 city="España",
-                price=113740,
+                price=115000,
                 discountPrice=137036,
                 rating=4.9,
                 reviews=123,
-                buyers=159,
+                buyers="Para 250 Invitados",
                 image4="https://res.cloudinary.com/dlcovtv8q/image/upload/v1748943954/alvaro-cvg-mW8IZdX7n8E-unsplash_xlxfhd.jpg",
                 image5="https://res.cloudinary.com/dlcovtv8q/image/upload/v1748949846/pexels-oskars-lipatovs-46446967-7582980_f0x09u_c_crop_ar_1_1_vubuqh.jpg",
                 title2="Cómo gestionamos la selección de finca y menú para tu boda",

@@ -14,6 +14,7 @@ import RelatedContent2 from "../component/RelatedContent2.jsx";
 import FAQSection from "../component/FAQSection.jsx";
 import CookieConsent from 'react-cookie-consent';
 import WhatsAppButton from "../component/WhatsAppButton.jsx";
+import MoreInfoNav from '../component/MoreInfoNav.jsx';
 
 export const Home = () => {
   return (
@@ -80,6 +81,7 @@ export const Home = () => {
       <PromoBanner />
       <RelatedContent2 />
       <FAQSection />
+      <MoreInfoNav />
       <Newsletter />
       <WhatsAppButton />
       <Footer />

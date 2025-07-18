@@ -104,7 +104,7 @@ const RelatedContent = () => {
 
   return (
     <section className="col-12 col-sm-10 col-md-9 col-lg-9 mx-auto px-3 px-sm-4">
-      <h4 className="fs-3 fw-bold mb-4">Descubre nuestros paquetes de bodas</h4>
+      <h4 className="fs-3 fw-bold mb-4">Paquetes de Boda Todo Incluido</h4>
 
       {hasAnyData ? (
         categories.map((category) => {

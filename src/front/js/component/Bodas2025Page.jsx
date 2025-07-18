@@ -4,6 +4,8 @@ import CategoriesSection2 from "../component/CategoriesSection2.jsx";
 import RelatedContent from "../component/RelatedContent.jsx";
 import Footer from "../component/Footer.jsx";
 import WhatsAppButton from "../component/WhatsAppButton.jsx";
+import MoreInfoNav from '../component/MoreInfoNav.jsx';
+
 
 export function Bodas2025Page() {
   return (
@@ -11,6 +13,7 @@ export function Bodas2025Page() {
       <LayoutHeader />
       <CategoriesSection2 />
       <WhatsAppButton />
+      
 
       {/* Scoped styled content only for this section */}
       <section className="bodas2025-content">
@@ -149,7 +152,7 @@ export function Bodas2025Page() {
           <a href="https://wa.me/34641363127?text=Hola%20buen%20dia%20quiero%20solicitar%20informacion%20sobre%20los%20paquetes%20de%20bodas" className="cta-link">Solicita tu asesoría gratuita</a>
         </div>
       </section>
-
+      <MoreInfoNav />
       <RelatedContent />
       <Footer />
     </div>

@@ -523,7 +523,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
             Belleza(
                 title="Paquete Gold",
                 descripcion=html_desc_gold,
-                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672401/Dise%C3%B1o_sin_t%C3%ADtulo_11_nbpdnt.png",
+                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672328/Dise%C3%B1o_sin_t%C3%ADtulo_10_zhfhvg.png",
                 city="España",
                 price=29900,
                 discountPrice=40702,
@@ -568,7 +568,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                     ✓ Alojamiento para los recién casados (habitación en finca u hotel cercano)
                     ✓ Coordinador de bodas (logística, montaje, proveedores y horarios)
                 """),
-                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752672328/Dise%C3%B1o_sin_t%C3%ADtulo_10_zhfhvg.png",
+                image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752824328/Dise%C3%B1o_sin_t%C3%ADtulo_13_fuizsp.png",
                 city="España",
                 price=54900,
                 discountPrice=71627,

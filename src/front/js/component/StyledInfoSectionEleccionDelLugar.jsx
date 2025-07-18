@@ -19,8 +19,8 @@ export default function StyledInfoSectionEleccionDelLugar() {
       image: hotelImg
     },
     {
-      title: "Finca Rústica",
-      text: "Encanto campestre con vigas de madera, jardines y pérgolas. Ofrece versatilidad para carpas y zonas chill‑out, y se integra con menús de km 0. Perfecto para bodas íntimas y con un toque natural.",
+      title: "Finca",
+      text: "Espacios abiertos rodeados de jardines y pérgolas, pensados para ceremonias al aire libre bajo el cielo y para disfrutar de la naturaleza en todo su esplendor. Además, disponen de salones climatizados que ofrecen refugio ante cambios de tiempo, garantizando confort en cualquier estación. Su versatilidad permite instalar carpas, zonas chill‑out o decoraciones a medida, haciendo de la finca la opción más auténtica y personalizable para celebrar una boda inolvidable.",
       image: fincaImg
     },
     {

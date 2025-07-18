@@ -4,12 +4,9 @@ import { Link } from 'react-router-dom';
 export default function MoreInfoNav() {
   const items = [
     { label: 'Menús de boda', to: '/Menus' },
-    { label: 'Invitaciones de boda', to: '/Invitaciones' },
-    { label: 'Coches para bodas', to: '/Coches' },
     { label: 'Elección del lugar', to: '/EleccionDelLugar' },
     { label: 'Organizar invitados', to: '/ComoOrganizarATusInvitados' },
     { label: 'Informe sector nupcial', to: '/SectorNupcial' },
-    { label: 'Fecha y lugares', to: '/FechaYLugares' },
     { label: 'Cómo elegir invitaciones', to: '/Invitaciones' },
     { label: 'Cómo elegir coche', to: '/Coches' }
   ];

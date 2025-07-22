@@ -571,7 +571,7 @@ def crear_servicios_belleza(user_id, belleza_category_id):
                 image="https://res.cloudinary.com/dlcovtv8q/image/upload/v1752863544/Dise%C3%B1o_sin_t%C3%ADtulo_17_llqtvz.png",
                 city="España",
                 price=51327,
-                discountPrice=71627,
+                discountPrice=69927,
                 rating=4.85,
                 reviews=137,
                 buyers=100,

@@ -19,8 +19,8 @@ export default function StyledInfoSectionEleccionDelLugar() {
       image: hotelImg
     },
     {
-      title: "Finca",
-      text: "Espacios abiertos rodeados de jardines y pérgolas, pensados para ceremonias al aire libre bajo el cielo y para disfrutar de la naturaleza en todo su esplendor. Además, disponen de salones climatizados que ofrecen refugio ante cambios de tiempo, garantizando confort en cualquier estación. Su versatilidad permite instalar carpas, zonas chill‑out o decoraciones a medida, haciendo de la finca la opción más auténtica y personalizable para celebrar una boda inolvidable.",
+      title: "Fincas",
+      text: "Entornos con jardines y pérgolas perfectos para celebrar bajo el cielo. Versátiles para instalar carpas y zonas chill‑out, y cuentan con salones climatizados para asegurar comodidad en cualquier estación.",
       image: fincaImg
     },
     {
@@ -29,8 +29,8 @@ export default function StyledInfoSectionEleccionDelLugar() {
       image: salonImg
     },
     {
-      title: "Jardín Botánico",
-      text: "Un oasis de vegetación y colorido, con especies autóctonas y exóticas. Perfecto para ceremonias al aire libre rodeadas de flores, fotos inolvidables y un ambiente fresco y natural.",
+      title: "Celebraciones en Espacios Naturales",
+      text: "Oasis de vegetación y color, con rincones florales únicos que crean una atmósfera fresca y romántica. Perfecto para fotos inolvidables y ceremonias rodeadas de naturaleza.",
       image: jardinImg
     },
     {
@@ -44,10 +44,10 @@ export default function StyledInfoSectionEleccionDelLugar() {
     <section className="venue-selection py-5">
       <div className="container">
         <h2 className="fs-2 fw-bold mb-4 text-center">
-          Opciones para el Lugar de tu Boda
+          Cómo Elegir el Lugar de la Boda
         </h2>
-        <p className="lead text-center mb-5">
-          Elige el escenario perfecto según tu estilo, clima y número de invitados.
+        <p className="lead mb-5">
+          En <strong>Camino al “Sí”</strong> sabemos que elegir el lugar de celebración es tan decisivo como el “sí, quiero” mismo, por eso acompañamos a las parejas en cada paso para encontrar el espacio perfecto según su estilo y necesidades. Analizamos la capacidad y distribución (ceremonia, banquete, zona de baile y rincón para el photocall), la ubicación y accesibilidad para facilitar el traslado de invitados, y los servicios adicionales (iluminación, montaje, aparcamiento y seguros). Nuestro equipo selecciona fincas campestres, masías con salones, hoteles con vistas al mar o espacios urbanos de diseño, coordina visitas guiadas y negocia las mejores condiciones para que vosotros solo tengáis que escoger la opción que os enamore. Así, el día B todo fluye con total tranquilidad y vosotros disfrutáis de un escenario hecho a vuestra medida.
         </p>
 
         <div className="row gx-4 gy-5">
@@ -68,7 +68,10 @@ export default function StyledInfoSectionEleccionDelLugar() {
       <style>{`
         .venue-selection { background-color: #fafafa; }
         .venue-selection h2 { color: #D64550; }
-        .venue-selection p.lead { color: #555; }
+        .venue-selection p.lead { 
+          color: #555; 
+          text-align: justify; 
+        }
         .venue-selection img {
           border: 2px solid #D64550;
           height: 200px;
@@ -82,10 +85,9 @@ export default function StyledInfoSectionEleccionDelLugar() {
         .venue-selection p {
           color: #555;
           line-height: 1.6;
+          text-align: justify;
         }
       `}</style>
     </section>
   );
 }
-
-

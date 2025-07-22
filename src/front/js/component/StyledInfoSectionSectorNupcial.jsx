@@ -6,13 +6,13 @@ import serviciosImg from '../../img/Diseño sin título (1).png';
 export default function StyledInfoSectionSectorNupcial() {
   const sections = [
     {
-      title: 'Informe del Sector Nupcial 2025: Claves en España',
-      text: `El Informe del Sector Nupcial 2025 revela datos de más de 6 700 parejas que se casaron en 2024. Con él descubrirás la edad media de los contrayentes (36 años), la inversión media por boda (€24 618) y la generación dominante (millennials 68 %). Además, una de cada cuatro parejas ya tiene hijos antes de decir “sí, quiero”.`,
+      title: 'Informe del Sector Nupcial: Claves en España',
+      text: `El Informe del Sector Nupcial revela datos de más de 6 700 parejas que se casaron en 2024. Con él descubrirás la edad media de los contrayentes (36 años), la inversión media por boda (€54 918) y la generación dominante (millennials 68 %). Además, una de cada cuatro parejas ya tiene hijos antes de decir “sí, quiero”.`,
       image: planificacionImg
     },
     {
       title: 'Planificación y Proveedores Más Demandados',
-      text: `La organización de la boda dura en promedio 12 meses y contrata un promedio de 8–9 proveedores: fotografía, vestidos, música, floristería y catering encabezan la lista. El 45 % busca en webs especializadas y el 37 % confía en el boca a boda para elegir a sus profesionales. La tendencia 2025: más inversión en animación y experiencias personalizadas.`,
+      text: `La organización de la boda dura en promedio 6 meses y contrata un promedio de 5–4 proveedores: fotografía, vestidos, música, floristería y catering encabezan la lista. El 45 % busca en webs especializadas y el 37 % confía en el boca a boda para elegir a sus profesionales. La tendencia 2025: más inversión en animación y experiencias personalizadas.`,
       image: espaciosImg
     },
     {
@@ -78,7 +78,7 @@ export default function StyledInfoSectionSectorNupcial() {
         }
       `}</style>
 
-      <h2>Informe del Sector Nupcial 2025 en España</h2>
+      <h2>Informe del Sector Nupcial en España</h2>
       {sections.map((section, idx) => (
         <div className="sector-row" key={idx}>
           <div className="sector-image">

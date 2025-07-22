@@ -8,12 +8,8 @@ export default function StyledInfoSectionInvitaciones() {
   const sections = [
     {
       title: 'Diseño y Estilo de la Invitación',
-      text: `Las invitaciones de boda son la primera carta de presentación de vuestro gran día. En Camino al “Sí” creamos diseños a medida partiendo de un moodboard con paletas de color, tipografías y texturas que reflejen vuestra personalidad.  
-- Clásico elegante con papel de alto gramaje y estampado en dorado.  
-- Rústico-chic con papeles kraft y detalles en acuarela.  
-- Minimalista moderno con abundante espacio en blanco.  
-- Floral romántico con ilustraciones y acuarelas suaves.  
-Validamos cada propuesta en mockup digital para que el resultado encaje al 100% con vuestra temática.`,
+      text: `Las invitaciones de boda son el primer avance de vuestra celebración, por eso en Camino al “Sí” diseñamos propuestas 100 % digitales que reflejan vuestra esencia y facilitan la gestión: desde invitaciones clásicas con tipografías elegantes hasta estilos rústicos, minimalistas o florales, todas adaptables a vuestra paleta de color y temática. Creamos un moodboard inicial para seleccionar colores, fuentes y texturas, presentamos mockups interactivos y ajustamos cada detalle hasta lograr la invitación perfecta que recibirán vuestros invitados directamente en su correo o WhatsApp, con confirmación de asistencia integrada para que el proceso sea ágil y moderno.
+`,
       image: planificacionImg
     },
     {

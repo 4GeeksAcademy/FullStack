@@ -54,52 +54,60 @@ export default function StyledInfoSectionMenus() {
         }
       `}</style>
 
-      <h1>Catering y Menús a Medida</h1>
+      <h1>Cómo En Camino al “Sí” Simplifica la Elección de tu Catering de Boda</h1>
 
       <p>
-        Ofrecemos un servicio de catering especializado para bodas, con menús orientativos de 3 o 4 platos elaborados con ingredientes locales de temporada. Estos menús sirven de guía; la selección final la realiza la pareja, eligiendo el estilo gastronómico que deseen: mediterráneo, internacional, vegetariano, vegano o sin gluten.
+        En <strong>Camino al “Sí”</strong>, entendemos que el catering es mucho más que comida: es la experiencia culinaria que acompañará cada sonrisa y brindis de vuestro gran día. Por eso, ofrecemos un servicio integral que acompaña a las parejas en cada paso de la elección, contratación y personalización de su banquete de boda.
+      </p>
+
+      <h2>1. Asesoría Personalizada desde el Primer Contacto</h2>
+      <p>
+        Nada de búsquedas interminables ni acertijos: nuestro equipo de expertos os guía en una entrevista inicial para conocer vuestro estilo, presupuesto y preferencias gastronómicas. ¿Sois de sabores mediterráneos con toques de mar? ¿Preferís propuestas internacionales o menús temáticos (vegano, sin gluten, fusión)? A partir de vuestros gustos, nosotros buscamos y seleccionamos los caterings de confianza que mejor encajen, y organizamos degustaciones presenciales o virtuales para que toméis la decisión con total seguridad.
       </p>
 
       <img src={cateringImg1} alt="Banquete boda elegante" />
 
-      <h2>Recomendaciones para Elegir tu Menú</h2>
+      <h2>2. Paquetes Flexibles y Ejemplos Orientativos</h2>
       <ul>
-        <li>Define el concepto: buffet interactivo, degustación por estaciones o servicio en mesa.</li>
-        <li>Incluye opciones especiales: dietas sin gluten, veganas y alérgenos bien identificados.</li>
-        <li>Combina sabores: entrantes ligeros, plato principal contundente y postres frescos.</li>
-        <li>Considera el maridaje: vinos, cervezas artesanales y cócteles de bienvenida.</li>
+        <li><strong>Menú Clásico de 3 Platos</strong>: entrante fresco, carne o pescado a la carta y postre tradicional.</li>
+        <li><strong>Selección Gourmet de 4 Platos</strong>: incluye un aperitivo diseñado por chef, plato principal creativo y una opción de postres de autor.</li>
+        <li><strong>Estaciones Temáticas y Cóctel de Bienvenida</strong>: barras de quesos y charcutería, estaciones de sushi o finger food, acompañadas de mocktails y cócteles artesanales.</li>
       </ul>
+      <p>
+        Estos ejemplos pueden ajustarse en precio, número de pases y estilo para que reflejen vuestra personalidad.
+      </p>
 
       <img src={cateringImg2} alt="Chef presentando platos" />
 
-      <h2>Proceso de Selección y Degustación</h2>
-      <ul>
-        <li>Agenda al menos una sesión de prueba con 2–3 combinaciones de platos.</li>
-        <li>Ajusta texturas y presentaciones junto al chef durante la degustación.</li>
-        <li>Valora la logística: tiempos de servicio y número de invitados.</li>
-      </ul>
+      <h2>3. Búsqueda y Presentación de Opciones de Catering</h2>
+      <p>
+        Nos encargamos de investigar disponibilidad, menús y valoraciones de cada proveedor; vosotros solo elegís cuál os convence más. Presentamos un dossier comparativo con fotos, reseñas reales y costes, para que la selección sea clara y transparente.
+      </p>
 
-      <h2>Personalización y Detalles</h2>
-      <ul>
-        <li>Estaciones de snacks artesanales y cóctel de bienvenida de 1,5 horas.</li>
-        <li>Decoración culinaria: emplatados creativos y vajilla acorde al estilo.</li>
-        <li>Opciones temáticas: food trucks, barras de postres o estaciones de café.</li>
-      </ul>
+      <h2>4. Coordinación Total y Tranquilidad Garantizada</h2>
+      <p>
+        Una vez decidido, coordinamos fechas, logística y montaje con el catering elegido. Gestionamos permisos de finca o salón, validamos la calidad de los ingredientes y supervisamos el servicio in situ el día de la boda. Así, vosotros solo tenéis que disfrutar: desde el primer bocado hasta el último brindis, nuestro equipo vela porque cada plato llegue a tiempo, caliente y con la presentación perfecta.
+      </p>
 
       <img src={cateringImg3} alt="Estación de cócteles" />
 
-      <h2>Sostenibilidad y Responsabilidad</h2>
+      <p>
+        Con <strong>Cómo En Camino al “Sí” Simplifica la Elección de tu Catering de Boda</strong> os ofrecemos:
+      </p>
       <ul>
-        <li>Minimiza desperdicios con porciones ajustadas.</li>
-        <li>Vajilla reusable o compostable para reducir impacto ambiental.</li>
-        <li>Colabora con donación de excedentes a bancos de alimentos.</li>
+        <li>Atención personalizada y degustaciones a medida.</li>
+        <li>Paquetes orientativos que se adaptan a cualquier estilo y presupuesto.</li>
+        <li>Búsqueda y comparación de caterings para que elijáis sin esfuerzo.</li>
+        <li>Gestión completa de logística y coordinación el día del evento.</li>
       </ul>
 
       <p>
-        Con nuestra guía de catering y menús personalizados, tendrás todas las herramientas para diseñar un banquete nupcial único y memorable. ¡Empieza hoy a planificar el menú de tu boda perfecta!
+        ¡Contactad con nosotros y haced de vuestro banquete un recuerdo inolvidable!
       </p>
     </article>
   );
 }
+
+
 
 
